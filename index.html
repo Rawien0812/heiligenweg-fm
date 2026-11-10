@@ -418,6 +418,7 @@ const STATIONS = [
     { id: "g_2M3XrhsDs", t: "Volume 18 (live)", a: "Dewindersingh Sewnath" },
   ]},
   { name: "KRISHWAM", label: "Krishwam Chedi", tracks: [
+    { list: "PLaN1CATOpp3Q", t: "Alle nummers (afspeellijst)", a: "Krishwam Chedi" },
     { id: "_PubxSGcMEo", t: "Aaja Re O Sanam", a: "Krishwam Chedi & Baithak XPrezz" },
   ]},
 ];
@@ -545,7 +546,10 @@ window.onYouTubeIframeAPIReady = function () {
       },
       onError: (e) => {
         showError(e.data);
-        if (track().list) { player.nextVideo(); return; }
+        if (track().list) {
+          const list = player.getPlaylist && player.getPlaylist();
+          if (list && list.length && player.getPlaylistIndex() < list.length - 1) { player.nextVideo(); return; }
+        }
         // Nummer mag niet ingesloten worden of is weg: door naar de volgende halte.
         if (++fails < STATIONS[st].tracks.length) step(1);
         else { playing = false; renderLcd(); $("lcdTitle").textContent = "Geen bereik op deze zender"; }
