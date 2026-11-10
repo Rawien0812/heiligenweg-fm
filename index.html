@@ -184,6 +184,9 @@ h1 {
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .lcd .artist { font-size: 1.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lcd .scroll { text-overflow: clip; }
+.lcd .scroll > span { display: inline-block; padding-right: 3em; animation: marquee var(--dur, 12s) linear infinite; }
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 .eq { display: flex; gap: 3px; align-items: flex-end; height: 18px; }
 .eq i { width: 4px; height: 4px; }
 .eq i:nth-child(1), .eq i:nth-child(5) { background: var(--sr-green); filter: brightness(1.6); }
@@ -253,7 +256,7 @@ ol.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
   text-align: left; background: #123a21; color: var(--ink); border: 0; border-radius: 8px;
   padding: 10px 12px; cursor: pointer; font: inherit;
 }
-.list li:nth-child(even) button { background: #0f3019; }
+.list > li:nth-child(even) > button { background: #0f3019; }
 .list button:hover { background: #1a5130; }
 .list .num {
   font: 1.2rem/1 var(--lcd); color: var(--sr-yellow); background: #0b0b0b; border-radius: 4px;
@@ -263,9 +266,17 @@ ol.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .list .t strong { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .list .t span { color: var(--muted); font-size: .88rem; }
 .list .yt { font-size: .8rem; color: var(--muted); }
-.list .pl .num { background: var(--gold); color: #2a1a00; }
-.list li.current button { background: var(--sr-red); box-shadow: inset 5px 0 0 var(--sr-yellow), 0 0 0 2px var(--gold); }
-.list li.current .t span, .list li.current .yt { color: #ffe1e6; }
+.list > li.pl > button .num { background: var(--gold); color: #2a1a00; }
+.list > li.current > button { background: var(--sr-red); box-shadow: inset 5px 0 0 var(--sr-yellow), 0 0 0 2px var(--gold); }
+.list > li.current > button .t span, .list > li.current > button .yt { color: #ffe1e6; }
+ol.tracks { list-style: none; margin: 6px 0 4px 26px; padding: 0 0 0 14px; display: grid; gap: 4px;
+  border-left: 3px solid var(--gold-deep); max-height: 440px; overflow-y: auto; }
+.list .tracks button { grid-template-columns: 44px minmax(0,1fr) auto; padding: 7px 10px; background: #0d2a17; }
+.list .tracks li:nth-child(even) button { background: #0b2414; }
+.tracks .num { font-size: 1.05rem; }
+.list .tracks li.on button { background: #1d5a33; box-shadow: inset 4px 0 0 var(--sr-yellow); }
+.tracks li.on .yt { color: var(--gold); }
+.tracks .loading strong { color: var(--muted); font-weight: 400; }
 
 .flagbar { height: 14px; background: linear-gradient(to bottom, var(--sr-green) 0 20%, #fff 20% 30%, var(--sr-red) 30% 70%, #fff 70% 80%, var(--sr-green) 80%); margin-top: 30px; }
 footer { padding-block: 22px 40px; color: var(--muted); font-size: .85rem; }
@@ -431,6 +442,90 @@ let st = 0, idx = 0, player = null, ready = false, wantPlay = false, playing = f
 const $ = (id) => document.getElementById(id);
 const track = () => STATIONS[st].tracks[idx];
 
+// Tekst op het radioschermpje; te lang = laten scrollen.
+function setText(id, text) {
+  const el = $(id);
+  el.classList.remove("scroll");
+  el.textContent = text;
+  if (el.scrollWidth > el.clientWidth + 2) {
+    const sp = document.createElement("span");
+    sp.textContent = text;
+    el.textContent = "";
+    el.append(sp, sp.cloneNode(true));
+    el.classList.add("scroll");
+    el.style.setProperty("--dur", Math.max(8, text.length * 0.35) + "s");
+  }
+}
+
+// Titels van video's in een afspeellijst ophalen (YouTube oEmbed, met noembed als reserve).
+let plIds = [], plIndex = -1;
+const titles = {};
+try { Object.assign(titles, JSON.parse(localStorage.getItem("hfm-titles") || "{}")); } catch (e) {}
+const queue = [];
+let active = 0;
+function wantTitle(vid) {
+  if (titles[vid] || queue.includes(vid)) return;
+  queue.push(vid); pump();
+}
+function pump() {
+  while (active < 4 && queue.length) {
+    const vid = queue.shift(); active++;
+    const url = encodeURIComponent("https://www.youtube.com/watch?v=" + vid);
+    fetch("https://www.youtube.com/oembed?format=json&url=" + url)
+      .then((r) => r.ok ? r.json() : Promise.reject())
+      .catch(() => fetch("https://noembed.com/embed?url=" + url).then((r) => r.json()))
+      .then((d) => {
+        if (d && d.title) {
+          titles[vid] = { t: d.title, a: d.author_name || "" };
+          try { localStorage.setItem("hfm-titles", JSON.stringify(titles)); } catch (e) {}
+          fillTrack(vid);
+          if (plIds[plIndex] === vid) showPlaylistLcd();
+        }
+      })
+      .catch(() => {})
+      .finally(() => { active--; pump(); });
+  }
+}
+function fillTrack(vid) {
+  document.querySelectorAll(`[data-vid="${vid}"]`).forEach((li) => {
+    const info = titles[vid]; if (!info) return;
+    li.classList.remove("loading");
+    li.querySelector("strong").textContent = info.t;
+    li.querySelector(".t > span").textContent = info.a;
+  });
+}
+function showPlaylistLcd() {
+  if (!track().list || plIndex < 0) return;
+  const vid = plIds[plIndex];
+  const d = player && player.getVideoData ? player.getVideoData() : null;
+  const name = (titles[vid] && titles[vid].t) || (d && d.title) || track().t;
+  setText("lcdTitle", name);
+  setText("lcdArtist", `${track().a} · ${plIndex + 1}/${plIds.length}`);
+}
+
+function renderTracks(li) {
+  const ol = document.createElement("ol");
+  ol.className = "tracks";
+  plIds.forEach((vid, j) => {
+    const item = document.createElement("li");
+    item.dataset.vid = vid;
+    if (j === plIndex) item.classList.add("on");
+    if (!titles[vid]) item.classList.add("loading");
+    const b = document.createElement("button");
+    b.innerHTML = `<span class="num">${String(j + 1).padStart(2, "0")}</span>
+      <span class="t"><strong></strong><span></span></span><span class="yt">${j === plIndex && playing ? "nu" : "▶"}</span>`;
+    b.querySelector("strong").textContent = titles[vid] ? titles[vid].t : "Titel laden…";
+    b.querySelector(".t > span").textContent = titles[vid] ? titles[vid].a : "";
+    b.addEventListener("click", () => { if (ready) { player.playVideoAt(j); checkStarted(); } });
+    item.appendChild(b);
+    ol.appendChild(item);
+    wantTitle(vid);
+  });
+  li.appendChild(ol);
+  const on = ol.querySelector("li.on");
+  if (on) ol.scrollTop = Math.max(0, on.offsetTop - ol.offsetTop - 60);
+}
+
 function renderList() {
   const list = $("list");
   list.innerHTML = "";
@@ -444,6 +539,7 @@ function renderList() {
     b.querySelector(".t > span").textContent = tr.a;
     b.addEventListener("click", () => { idx = i; load(true); });
     li.appendChild(b);
+    if (tr.list && i === idx && plIds.length) renderTracks(li);
     list.appendChild(li);
   });
   $("stopsTitle").textContent = `Haltes op zender ${st + 1}: ${STATIONS[st].label}`;
@@ -452,8 +548,8 @@ function renderList() {
 function renderLcd() {
   const tr = track();
   $("lcdStation").textContent = `ZENDER ${st + 1} · ${STATIONS[st].name}`;
-  $("lcdTitle").textContent = tr.t;
-  $("lcdArtist").textContent = tr.a;
+  if (tr.list && plIds.length && plIndex >= 0) showPlaylistLcd();
+  else { setText("lcdTitle", tr.t); setText("lcdArtist", tr.a); }
   $("ytLink").href = tr.list ? `https://www.youtube.com/playlist?list=${tr.list}` : `https://www.youtube.com/watch?v=${tr.id}`;
   document.querySelectorAll(".preset").forEach((p) => p.setAttribute("aria-pressed", String(+p.dataset.st === st)));
   $("play").textContent = playing ? "❚❚" : "▶";
@@ -463,6 +559,7 @@ function renderLcd() {
 
 function load(autoplay) {
   wantPlay = autoplay;
+  plIds = []; plIndex = -1;
   renderLcd(); renderList();
   if (!ready) { ensureApi(); return; }
   $("idle").hidden = true;
@@ -483,7 +580,7 @@ function checkStarted() {
     if (!ready) return;
     const s = player.getPlayerState();
     if (s !== YT.PlayerState.PLAYING && s !== YT.PlayerState.BUFFERING) {
-      $("lcdTitle").textContent = "Tik op ▶ of op het tv-scherm";
+      setText("lcdTitle", "Tik op ▶ of op het tv-scherm");
     }
   }, 3000);
 }
@@ -528,7 +625,7 @@ window.onYouTubeIframeAPIReady = function () {
         ready = true;
         player.setVolume(+$("vol").value);
         $("idle").hidden = true;
-        $("lcdTitle").textContent = wantPlay ? track().t : "Radio staat klaar: druk op ▶";
+        setText("lcdTitle", wantPlay ? track().t : "Radio staat klaar: druk op ▶");
         if (wantPlay || track().list) load(wantPlay);
       },
       onStateChange: (e) => {
@@ -540,13 +637,11 @@ window.onYouTubeIframeAPIReady = function () {
           // In een afspeellijst gaat YouTube zelf door; pas na het laatste nummer naar de volgende halte.
           if (!pl || !list || player.getPlaylistIndex() >= list.length - 1) { playing = false; step(1); return; }
         }
-        renderLcd(); renderList();
-        if (pl && playing) {
-          const d = player.getVideoData ? player.getVideoData() : null;
+        if (pl) {
           const list = player.getPlaylist && player.getPlaylist();
-          if (d && d.title) $("lcdTitle").textContent = d.title;
-          if (list) $("lcdArtist").textContent = `${track().a} · ${player.getPlaylistIndex() + 1}/${list.length}`;
+          if (list && list.length) { plIds = list; plIndex = player.getPlaylistIndex(); }
         }
+        renderLcd(); renderList();
       },
       onError: (e) => {
         showError(e.data);
@@ -556,14 +651,14 @@ window.onYouTubeIframeAPIReady = function () {
         }
         // Nummer mag niet ingesloten worden of is weg: door naar de volgende halte.
         if (++fails < STATIONS[st].tracks.length) step(1);
-        else { playing = false; renderLcd(); $("lcdTitle").textContent = "Geen bereik op deze zender"; }
+        else { playing = false; renderLcd(); setText("lcdTitle", "Geen bereik op deze zender"); }
       },
     },
   });
 };
 
 $("play").addEventListener("click", () => {
-  if (!ready) { wantPlay = true; $("lcdTitle").textContent = "Radio wordt geladen…"; ensureApi(); return; }
+  if (!ready) { wantPlay = true; setText("lcdTitle", "Radio wordt geladen…"); ensureApi(); return; }
   if (playing) { player.pauseVideo(); return; }
   const s = player.getPlayerState();
   if (s === YT.PlayerState.UNSTARTED || s === YT.PlayerState.CUED || s === YT.PlayerState.PAUSED) { player.playVideo(); checkStarted(); }
@@ -591,12 +686,12 @@ $("bell").addEventListener("click", () => {
   } catch (e) {}
   const was = playing;
   if (ready && playing) player.pauseVideo();
-  $("lcdTitle").textContent = "Halte! Iemand stapt uit…";
+  setText("lcdTitle", "Halte! Iemand stapt uit…");
   setTimeout(() => { if (was && ready) player.playVideo(); else renderLcd(); }, 2500);
 });
 
 // YouTube meteen laden, zodat een tik op ▶ direct geluid geeft (telefoons eisen dat).
-$("lcdTitle").textContent = "Radio wordt geladen…";
+setText("lcdTitle", "Radio wordt geladen…");
 ensureApi();
 
 // Aftellen naar Srefidensi (25 november 1975).
