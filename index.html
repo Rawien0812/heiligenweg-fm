@@ -10,29 +10,37 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Bungee+Shade&family=Archivo:wght@400;600;800&family=VT323&display=swap">
 <style>
-/* Layout: je zit voorin de lijnbus. Bovenaan de beschilderde voorruitstrook met franje,
-   daaronder de weg door de voorruit, dan het dashboard met de radio. Haltes = nummers. */
+/* Layout: je zit voorin de lijnbus op Srefidensi. Bovenaan de Surinaamse vlag als voorruitstrook
+   (groen-wit-rood-wit-groen, 2:1:4:1:2, gele ster), daaronder het uitzicht op de Suriname-rivier
+   met de Wijdenboschbrug, dan het groen-gouden dashboard met de radio. Haltes = nummers. */
 :root {
-  --night: #0f1a14;        /* donkergroene avond, bus-interieur */
-  --body-green: #1f6b3a;   /* Surinaamse vlag-groen */
-  --flag-red: #b40a2d;
-  --star: #f2c418;         /* gele ster */
-  --chrome: #e9efe9;
-  --dash: #1b1715;         /* dashboard */
+  --sr-green: #377e3f;     /* vlag-groen */
+  --sr-red: #b40a2d;       /* vlag-rood */
+  --sr-yellow: #ecc81d;    /* gele ster */
+  --sr-white: #ffffff;
+  --gold: #f6c64a;
+  --gold-deep: #b8860b;
+  --forest: #0b2413;       /* oerwoudgroen, pagina */
+  --forest-2: #123821;
+  --panel: #0e2c18;
+  --ink: #f4f7f2;
+  --muted: #b7cbb9;
   --lcd-bg: #12210f;
   --lcd-fg: #9df27a;
-  --muted: #a9b8ad;
   --display: "Bungee", "Impact", system-ui, sans-serif;
-  --shade: "Bungee Shade", "Bungee", "Impact", system-ui, sans-serif;
   --body: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
   --lcd: "VT323", ui-monospace, "Courier New", monospace;
+  --star-shape: polygon(50% 0%, 61.8% 35.3%, 100% 35.3%, 69.1% 57.1%, 80.9% 92.7%, 50% 70.9%, 19.1% 92.7%, 30.9% 57.1%, 0% 35.3%, 38.2% 35.3%);
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; }
 body {
-  background: var(--night);
-  color: var(--chrome);
+  background:
+    repeating-linear-gradient(135deg, rgba(255,255,255,.018) 0 18px, transparent 18px 36px),
+    radial-gradient(90% 60% at 50% 0%, var(--forest-2), var(--forest) 70%);
+  background-color: var(--forest);
+  color: var(--ink);
   font: 16px/1.5 var(--body);
   padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -44,38 +52,65 @@ body {
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
+.star { display: inline-block; width: 1em; height: 1em; background: var(--sr-yellow); clip-path: var(--star-shape); vertical-align: -0.12em; }
 
-/* ---------- Voorruitstrook ---------- */
+/* ---------- Vlag als voorruitstrook ---------- */
 .strip {
-  background:
-    radial-gradient(120% 140% at 50% -40%, #2f9a55 0%, var(--body-green) 45%, #123f22 100%);
-  border-bottom: 6px solid var(--flag-red);
   position: relative;
+  background: linear-gradient(to bottom,
+    var(--sr-green) 0 20%, var(--sr-white) 20% 30%, var(--sr-red) 30% 70%,
+    var(--sr-white) 70% 80%, var(--sr-green) 80% 100%);
+  overflow: hidden;
 }
-.strip .wrap { padding-block: 22px 30px; display: grid; gap: 10px; justify-items: center; text-align: center; }
+.strip::before {               /* grote ster achter de titel */
+  content: ""; position: absolute; left: 50%; top: 50%;
+  width: min(62vw, 330px); aspect-ratio: 1; transform: translate(-50%, -52%);
+  background: var(--sr-yellow); clip-path: var(--star-shape); opacity: .9;
+}
+.strip::after {                /* wapperende glans over de vlag */
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(100deg, transparent 20%, rgba(255,255,255,.18) 35%, transparent 50%, rgba(0,0,0,.12) 70%, transparent 85%);
+  background-size: 200% 100%;
+  animation: wave 7s ease-in-out infinite;
+}
+@keyframes wave { 0%,100% { background-position: 0% 0; } 50% { background-position: 100% 0; } }
+.strip .wrap { position: relative; z-index: 1; padding-block: 18px 26px; display: grid; gap: 12px; justify-items: center; text-align: center; }
 .route {
   display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center;
-  background: #0b0b0b; color: var(--star);
+  background: #0b0b0b; color: var(--sr-yellow);
   font: 1.15rem/1 var(--lcd); letter-spacing: .06em; text-transform: uppercase;
-  padding: 6px 12px; border-radius: 4px; border: 2px solid #333;
+  padding: 6px 12px; border-radius: 4px; border: 2px solid var(--gold-deep);
 }
-.route b { color: #ff8a3c; font-weight: 400; }
+.route .star { font-size: .8em; }
 h1 {
-  margin: 0;
-  font-family: var(--shade);
+  margin: 4px 0 0;
+  font-family: var(--display);
   font-weight: 400;
-  font-size: clamp(2.2rem, 8vw, 5rem);
+  font-size: clamp(2.3rem, 9vw, 5.4rem);
   line-height: .95;
-  color: var(--star);
-  text-shadow: 3px 3px 0 var(--flag-red), 6px 6px 0 rgba(0,0,0,.35);
   text-wrap: balance;
+  background: linear-gradient(180deg, #fff6c8 0%, var(--gold) 38%, var(--gold-deep) 62%, #ffe27a 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  -webkit-text-stroke: 1.5px #5a3a00;
+  filter: drop-shadow(3px 3px 0 #0b2413) drop-shadow(0 0 10px rgba(0,0,0,.35));
 }
-.tag { margin: 0; color: #e7f5ea; font-weight: 600; max-width: 46ch; }
+.tag {
+  margin: 0; color: #fff; font-weight: 600; max-width: 46ch;
+  background: rgba(11,36,19,.82); padding: 8px 14px; border-radius: 6px;
+  border: 1px solid rgba(246,198,74,.5);
+}
+.tag em { font-style: normal; color: var(--gold); font-weight: 800; }
+.countdown {
+  display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center;
+  font: 400 .95rem/1.1 var(--display); letter-spacing: .02em;
+  color: #2a1a00; background: linear-gradient(180deg, #ffe58a, var(--gold) 55%, #d9a21f);
+  padding: 8px 16px; border-radius: 999px; box-shadow: 0 3px 0 #7a5200;
+}
+.countdown b { font-weight: 400; font-size: 1.35em; color: var(--sr-red); font-variant-numeric: tabular-nums; }
 .fringe {
-  position: absolute; left: 0; right: 0; bottom: -22px; height: 16px; pointer-events: none;
-  background:
-    repeating-linear-gradient(90deg,
-      var(--flag-red) 0 6px, var(--star) 6px 12px, #fff 12px 18px, var(--body-green) 18px 24px);
+  position: relative; height: 16px; pointer-events: none;
+  background: repeating-linear-gradient(90deg,
+      var(--sr-green) 0 6px, var(--sr-white) 6px 12px, var(--sr-red) 12px 18px, var(--sr-yellow) 18px 24px);
   -webkit-mask: repeating-linear-gradient(90deg, #000 0 4px, transparent 4px 6px);
           mask: repeating-linear-gradient(90deg, #000 0 4px, transparent 4px 6px);
   transform-origin: top;
@@ -83,68 +118,59 @@ h1 {
 .playing .fringe { animation: sway 1.4s ease-in-out infinite; }
 @keyframes sway { 0%,100% { transform: skewX(-6deg); } 50% { transform: skewX(6deg); } }
 
-/* ---------- Voorruit / weg ---------- */
+/* ---------- Voorruit: Suriname-rivier en Wijdenboschbrug ---------- */
 .windshield {
-  margin-top: 34px;
+  margin-top: 22px;
   position: relative;
-  height: clamp(130px, 22vw, 200px);
+  height: clamp(150px, 26vw, 230px);
   border-radius: 28px 28px 8px 8px;
   overflow: hidden;
-  border: 8px solid #2a2522;
-  background: linear-gradient(#f39a4a 0%, #e0646a 35%, #3c2f5c 70%, #1c2238 100%);
+  border: 8px solid #1b130c;
+  box-shadow: 0 0 0 3px var(--gold-deep);
+  background: linear-gradient(#f7a33f 0%, #ee6b4d 30%, #a03b5a 52%, #3a2f5f 70%);
 }
-.sun {
-  position: absolute; left: 50%; top: 38%; width: 70px; height: 70px; margin-left: -35px;
-  border-radius: 50%; background: #ffd36b; box-shadow: 0 0 40px #ffb347;
-}
-.palms {
-  position: absolute; inset: auto 0 34% 0; height: 46px;
-  background:
-    radial-gradient(14px 20px at 8% 100%, #102016 98%, transparent) ,
-    radial-gradient(20px 26px at 20% 100%, #102016 98%, transparent),
-    radial-gradient(18px 22px at 78% 100%, #102016 98%, transparent),
-    radial-gradient(26px 30px at 92% 100%, #102016 98%, transparent);
-}
+.windshield svg.scene { position: absolute; inset: 0; width: 100%; height: 100%; }
 .road {
-  position: absolute; left: 0; right: 0; bottom: 0; height: 36%;
+  position: absolute; left: 0; right: 0; bottom: 0; height: 26%;
   background: #23201f;
-  clip-path: polygon(0 100%, 42% 0, 58% 0, 100% 100%);
+  clip-path: polygon(0 100%, 40% 0, 60% 0, 100% 100%);
 }
 .lane {
-  position: absolute; left: 50%; bottom: 0; width: 6px; height: 36%; margin-left: -3px;
-  background: repeating-linear-gradient(to top, var(--star) 0 14px, transparent 14px 30px);
+  position: absolute; left: 50%; bottom: 0; width: 6px; height: 26%; margin-left: -3px;
+  background: repeating-linear-gradient(to top, var(--sr-yellow) 0 12px, transparent 12px 26px);
   clip-path: polygon(0 100%, 30% 0, 70% 0, 100% 100%);
 }
 .playing .lane { animation: drive .5s linear infinite; }
-@keyframes drive { to { background-position: 0 -30px; } }
-.dice {
-  position: absolute; top: 0; left: 50%; width: 2px; height: 46px; background: #ccc;
-  transform-origin: top;
+@keyframes drive { to { background-position: 0 -26px; } }
+.pennant {                       /* vlaggetje aan de binnenspiegel */
+  position: absolute; top: 0; left: 50%; width: 2px; height: 34px; background: #ccc; transform-origin: top;
 }
-.dice::after {
-  content: ""; position: absolute; left: -9px; bottom: -16px; width: 20px; height: 20px;
-  background: var(--flag-red); border-radius: 4px;
-  background-image: radial-gradient(circle, #fff 2.5px, transparent 3px);
-  background-size: 10px 10px; background-position: 0 0;
+.pennant::after {
+  content: ""; position: absolute; left: -17px; top: 32px; width: 36px; height: 24px; border: 1px solid #222;
+  background:
+    radial-gradient(circle at 50% 50%, var(--sr-yellow) 0 3px, transparent 3.5px),
+    linear-gradient(to bottom, var(--sr-green) 0 20%, #fff 20% 30%, var(--sr-red) 30% 70%, #fff 70% 80%, var(--sr-green) 80%);
 }
-.playing .dice { animation: dangle 1.8s ease-in-out infinite; }
+.playing .pennant { animation: dangle 1.8s ease-in-out infinite; }
 @keyframes dangle { 0%,100% { transform: rotate(-12deg); } 50% { transform: rotate(12deg); } }
 
 /* ---------- Dashboard / radio ---------- */
 .dash {
-  background: linear-gradient(#2b2522, var(--dash));
+  background: linear-gradient(#1a4a2a, var(--panel));
   border-radius: 0 0 22px 22px;
   padding: 18px;
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
   gap: 18px;
-  box-shadow: inset 0 3px 0 #3a332f;
+  border: 3px solid var(--gold-deep); border-top: 0;
+  box-shadow: inset 0 3px 0 rgba(246,198,74,.35);
 }
 @media (max-width: 720px) { .dash { grid-template-columns: minmax(0, 1fr); } }
 
 .radio {
-  background: #0c0c0c; border-radius: 12px; padding: 14px;
-  border: 2px solid #3b3b3b; display: grid; gap: 12px; min-width: 0;
+  background: #0a0a0a; border-radius: 12px; padding: 14px;
+  border: 3px solid var(--gold); display: grid; gap: 12px; min-width: 0;
+  box-shadow: 0 0 0 2px #5a3a00, inset 0 0 0 1px #333;
 }
 .lcd {
   background: var(--lcd-bg); color: var(--lcd-fg);
@@ -159,7 +185,10 @@ h1 {
 }
 .lcd .artist { font-size: 1.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .eq { display: flex; gap: 3px; align-items: flex-end; height: 18px; }
-.eq i { width: 4px; background: var(--lcd-fg); height: 4px; }
+.eq i { width: 4px; height: 4px; }
+.eq i:nth-child(1), .eq i:nth-child(5) { background: var(--sr-green); filter: brightness(1.6); }
+.eq i:nth-child(2), .eq i:nth-child(4) { background: #fff; }
+.eq i:nth-child(3) { background: #ff3b5c; }
 .playing .eq i { animation: bar .6s ease-in-out infinite alternate; }
 .eq i:nth-child(2) { animation-delay: .15s !important; }
 .eq i:nth-child(3) { animation-delay: .3s !important; }
@@ -171,69 +200,79 @@ h1 {
 .presets .preset { grid-column: span 2; }
 .presets .preset:nth-child(n+4) { grid-column: span 3; }
 .preset {
-  font: 0.95rem/1.1 var(--display); color: #ddd; background: #262626;
-  border: 0; border-bottom: 4px solid #111; border-radius: 6px; padding: 10px 6px; cursor: pointer;
-  display: grid; gap: 2px; text-align: center;
+  font: 0.95rem/1.1 var(--display); color: #e8f2e9; background: #17492a;
+  border: 0; border-bottom: 4px solid #0a2614; border-radius: 6px; padding: 10px 6px; cursor: pointer;
+  display: grid; gap: 2px; text-align: center; position: relative;
 }
 .preset small { font: 600 .7rem/1 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-.preset[aria-pressed="true"] { background: var(--flag-red); color: #fff; border-bottom-color: #5d0016; transform: translateY(2px); }
-.preset[aria-pressed="true"] small { color: #ffd9df; }
+.preset[aria-pressed="true"] { background: var(--sr-red); color: #fff; border-bottom-color: #5d0016; transform: translateY(2px); box-shadow: 0 0 0 2px var(--gold); }
+.preset[aria-pressed="true"] small { color: #ffe1e6; }
+.preset[aria-pressed="true"]::after {
+  content: ""; position: absolute; top: -7px; right: -5px; width: 18px; height: 18px;
+  background: var(--sr-yellow); clip-path: var(--star-shape);
+}
 
 .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .btn {
   font: 1rem/1 var(--display); border: 0; border-radius: 999px; cursor: pointer;
-  background: var(--chrome); color: #111; padding: 12px 16px; min-width: 48px;
+  background: #fff; color: #111; padding: 12px 16px; min-width: 48px;
 }
-.btn.play { background: var(--star); padding-inline: 22px; font-size: 1.1rem; }
-.btn.stop { background: var(--flag-red); color: #fff; margin-left: auto; }
+.btn.play { background: linear-gradient(180deg, #ffe58a, var(--gold) 55%, #d9a21f); padding-inline: 22px; font-size: 1.1rem; box-shadow: 0 3px 0 #7a5200; }
+.btn.stop { background: var(--sr-red); color: #fff; margin-left: auto; }
 .btn:active { transform: translateY(2px); }
-button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid var(--star); outline-offset: 3px; }
+button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid var(--sr-yellow); outline-offset: 3px; }
 .vol { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: .85rem; }
-.vol input { accent-color: var(--star); width: 110px; }
+.vol input { accent-color: var(--sr-yellow); width: 110px; }
 
 .tv { display: grid; gap: 8px; min-width: 0; align-content: start; }
 .screen {
   position: relative; aspect-ratio: 16 / 9; max-width: 100%;
   background: #000; border-radius: 10px; overflow: hidden; border: 6px solid #0a0a0a;
-  box-shadow: 0 0 0 2px #3b3b3b;
+  box-shadow: 0 0 0 3px var(--gold-deep);
 }
 .screen iframe, .screen #yt { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .screen .idle {
-  position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 12px;
-  font: 1.3rem/1.2 var(--lcd); color: #6c6;
-  background: repeating-linear-gradient(0deg, #050805 0 2px, #0b130b 2px 4px);
+  position: absolute; inset: 0; display: grid; place-items: center; align-content: center; gap: 6px; text-align: center; padding: 12px;
+  font: 1.3rem/1.2 var(--lcd); color: #fff;
+  background: linear-gradient(to bottom,
+    var(--sr-green) 0 20%, #fff 20% 30%, var(--sr-red) 30% 70%, #fff 70% 80%, var(--sr-green) 80%);
 }
+.screen .idle span { background: rgba(0,0,0,.6); padding: 2px 10px; border-radius: 4px; }
 .note { font-size: .82rem; color: var(--muted); margin: 0; }
-.note a { color: var(--star); }
+.note a { color: var(--gold); }
 
 /* ---------- Haltes (playlist) ---------- */
 section.stops { padding-block: 34px 10px; }
 .stops h2 {
-  font: 400 clamp(1.4rem, 4vw, 2rem)/1.1 var(--display); margin: 0 0 4px; color: var(--star);
+  font: 400 clamp(1.4rem, 4vw, 2rem)/1.1 var(--display); margin: 0 0 4px; color: var(--gold);
+  display: flex; gap: 10px; align-items: center;
 }
+.stops h2 .star { flex: none; }
 .stops .sub { margin: 0 0 16px; color: var(--muted); }
 ol.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .list button {
   width: 100%; display: grid; grid-template-columns: 54px minmax(0,1fr) auto; gap: 12px; align-items: center;
-  text-align: left; background: #16261c; color: var(--chrome); border: 0; border-radius: 8px;
+  text-align: left; background: #123a21; color: var(--ink); border: 0; border-radius: 8px;
   padding: 10px 12px; cursor: pointer; font: inherit;
 }
-.list button:hover { background: #1d3325; }
+.list li:nth-child(even) button { background: #0f3019; }
+.list button:hover { background: #1a5130; }
 .list .num {
-  font: 1.2rem/1 var(--lcd); color: var(--star); background: #0b0b0b; border-radius: 4px;
+  font: 1.2rem/1 var(--lcd); color: var(--sr-yellow); background: #0b0b0b; border-radius: 4px;
   padding: 4px 0; text-align: center; font-variant-numeric: tabular-nums;
 }
 .list .t { min-width: 0; }
 .list .t strong { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .list .t span { color: var(--muted); font-size: .88rem; }
 .list .yt { font-size: .8rem; color: var(--muted); }
-.list .pl .num { background: var(--star); color: #111; }
-.list li.current button { background: var(--body-green); box-shadow: inset 4px 0 0 var(--star); }
-.list li.current .yt { color: #fff; }
+.list .pl .num { background: var(--gold); color: #2a1a00; }
+.list li.current button { background: var(--sr-red); box-shadow: inset 5px 0 0 var(--sr-yellow), 0 0 0 2px var(--gold); }
+.list li.current .t span, .list li.current .yt { color: #ffe1e6; }
 
-footer { padding-block: 30px 40px; color: var(--muted); font-size: .85rem; }
+.flagbar { height: 14px; background: linear-gradient(to bottom, var(--sr-green) 0 20%, #fff 20% 30%, var(--sr-red) 30% 70%, #fff 70% 80%, var(--sr-green) 80%); margin-top: 30px; }
+footer { padding-block: 22px 40px; color: var(--muted); font-size: .85rem; }
 footer p { margin: 0 0 6px; max-width: 70ch; }
-footer a { color: var(--chrome); }
+footer .sig { font: 400 1.1rem/1.2 var(--display); color: var(--gold); display: flex; gap: 8px; align-items: center; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; }
@@ -244,20 +283,41 @@ footer a { color: var(--chrome); }
 
 <header class="strip">
   <div class="wrap">
-    <div class="route" aria-label="Busroute">Lijn PL <b>●</b> Heiligenweg ⇄ Lelydorp <b>●</b> SRD 7,50</div>
+    <div class="route" aria-label="Busroute">Lijn PL <span class="star" aria-hidden="true"></span> Heiligenweg ⇄ Lelydorp <span class="star" aria-hidden="true"></span> SRD 7,50</div>
     <h1>Heiligenweg FM</h1>
-    <p class="tag">Stap in, schuif door naar achter. De chauffeur zet baithak gana, kaseko en Trafassi op. Hard.</p>
+    <p class="tag"><em>Kon na ini!</em> Schuif door naar achter. De chauffeur zet baithak gana, kaseko en Trafassi op. Hard.</p>
+    <div class="countdown" id="countdown">25 november · Srefidensi</div>
   </div>
-  <div class="fringe" aria-hidden="true"></div>
 </header>
+<div class="fringe" aria-hidden="true"></div>
 
 <main class="wrap">
   <div class="windshield" aria-hidden="true">
-    <div class="sun"></div>
-    <div class="palms"></div>
+    <svg class="scene" viewBox="0 0 1000 230" preserveAspectRatio="xMidYMax slice">
+      <circle cx="500" cy="118" r="34" fill="#ffd36b"/>
+      <!-- oerwoud aan de overkant -->
+      <path d="M0 132 Q60 112 120 128 T250 122 T380 130 T520 120 T660 128 T800 118 T1000 128 V146 H0Z" fill="#14301d"/>
+      <!-- Suriname-rivier -->
+      <rect x="0" y="144" width="1000" height="86" fill="#3b3a66"/>
+      <g fill="#f7a33f" opacity=".55"><rect x="470" y="152" width="60" height="3"/><rect x="455" y="162" width="90" height="3"/><rect x="480" y="172" width="40" height="3"/></g>
+      <!-- Wijdenboschbrug -->
+      <g stroke="#1b1424" fill="none">
+        <path d="M120 150 Q500 108 880 150" stroke-width="7"/>
+        <path d="M300 128 V60 M700 128 V60" stroke-width="9"/>
+        <path d="M300 62 L190 140 M300 62 L240 134 M300 62 L360 122 M300 62 L410 117 M700 62 L590 117 M700 62 L640 122 M700 62 L760 134 M700 62 L810 140" stroke-width="2.5"/>
+        <path d="M300 128 V150 M700 128 V150" stroke-width="7"/>
+      </g>
+      <!-- palmen op de oever -->
+      <g fill="#0b1f12" stroke="#0b1f12">
+        <path d="M70 230 Q80 180 64 140" stroke-width="7" fill="none"/>
+        <path d="M64 140 q-40 -6 -58 18 q30 -10 58 -18 q-24 -26 -54 -22 q32 4 54 22 q4 -30 30 -40 q-14 22 -30 40 q30 -16 60 -2 q-34 -2 -60 2z"/>
+        <path d="M940 230 Q930 175 950 132" stroke-width="7" fill="none"/>
+        <path d="M950 132 q-40 -6 -58 18 q30 -10 58 -18 q-24 -26 -54 -22 q32 4 54 22 q4 -30 30 -40 q-14 22 -30 40 q30 -16 60 -2 q-34 -2 -60 2z"/>
+      </g>
+    </svg>
     <div class="road"></div>
     <div class="lane"></div>
-    <div class="dice"></div>
+    <div class="pennant"></div>
   </div>
 
   <div class="dash">
@@ -288,21 +348,22 @@ footer a { color: var(--chrome); }
     <div class="tv">
       <div class="screen">
         <div id="yt"></div>
-        <div class="idle" id="idle">TV BOVEN DE CHAUFFEUR<br>▶ om te starten</div>
+        <div class="idle" id="idle"><span>TV BOVEN DE CHAUFFEUR</span><span>▶ om te starten</span></div>
       </div>
       <p class="note" id="note">Muziek komt van YouTube. Lukt een nummer niet, dan springt de radio door. <a id="ytLink" href="https://www.youtube.com" target="_blank" rel="noopener">Open op YouTube ↗</a></p>
     </div>
   </div>
 
-  <section class="stops" aria-labelledby="stopsTitle">
-    <h2 id="stopsTitle">Haltes op deze zender</h2>
+  <section class="stops" aria-label="Haltes">
+    <h2><span class="star" aria-hidden="true"></span><span id="stopsTitle">Haltes op deze zender</span></h2>
     <p class="sub">Elk nummer is een halte. Tik erop om er meteen naartoe te rijden.</p>
     <ol class="list" id="list"></ol>
   </section>
 </main>
 
+<div class="flagbar" aria-hidden="true"></div>
 <footer class="wrap">
-  <p>Gemaakt door Rawien Paltoe.</p>
+  <p class="sig"><span class="star" aria-hidden="true"></span>Gemaakt door Rawien Paltoe.</p>
   <p>Alle muziek wordt afgespeeld via YouTube. De rechten liggen bij de artiesten en uploaders.</p>
 </footer>
 
@@ -491,6 +552,22 @@ $("bell").addEventListener("click", () => {
   $("lcdTitle").textContent = "Halte! Iemand stapt uit…";
   setTimeout(() => { if (was && ready) player.playVideo(); else renderLcd(); }, 2500);
 });
+
+// Aftellen naar Srefidensi (25 november 1975).
+(function countdown() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const today = new Date(y, now.getMonth(), now.getDate());
+  let target = new Date(y, 10, 25);
+  const el = $("countdown");
+  if (today.getTime() === target.getTime()) {
+    el.innerHTML = `Fijne Srefidensi! <b>${y - 1975}</b> jaar Suriname`;
+    return;
+  }
+  if (today > target) target = new Date(y + 1, 10, 25);
+  const days = Math.round((target - today) / 86400000);
+  el.innerHTML = `Nog <b>${days}</b> ${days === 1 ? "dag" : "dagen"} tot ${target.getFullYear() - 1975} jaar Srefidensi`;
+})();
 
 renderLcd(); renderList();
 </script>
