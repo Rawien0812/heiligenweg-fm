@@ -166,7 +166,9 @@ h1 {
 .eq i:nth-child(5) { animation-delay: .1s !important; }
 @keyframes bar { from { height: 3px; } to { height: 18px; } }
 
-.presets { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; }
+.presets { display: grid; grid-template-columns: repeat(6, minmax(0,1fr)); gap: 8px; }
+.presets .preset { grid-column: span 2; }
+.presets .preset:nth-child(n+4) { grid-column: span 3; }
 .preset {
   font: 0.95rem/1.1 var(--display); color: #ddd; background: #262626;
   border: 0; border-bottom: 4px solid #111; border-radius: 6px; padding: 10px 6px; cursor: pointer;
@@ -224,6 +226,7 @@ ol.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .list .t strong { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .list .t span { color: var(--muted); font-size: .88rem; }
 .list .yt { font-size: .8rem; color: var(--muted); }
+.list .pl .num { background: var(--star); color: #111; }
 .list li.current button { background: var(--body-green); box-shadow: inset 4px 0 0 var(--star); }
 .list li.current .yt { color: #fff; }
 
@@ -268,6 +271,8 @@ footer a { color: var(--chrome); }
         <button class="preset" id="st-0" data-st="0" aria-pressed="true">1 Baithak<small>Sarnami</small></button>
         <button class="preset" id="st-1" data-st="1" aria-pressed="false">2 Kaseko<small>Sranan</small></button>
         <button class="preset" id="st-2" data-st="2" aria-pressed="false">3 Trafassi<small>Feestband</small></button>
+        <button class="preset" id="st-3" data-st="3" aria-pressed="false">4 Dewinder<small>Sewnath</small></button>
+        <button class="preset" id="st-4" data-st="4" aria-pressed="false">5 Krishwam<small>Chedi</small></button>
       </div>
 
       <div class="controls">
@@ -325,6 +330,34 @@ const STATIONS = [
     { id: "u8Jg-2c4dmU", t: "Oh Oh Tonight", a: "Trafassi" },
     { id: "uLG1i7Xwq-Y", t: "Brombere", a: "Trafassi" },
   ]},
+  { name: "DEWINDERSINGH", label: "Dewindersingh Sewnath", tracks: [
+    { list: "PL-dj7aGnOdlIla0_fNhGUhp6kNVFlXLhe", t: "Best of (hele afspeellijst)", a: "Dewindersingh Sewnath" },
+    { list: "PLDt039exsD-UiQm3-LIyVE05lSktCQuEc", t: "Volume 15 (hele afspeellijst)", a: "Dewindersingh Sewnath" },
+    { id: "6cXOJN316iA", t: "Hamaar Machiniya", a: "Dewindersingh Sewnath" },
+    { id: "e4S5SnWeBQs", t: "Fly Butterfly", a: "Dewindersingh Sewnath" },
+    { id: "hhGuwyrSWfc", t: "Do Sathi", a: "Dewindersingh Sewnath & Savita Singh" },
+    { id: "o5yJ10ohNJg", t: "Behni Ki Yehi Armaan V2", a: "Dewindersingh Sewnath" },
+    { id: "Ckp1_nExQdk", t: "Soete Na Dewe", a: "Dewindersingh Sewnath" },
+    { id: "PWV4t2WSvxY", t: "Jab Gaile Choetie", a: "Dewindersingh Sewnath" },
+    { id: "o6ycpeFp7h0", t: "Shirley Gyal / Gorkie Sugharkie", a: "Dewindersingh Sewnath" },
+    { id: "b4E5kcIEpEM", t: "Ek Dil Ka Lagana", a: "Dewindersingh Sewnath" },
+    { id: "cDUWcy3Ohi0", t: "Mehndi Lagi Meri Haath", a: "Dewindersingh Sewnath" },
+    { id: "ulbnuGww3VE", t: "Gori Ratiya Ke Nindiya", a: "Dewindersingh Sewnath" },
+    { id: "S6O_baNwVgY", t: "Arhar Ke Daal", a: "Dewindersingh Sewnath" },
+    { id: "Soo-l0gMoPY", t: "Jhini Jhini Boeniya (live)", a: "Dewindersingh Sewnath" },
+    { id: "Edy4SGlUQPE", t: "Koiye Na Ledjaiye (live)", a: "Dewindersingh Sewnath" },
+    { id: "-IuO86_rqbw", t: "Chali Re Moehwa Chikni (live)", a: "Dewindersingh Sewnath" },
+    { id: "vQdt11Db_90", t: "Medley", a: "Dewindersingh Sewnath & Swastika" },
+    { id: "FPSfrErWp2o", t: "Baithak Gana Group Swastika", a: "Dewindersingh Sewnath & Swastika" },
+    { id: "wdoITJlVujM", t: "Live met Swastika", a: "Dewindersingh Sewnath & Swastika" },
+    { id: "s9eit1LYAY8", t: "The Lion of Baithakgana (live)", a: "Dewindersingh Sewnath" },
+    { id: "Hj53v0ImSjg", t: "Live", a: "Dewindersingh Sewnath" },
+    { id: "1ONvwr-C-3E", t: "Volume 10", a: "Dewindersingh Sewnath" },
+    { id: "g_2M3XrhsDs", t: "Volume 18 (live)", a: "Dewindersingh Sewnath" },
+  ]},
+  { name: "KRISHWAM", label: "Krishwam Chedi", tracks: [
+    { id: "_PubxSGcMEo", t: "Aaja Re O Sanam", a: "Krishwam Chedi & Baithak XPrezz" },
+  ]},
 ];
 
 let st = 0, idx = 0, player = null, ready = false, wantPlay = false, playing = false, fails = 0;
@@ -336,9 +369,9 @@ function renderList() {
   list.innerHTML = "";
   STATIONS[st].tracks.forEach((tr, i) => {
     const li = document.createElement("li");
-    if (i === idx) li.className = "current";
+    li.className = (i === idx ? "current " : "") + (tr.list ? "pl" : "");
     const b = document.createElement("button");
-    b.innerHTML = `<span class="num">${String(i + 1).padStart(2, "0")}</span>
+    b.innerHTML = `<span class="num">${tr.list ? "ALLE" : String(i + 1).padStart(2, "0")}</span>
       <span class="t"><strong></strong><span></span></span><span class="yt">${i === idx && playing ? "nu" : "▶"}</span>`;
     b.querySelector("strong").textContent = tr.t;
     b.querySelector(".t > span").textContent = tr.a;
@@ -354,7 +387,7 @@ function renderLcd() {
   $("lcdStation").textContent = `ZENDER ${st + 1} · ${STATIONS[st].name}`;
   $("lcdTitle").textContent = tr.t;
   $("lcdArtist").textContent = tr.a;
-  $("ytLink").href = `https://www.youtube.com/watch?v=${tr.id}`;
+  $("ytLink").href = tr.list ? `https://www.youtube.com/playlist?list=${tr.list}` : `https://www.youtube.com/watch?v=${tr.id}`;
   document.querySelectorAll(".preset").forEach((p) => p.setAttribute("aria-pressed", String(+p.dataset.st === st)));
   $("play").textContent = playing ? "❚❚" : "▶";
   $("play").setAttribute("aria-label", playing ? "Pauzeren" : "Afspelen");
@@ -366,8 +399,12 @@ function load(autoplay) {
   renderLcd(); renderList();
   if (!ready) { ensureApi(); return; }
   $("idle").hidden = true;
-  if (autoplay) player.loadVideoById(track().id);
-  else player.cueVideoById(track().id);
+  const tr = track();
+  if (tr.list) {
+    const o = { list: tr.list, listType: "playlist", index: 0 };
+    autoplay ? player.loadPlaylist(o) : player.cuePlaylist(o);
+  } else if (autoplay) player.loadVideoById(tr.id);
+  else player.cueVideoById(tr.id);
 }
 
 function step(d) {
@@ -388,22 +425,34 @@ function ensureApi() {
 
 window.onYouTubeIframeAPIReady = function () {
   player = new YT.Player("yt", {
-    videoId: track().id,
+    videoId: track().id || undefined,
     playerVars: { playsinline: 1, rel: 0, modestbranding: 1 },
     events: {
       onReady: () => {
         ready = true;
         player.setVolume(+$("vol").value);
         $("idle").hidden = true;
-        if (wantPlay) player.playVideo();
+        if (wantPlay || track().list) load(wantPlay);
       },
       onStateChange: (e) => {
+        const pl = track().list;
         if (e.data === YT.PlayerState.PLAYING) { playing = true; fails = 0; }
         else if (e.data === YT.PlayerState.PAUSED) playing = false;
-        else if (e.data === YT.PlayerState.ENDED) { playing = false; step(1); return; }
+        else if (e.data === YT.PlayerState.ENDED) {
+          const list = player.getPlaylist && player.getPlaylist();
+          // In een afspeellijst gaat YouTube zelf door; pas na het laatste nummer naar de volgende halte.
+          if (!pl || !list || player.getPlaylistIndex() >= list.length - 1) { playing = false; step(1); return; }
+        }
         renderLcd(); renderList();
+        if (pl && playing) {
+          const d = player.getVideoData ? player.getVideoData() : null;
+          const list = player.getPlaylist && player.getPlaylist();
+          if (d && d.title) $("lcdTitle").textContent = d.title;
+          if (list) $("lcdArtist").textContent = `${track().a} · ${player.getPlaylistIndex() + 1}/${list.length}`;
+        }
       },
       onError: () => {
+        if (track().list) { player.nextVideo(); return; }
         // Nummer mag niet ingesloten worden of is weg: door naar de volgende halte.
         if (++fails < STATIONS[st].tracks.length) step(1);
         else { playing = false; renderLcd(); $("lcdTitle").textContent = "Geen bereik op deze zender"; }
