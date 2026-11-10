@@ -467,6 +467,35 @@ function load(autoplay) {
     autoplay ? player.loadPlaylist(o) : player.cuePlaylist(o);
   } else if (autoplay) player.loadVideoById(tr.id);
   else player.cueVideoById(tr.id);
+  if (autoplay) checkStarted();
+}
+
+// Blokkeert de browser het automatisch afspelen, vertel dan wat je moet doen.
+let startTimer = null;
+function checkStarted() {
+  clearTimeout(startTimer);
+  startTimer = setTimeout(() => {
+    if (!ready) return;
+    const s = player.getPlayerState();
+    if (s !== YT.PlayerState.PLAYING && s !== YT.PlayerState.BUFFERING) {
+      $("lcdTitle").textContent = "Tik op ▶ of op het tv-scherm";
+    }
+  }, 3000);
+}
+
+const YT_ERRORS = {
+  2: "ongeldige video", 5: "speler-fout", 100: "video verwijderd of privé",
+  101: "eigenaar staat insluiten niet toe", 150: "eigenaar staat insluiten niet toe",
+  153: "YouTube mist de herkomst van de pagina",
+};
+function showError(code) {
+  const tr = track();
+  $("note").innerHTML = "";
+  $("note").append(`Overgeslagen: “${tr.t}” (${YT_ERRORS[code] || "fout " + code}). `);
+  const a = document.createElement("a");
+  a.href = $("ytLink").href; a.target = "_blank"; a.rel = "noopener"; a.id = "ytLink";
+  a.textContent = "Open op YouTube ↗";
+  $("note").append(a);
 }
 
 function step(d) {
@@ -488,12 +517,13 @@ function ensureApi() {
 window.onYouTubeIframeAPIReady = function () {
   player = new YT.Player("yt", {
     videoId: track().id || undefined,
-    playerVars: { playsinline: 1, rel: 0, modestbranding: 1 },
+    playerVars: { playsinline: 1, rel: 0, modestbranding: 1, ...(location.protocol.startsWith("http") ? { origin: location.origin } : {}) },
     events: {
       onReady: () => {
         ready = true;
         player.setVolume(+$("vol").value);
         $("idle").hidden = true;
+        $("lcdTitle").textContent = wantPlay ? track().t : "Radio staat klaar: druk op ▶";
         if (wantPlay || track().list) load(wantPlay);
       },
       onStateChange: (e) => {
@@ -513,7 +543,8 @@ window.onYouTubeIframeAPIReady = function () {
           if (list) $("lcdArtist").textContent = `${track().a} · ${player.getPlaylistIndex() + 1}/${list.length}`;
         }
       },
-      onError: () => {
+      onError: (e) => {
+        showError(e.data);
         if (track().list) { player.nextVideo(); return; }
         // Nummer mag niet ingesloten worden of is weg: door naar de volgende halte.
         if (++fails < STATIONS[st].tracks.length) step(1);
@@ -524,8 +555,11 @@ window.onYouTubeIframeAPIReady = function () {
 };
 
 $("play").addEventListener("click", () => {
-  if (!ready) { load(true); return; }
-  if (playing) player.pauseVideo(); else player.playVideo();
+  if (!ready) { wantPlay = true; $("lcdTitle").textContent = "Radio wordt geladen…"; ensureApi(); return; }
+  if (playing) { player.pauseVideo(); return; }
+  const s = player.getPlayerState();
+  if (s === YT.PlayerState.UNSTARTED || s === YT.PlayerState.CUED || s === YT.PlayerState.PAUSED) { player.playVideo(); checkStarted(); }
+  else load(true);
 });
 $("next").addEventListener("click", () => step(1));
 $("prev").addEventListener("click", () => step(-1));
@@ -552,6 +586,10 @@ $("bell").addEventListener("click", () => {
   $("lcdTitle").textContent = "Halte! Iemand stapt uit…";
   setTimeout(() => { if (was && ready) player.playVideo(); else renderLcd(); }, 2500);
 });
+
+// YouTube meteen laden, zodat een tik op ▶ direct geluid geeft (telefoons eisen dat).
+$("lcdTitle").textContent = "Radio wordt geladen…";
+ensureApi();
 
 // Aftellen naar Srefidensi (25 november 1975).
 (function countdown() {
