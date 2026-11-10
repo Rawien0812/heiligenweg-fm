@@ -9,3 +9,6 @@ Een nostalgische muzieksite in de stijl van [saloon.wtf](https://saloon.wtf): je
 ## Online zetten met GitHub Pages
 1. Push deze map naar een GitHub-repo.
 2. Ga naar Settings → Pages → Source: *Deploy from a branch*, kies `main` en `/ (root)`.
+
+## Screenshots
+![Desktop](screenshots/preview-desktop.png)
