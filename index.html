@@ -196,9 +196,7 @@ h1 {
 .eq i:nth-child(5) { animation-delay: .1s !important; }
 @keyframes bar { from { height: 3px; } to { height: 18px; } }
 
-.presets { display: grid; grid-template-columns: repeat(6, minmax(0,1fr)); gap: 8px; }
-.presets .preset { grid-column: span 2; }
-.presets .preset:nth-child(n+4) { grid-column: span 3; }
+.presets { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; }
 .preset {
   font: 0.95rem/1.1 var(--display); color: #e8f2e9; background: #17492a;
   border: 0; border-bottom: 4px solid #0a2614; border-radius: 6px; padding: 10px 6px; cursor: pointer;
@@ -334,6 +332,7 @@ footer .sig { font: 400 1.1rem/1.2 var(--display); color: var(--gold); display: 
         <button class="preset" id="st-2" data-st="2" aria-pressed="false">3 Trafassi<small>Feestband</small></button>
         <button class="preset" id="st-3" data-st="3" aria-pressed="false">4 Dewinder<small>Sewnath</small></button>
         <button class="preset" id="st-4" data-st="4" aria-pressed="false">5 Krishwam<small>Chedi</small></button>
+        <button class="preset" id="st-5" data-st="5" aria-pressed="false">6 Goodvibezz<small>Muziekformatie</small></button>
       </div>
 
       <div class="controls">
@@ -420,6 +419,10 @@ const STATIONS = [
   { name: "KRISHWAM", label: "Krishwam Chedi", tracks: [
     { list: "PLaN1CATOpp3Q", t: "Alle nummers (afspeellijst)", a: "Krishwam Chedi" },
     { id: "_PubxSGcMEo", t: "Aaja Re O Sanam", a: "Krishwam Chedi & Baithak XPrezz" },
+  ]},
+  { name: "GOODVIBEZZ", label: "Muziekformatie Goodvibezz", tracks: [
+    { id: "_aioKAVQ220", t: "Goodvibezz Mixtape 3.0", a: "DJ Venom · Goodvibezz" },
+    { id: "_PubxSGcMEo", t: "Aaja Re O Sanam", a: "Krishwam Chedi & Goodvibezz" },
   ]},
 ];
 
