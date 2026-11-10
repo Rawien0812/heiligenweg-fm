@@ -1,6 +1,6 @@
 # Heiligenweg FM
 
-Een nostalgische muzieksite in de stijl van [saloon.wtf](https://saloon.wtf): je zit voorin een Surinaamse lijnbus van Heiligenweg naar Lelydorp, en de chauffeur draait baithak gana, kaseko en Trafassi.
+Een nostalgische muzieksite van **Rawien Paltoe**: je zit voorin een Surinaamse lijnbus van Heiligenweg naar Lelydorp, en de chauffeur draait baithak gana, kaseko en Trafassi.
 
 - Eén bestand: `index.html` (geen build nodig)
 - Muziek via YouTube-embeds. Een nummer dat niet ingesloten mag worden, wordt automatisch overgeslagen.
