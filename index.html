@@ -266,7 +266,8 @@ ol.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .list .t { min-width: 0; }
 .list .t strong { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .list .t span { color: var(--muted); font-size: .88rem; }
-.list .yt { font-size: .8rem; color: var(--muted); }
+.list .yt { font-size: .8rem; color: var(--muted); white-space: nowrap; }
+.list button[aria-expanded] .yt { font-size: 1rem; }
 .list > li.pl > button .num { background: var(--gold); color: #2a1a00; }
 .list > li.current > button { background: var(--sr-red); box-shadow: inset 5px 0 0 var(--sr-yellow), 0 0 0 2px var(--gold); }
 .list > li.current > button .t span, .list > li.current > button .yt { color: #ffe1e6; }
@@ -459,7 +460,7 @@ function setText(id, text) {
 }
 
 // Titels van video's in een afspeellijst ophalen (YouTube oEmbed, met noembed als reserve).
-let plIds = [], plIndex = -1;
+let plIds = [], plIndex = -1, tracksOpen = true;
 const titles = {};
 try { Object.assign(titles, JSON.parse(localStorage.getItem("hfm-titles") || "{}")); } catch (e) {}
 const queue = [];
@@ -534,13 +535,26 @@ function renderList() {
     const li = document.createElement("li");
     li.className = (i === idx ? "current " : "") + (tr.list ? "pl" : "");
     const b = document.createElement("button");
+    const isOpenable = tr.list && i === idx && plIds.length;
+    const mark = isOpenable ? `${playing ? "nu " : ""}${tracksOpen ? "▾" : "▸"}` : (i === idx && playing ? "nu" : "▶");
     b.innerHTML = `<span class="num">${tr.list ? "ALLE" : String(i + 1).padStart(2, "0")}</span>
-      <span class="t"><strong></strong><span></span></span><span class="yt">${i === idx && playing ? "nu" : "▶"}</span>`;
+      <span class="t"><strong></strong><span></span></span><span class="yt">${mark}</span>`;
+    if (isOpenable) {
+      b.setAttribute("aria-expanded", String(tracksOpen));
+      b.title = tracksOpen ? "Tracklist dichtklappen" : "Tracklist openklappen";
+    }
     b.querySelector("strong").textContent = tr.t;
     b.querySelector(".t > span").textContent = tr.a;
-    b.addEventListener("click", () => { idx = i; load(true); });
+    b.addEventListener("click", () => {
+      if (isOpenable) { tracksOpen = !tracksOpen; renderList(); return; }   // alleen open/dicht
+      if (i === idx && ready && !tr.list) {                                // huidig nummer: pauze/verder
+        if (playing) player.pauseVideo(); else player.playVideo();
+        return;
+      }
+      idx = i; load(true);
+    });
     li.appendChild(b);
-    if (tr.list && i === idx && plIds.length) renderTracks(li);
+    if (isOpenable && tracksOpen) renderTracks(li);
     list.appendChild(li);
   });
   $("stopsTitle").textContent = `Haltes op zender ${st + 1}: ${STATIONS[st].label}`;
@@ -560,7 +574,7 @@ function renderLcd() {
 
 function load(autoplay) {
   wantPlay = autoplay;
-  plIds = []; plIndex = -1;
+  plIds = []; plIndex = -1; tracksOpen = true;
   renderLcd(); renderList();
   if (!ready) { ensureApi(); return; }
   $("idle").hidden = true;
