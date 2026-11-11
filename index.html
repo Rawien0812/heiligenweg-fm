@@ -383,6 +383,13 @@ section.programma { padding-block: 30px 0; }
 .day .slot.now b { color: var(--sr-red); }
 .day .none { font-size: .82rem; color: var(--muted); }
 .day.today .none { color: #ffe1e6; }
+.liveprog { background: #123a21; border-radius: 10px; padding: 12px; margin-bottom: 10px; display: grid; gap: 8px; border-left: 5px solid #ff2d55; }
+.liveprog h3 { margin: 0; font: 400 1rem/1.1 var(--display); color: var(--ink); }
+.lblocks { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px; }
+.lblocks .slot { display: grid; gap: 1px; font-size: .9rem; background: rgba(0,0,0,.25); border-radius: 6px; padding: 7px 9px; }
+.lblocks .slot b { font: 1.05rem/1 var(--lcd); color: var(--sr-yellow); font-weight: 400; }
+.lblocks .slot.now { background: var(--gold); color: #2a1a00; }
+.lblocks .slot.now b { color: var(--sr-red); }
 .always { margin: 10px 0 0; color: var(--muted); font-size: .9rem; }
 .onair { display: inline-block; margin-left: 6px; font: 400 .8rem/1 var(--lcd); color: #2a1a00; background: var(--sr-yellow); padding: 2px 6px; border-radius: 3px; vertical-align: 2px; }
 
@@ -490,6 +497,7 @@ footer .sig { font: 400 1.1rem/1.2 var(--display); color: var(--gold); display: 
   <section class="programma" id="programma" aria-labelledby="progTitle" hidden>
     <h2><span class="star" aria-hidden="true"></span><span id="progTitle">Programma</span></h2>
     <p class="sub" id="progSub">Welke zender wanneer te horen is.</p>
+    <div class="liveprog" id="liveprog" hidden></div>
     <div class="week" id="week"></div>
   </section>
 </main>
@@ -518,8 +526,20 @@ let randomizeOnPlay = false;   // afspeellijst in LIVE: willekeurig nummer kieze
 const plCache = {};            // afspeellijst-id -> video-id's (zodra YouTube ze één keer gaf)
 const isLive = () => !!(STATIONS[st] && STATIONS[st].live);
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+// LIVE-tijdblokken (bijv. 04:00–09:00 Bhajan): het blok dat nu loopt, elke dag.
+const ALLE_DAGEN = [0, 1, 2, 3, 4, 5, 6];
+function activeLiveBlock() {
+  const blokken = (LIVE.blokken || []).filter((b) => b && b.van != null);
+  if (!blokken.length) return null;
+  const { d, m } = nowParts();
+  return blokken.find((b) => blockOn({ dagen: ALLE_DAGEN, van: b.van, tot: b.tot }, d, m)) || null;
+}
+let liveBlockName = null;
 function liveEigenBronnen() {
-  return (LIVE.bronnen || []).filter((n) => n.video || n.lijst).map((n) => n.lijst
+  const blk = activeLiveBlock();
+  // Heeft het blok eigen bronnen? Dan die. Anders de algemene LIVE-bronnen.
+  const src = blk && Array.isArray(blk.bronnen) && blk.bronnen.some((n) => n.video || n.lijst) ? blk.bronnen : (LIVE.bronnen || []);
+  return src.filter((n) => n.video || n.lijst).map((n) => n.lijst
     ? { list: n.lijst, t: n.titel || "Afspeellijst", a: n.artiest || "" }
     : { id: n.video, t: n.titel || "Nummer", a: n.artiest || "", bpm: +n.bpm || 0 });
 }
@@ -600,7 +620,10 @@ function computeVisible() {
 }
 function scheduleTick() {
   const v = computeVisible();
-  const changed = v.join() !== visible.join();
+  const blk = activeLiveBlock();
+  const blkName = blk ? blk.naam || "" : null;
+  const changed = v.join() !== visible.join() || blkName !== liveBlockName;   // ook als een LIVE-blok wisselt
+  liveBlockName = blkName;
   visible = v;
   if (changed) {
     buildPresets();
@@ -620,8 +643,25 @@ function scheduleTick() {
 function renderProgramma() {
   const sec = $("programma");
   const planned = STATIONS.filter(hasSchedule);
-  sec.hidden = !planned.length;
-  if (!planned.length) return;
+  const blokken = (LIVE.blokken || []).filter((b) => b && b.van != null).slice().sort((a, b) => toMin(a.van) - toMin(b.van));
+  sec.hidden = !planned.length && !blokken.length;
+  const lp = $("liveprog");
+  lp.hidden = !blokken.length;
+  if (blokken.length) {
+    const nu = activeLiveBlock();
+    lp.innerHTML = "";
+    const h = document.createElement("h3"); h.innerHTML = '<span class="livedot" aria-hidden="true"></span>'; h.append(`${LIVE.knop || "Live"}, elke dag`);
+    const row = document.createElement("div"); row.className = "lblocks";
+    blokken.forEach((b) => {
+      const el = document.createElement("div"); el.className = "slot" + (b === nu ? " now" : "");
+      const tm = document.createElement("b"); tm.textContent = `${b.van}–${b.tot && b.tot !== "00:00" ? b.tot : "24:00"}`;
+      const nm = document.createElement("span"); nm.textContent = (b.naam || "Blok") + (b === nu ? " · nu" : "");
+      el.append(tm, nm); row.appendChild(el);
+    });
+    lp.append(h, row);
+  }
+  $("week").hidden = !planned.length;
+  if (!planned.length) { const p0 = sec.querySelector(".always"); if (p0) p0.textContent = ""; return; }
   const { d: today, m } = nowParts();
   const week = $("week"); week.innerHTML = "";
   [1, 2, 3, 4, 5, 6, 0].forEach((d) => {
@@ -643,7 +683,7 @@ function renderProgramma() {
     });
     week.appendChild(col);
   });
-  const vast = STATIONS.filter((z) => !hasSchedule(z)).map((z) => z.label);
+  const vast = STATIONS.filter((z) => !z.live && !hasSchedule(z)).map((z) => z.label);
   let p = sec.querySelector(".always");
   if (!p) { p = document.createElement("p"); p.className = "always"; sec.appendChild(p); }
   p.textContent = vast.length ? `Altijd te horen: ${vast.join(", ")}.` : "";
@@ -677,7 +717,8 @@ function buildPresets() {
     b.setAttribute("aria-pressed", String(i === st));
     b.textContent = `${pos + 1} ${z.knop}`;
     if (z.live) { b.textContent = ""; const dot = document.createElement("span"); dot.className = "livedot"; dot.setAttribute("aria-hidden", "true"); b.append(dot, `${z.knop}`); }
-    const sm = document.createElement("small"); sm.textContent = z.onder || "";
+    const blkNu = z.live ? activeLiveBlock() : null;
+    const sm = document.createElement("small"); sm.textContent = (blkNu && blkNu.naam) || z.onder || "";
     b.appendChild(sm);
     b.addEventListener("click", () => {
       st = i; idx = 0; fails = 0; pendingSwitch = false;
@@ -708,6 +749,7 @@ async function loadZenders() {
                        name: "LIVE", wanneer: [], tracks: [] });
   }
   visible = computeVisible();
+  { const b0 = activeLiveBlock(); liveBlockName = b0 ? b0.naam || "" : null; }
   if (STATIONS[0] && STATIONS[0].live) { STATIONS[0].tracks = buildLiveQueue(); liveSeekPending = true; }
   st = visible[0] || 0;
   buildPresets();
@@ -869,7 +911,8 @@ function renderList() {
 function renderLcd() {
   const tr = track();
   const pos = visible.indexOf(st);
-  $("lcdStation").textContent = isLive() ? `● ${STATIONS[st].name} · ${LIVE.volgorde === "bpm" ? "OP BPM" : "MIX"}` : `ZENDER ${pos >= 0 ? pos + 1 : "–"} · ${STATIONS[st].name}`;
+  const blkLcd = isLive() ? activeLiveBlock() : null;
+  $("lcdStation").textContent = isLive() ? `● ${STATIONS[st].name} · ${blkLcd && blkLcd.naam ? blkLcd.naam.toUpperCase() : LIVE.volgorde === "bpm" ? "OP BPM" : "MIX"}` : `ZENDER ${pos >= 0 ? pos + 1 : "–"} · ${STATIONS[st].name}`;
   if (isLive()) {
     const vid = tr.list ? plIds[plIndex] : tr.id;
     const d = player && player.getVideoData ? player.getVideoData() : null;

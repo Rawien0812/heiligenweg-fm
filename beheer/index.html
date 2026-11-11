@@ -222,9 +222,14 @@ ol.tracks { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
             </select>
           </label>
         </div>
+        <h2 style="margin-top:18px">Tijdblokken op LIVE</h2>
+        <p class="hint">Verdeel de dag in blokken, elk met eigen YouTube-bronnen (elke dag hetzelfde). Een blok <b>zonder eigen bronnen</b> draait de <b>algemene bronnen</b> hieronder. ‘tot 00:00’ betekent tot middernacht.</p>
+        <div id="liveBlokken" style="display:grid; gap:12px"></div>
+        <div style="margin-top:10px"><button class="btn ghost" type="button" id="addBlok">+ Tijdblok voor LIVE</button></div>
+
         <div class="zender" style="margin-top:16px; border-left-color: var(--gold)">
-          <div class="zender-head"><span class="title">Bronnen voor LIVE</span></div>
-          <p class="hint" style="margin:0">Plak hier YouTube-<b>kanalen</b> (kanaal-ID <code>UC…</code>), <b>afspeellijsten</b> of losse <b>video’s</b>. Staat hier iets, dan draait LIVE <b>alleen</b> deze bronnen. Leeg = de zenders met een vinkje.</p>
+          <div class="zender-head"><span class="title">Algemene bronnen voor LIVE</span></div>
+          <p class="hint" style="margin:0">Plak hier YouTube-<b>kanalen</b> (kanaal-ID <code>UC…</code>), <b>afspeellijsten</b> of losse <b>video’s</b>. Deze draaien buiten de tijdblokken en in blokken zonder eigen bronnen. Leeg = de zenders met een vinkje.</p>
           <p class="msg ok" id="liveMode"></p>
           <div id="liveBronnen" style="display:grid; gap:12px"></div>
         </div>
@@ -550,11 +555,57 @@ function renderLiveBronnen() {
   const [ol, add] = tracksBlock(z, "live", "Nog geen eigen bronnen: LIVE draait nu de zenders met een vinkje bij ‘Draait mee op LIVE’.");
   box.append(ol, add);
   $("liveMode").textContent = z.nummers.length
-    ? `LIVE draait nu alleen deze ${z.nummers.length} ${z.nummers.length === 1 ? "bron" : "bronnen"}.`
-    : "LIVE draait nu de zenders met een vinkje.";
+    ? `${z.nummers.length} algemene ${z.nummers.length === 1 ? "bron" : "bronnen"}.`
+    : "Geen algemene bronnen: dan draait LIVE de zenders met een vinkje.";
 }
 
+let confirmBlok = null;
+function renderLiveBlokken() {
+  data.site.live.blokken = Array.isArray(data.site.live.blokken) ? data.site.live.blokken : [];
+  const L = data.site.live.blokken;
+  const box = $("liveBlokken"); box.innerHTML = "";
+  if (!L.length) { const p = document.createElement("p"); p.className = "empty"; p.textContent = "Nog geen tijdblokken: LIVE draait de hele dag de algemene bronnen."; box.appendChild(p); }
+  L.forEach((b, bi) => {
+    b.bronnen = Array.isArray(b.bronnen) ? b.bronnen : [];
+    const card = document.createElement("article"); card.className = "zender"; card.style.borderLeftColor = "#ff2d55";
+    const head = document.createElement("div"); head.className = "zender-head";
+    const title = document.createElement("span"); title.className = "title";
+    const setTitle = () => { title.textContent = `${b.van || "00:00"}–${b.tot && b.tot !== "00:00" ? b.tot : "24:00"} · ${b.naam || "Naamloos blok"} · ${b.bronnen.length ? b.bronnen.length + " bron(nen)" : "algemene bronnen"}`; };
+    setTitle();
+    const tools = document.createElement("span"); tools.className = "tools";
+    if (confirmBlok === bi) {
+      const yes = document.createElement("button"); yes.type = "button"; yes.className = "btn red"; yes.textContent = "Ja, verwijder blok";
+      yes.addEventListener("click", () => { L.splice(bi, 1); confirmBlok = null; setDirty(true); renderZenders(); });
+      const no = document.createElement("button"); no.type = "button"; no.className = "btn ghost"; no.textContent = "Nee";
+      no.addEventListener("click", () => { confirmBlok = null; renderZenders(); });
+      tools.append(yes, no);
+    } else tools.append(iconBtn("Tijdblok verwijderen", "🗑", () => { confirmBlok = bi; renderZenders(); }, "del"));
+    head.append(title, tools);
+
+    const row = document.createElement("div"); row.className = "block";
+    const nm = document.createElement("input"); nm.type = "text"; nm.id = `lb${bi}-naam`; nm.value = b.naam || ""; nm.placeholder = "Naam, bijv. Bhajan"; nm.setAttribute("aria-label", "Naam van het blok"); nm.style.flex = "1 1 180px";
+    nm.addEventListener("input", () => { b.naam = nm.value; setDirty(true); setTitle(); });
+    const times = document.createElement("span"); times.className = "times";
+    const van = document.createElement("input"); van.type = "time"; van.id = `lb${bi}-van`; van.value = b.van || "00:00"; van.setAttribute("aria-label", "Van");
+    const tot = document.createElement("input"); tot.type = "time"; tot.id = `lb${bi}-tot`; tot.value = b.tot || "00:00"; tot.setAttribute("aria-label", "Tot");
+    [van, tot].forEach((inp) => inp.addEventListener("change", () => { b.van = van.value || "00:00"; b.tot = tot.value || "00:00"; setDirty(true); setTitle(); }));
+    times.append("van", van, "tot", tot);
+    row.append(nm, times);
+
+    const [ol, add] = tracksBlock({ nummers: b.bronnen, knop: "", naam: b.naam || "" }, `lb${bi}`, "Nog geen eigen bronnen: in dit blok draait LIVE de algemene bronnen.");
+    card.append(head, row, ol, add);
+    box.appendChild(card);
+  });
+}
+$("addBlok").addEventListener("click", () => {
+  data.site.live.blokken = data.site.live.blokken || [];
+  data.site.live.blokken.push({ naam: "", van: "00:00", tot: "00:00", bronnen: [] });
+  setDirty(true); renderZenders();
+  $(`lb${data.site.live.blokken.length - 1}-naam`).focus();
+});
+
 function renderZenders() {
+  renderLiveBlokken();
   renderLiveBronnen();
   const box = $("zenders"); box.innerHTML = "";
   if (!data.zenders.length) { const p = document.createElement("p"); p.className = "empty"; p.textContent = "Nog geen zenders. Klik op ‘+ Zender toevoegen’."; box.appendChild(p); }

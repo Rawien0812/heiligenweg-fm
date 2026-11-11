@@ -60,6 +60,32 @@
           "titel": "Lokal songs",
           "artiest": ""
         }
+      ],
+      "blokken": [
+        {
+          "naam": "Soul",
+          "van": "00:00",
+          "tot": "04:00",
+          "bronnen": []
+        },
+        {
+          "naam": "Bhajan",
+          "van": "04:00",
+          "tot": "09:00",
+          "bronnen": []
+        },
+        {
+          "naam": "Bollywood",
+          "van": "09:00",
+          "tot": "12:00",
+          "bronnen": []
+        },
+        {
+          "naam": "Lokaal",
+          "van": "12:00",
+          "tot": "00:00",
+          "bronnen": []
+        }
       ]
     },
     "overgang": "5"
