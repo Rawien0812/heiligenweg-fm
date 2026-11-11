@@ -89,6 +89,12 @@ code { font-family: var(--mono); font-size: 1.1em; background: #000; padding: 0 
 .zender-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .zender-head .nr { font: 400 1.1rem/1 var(--display); color: #2a1a00; background: var(--gold); border-radius: 6px; padding: 6px 10px; }
 .zender-head .title { font: 400 1.05rem/1.2 var(--display); flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.zender-head .title.clickable { cursor: pointer; }
+.card-body { display: grid; gap: 12px; }
+.icon.fold { font-size: 1.1rem; transition: transform .15s; }
+.icon.fold[aria-expanded="false"] { transform: rotate(-90deg); }
+.foldall { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 10px; }
+.foldall button { padding: 6px 10px; font-size: .85rem; }
 .zender-head .tools { display: flex; gap: 6px; }
 .zenders { display: grid; gap: 14px; }
 
@@ -263,6 +269,7 @@ ul.alist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 
         <h2 style="margin-top:18px">Tijdblokken op LIVE</h2>
         <p class="hint">Verdeel de dag in blokken, elk met eigen YouTube-bronnen (elke dag hetzelfde). Een blok <b>zonder eigen bronnen</b> draait de <b>algemene bronnen</b> hieronder. ‘tot 00:00’ betekent tot middernacht.</p>
+        <div class="foldall"><button class="btn ghost" type="button" data-fold="lb" data-open="1">Alles uitklappen</button><button class="btn ghost" type="button" data-fold="lb" data-open="0">Alles inklappen</button></div>
         <div id="liveBlokken" style="display:grid; gap:12px"></div>
         <div style="margin-top:10px"><button class="btn ghost" type="button" id="addBlok">+ Tijdblok voor LIVE</button></div>
 
@@ -278,6 +285,7 @@ ul.alist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
       <section class="panel">
         <h2>Zenders</h2>
         <p class="hint">Plak een YouTube-link bij een zender om muziek toe te voegen. Dat kan een <b>video</b>, een <b>afspeellijst</b> (<code>list=</code>) of een <b>kanaal</b> (<code>/channel/UC…</code> of alleen de kanaal-ID <code>UC…</code>) zijn. Een afspeellijst of kanaal speelt op de site <b>alle</b> nummers af.</p>
+        <div class="foldall"><button class="btn ghost" type="button" data-fold="z" data-open="1">Alles uitklappen</button><button class="btn ghost" type="button" data-fold="z" data-open="0">Alles inklappen</button></div>
         <div class="zenders" id="zenders"></div>
         <div style="margin-top:14px"><button class="btn ghost" type="button" id="addZender">+ Zender toevoegen</button></div>
       </section>
@@ -747,6 +755,36 @@ function renderLiveBronnen() {
     : "Geen algemene bronnen: dan draait LIVE de zenders met een vinkje.";
 }
 
+// ---------- In- en uitklappen (onthouden in deze browser) ----------
+const openCards = (() => { try { return new Set(JSON.parse(localStorage.getItem("hfm-open") || "[]")); } catch (e) { return new Set(); } })();
+function saveOpen() { try { localStorage.setItem("hfm-open", JSON.stringify([...openCards])); } catch (e) {} }
+function swapOpen(prefix, a, b) {
+  const ka = prefix + a, kb = prefix + b, oa = openCards.has(ka), ob = openCards.has(kb);
+  oa ? openCards.add(kb) : openCards.delete(kb); ob ? openCards.add(ka) : openCards.delete(ka); saveOpen();
+}
+function collapsible(card, head, key, parts) {
+  const body = document.createElement("div"); body.className = "card-body"; body.id = key + "-body";
+  body.append(...parts);
+  const isOpen = openCards.has(key);
+  body.hidden = !isOpen;
+  const tg = document.createElement("button"); tg.type = "button"; tg.className = "icon fold"; tg.textContent = "▾";
+  tg.setAttribute("aria-controls", body.id);
+  const sync = () => { const o = !body.hidden; tg.setAttribute("aria-expanded", String(o)); tg.setAttribute("aria-label", o ? "Inklappen" : "Uitklappen"); tg.title = o ? "Inklappen" : "Uitklappen"; };
+  const toggle = () => { body.hidden = !body.hidden; body.hidden ? openCards.delete(key) : openCards.add(key); saveOpen(); sync(); };
+  sync();
+  tg.addEventListener("click", toggle);
+  const title = head.querySelector(".title");
+  if (title) { title.classList.add("clickable"); title.addEventListener("click", toggle); }
+  head.prepend(tg);
+  card.append(head, body);
+}
+document.querySelectorAll("[data-fold]").forEach((btn) => btn.addEventListener("click", () => {
+  const prefix = btn.dataset.fold, open = btn.dataset.open === "1";
+  const n = prefix === "z" ? data.zenders.length : (data.site.live.blokken || []).length;
+  for (let i = 0; i < n; i++) open ? openCards.add(prefix + i) : openCards.delete(prefix + i);
+  saveOpen(); renderZenders();
+}));
+
 let confirmBlok = null;
 function renderLiveBlokken() {
   data.site.live.blokken = Array.isArray(data.site.live.blokken) ? data.site.live.blokken : [];
@@ -785,13 +823,14 @@ function renderLiveBlokken() {
     row.append(nm, times);
 
     const [ol, add] = tracksBlock({ nummers: b.bronnen, knop: "", naam: b.naam || "" }, `lb${bi}`, "Nog geen eigen kanalen of afspeellijsten. Zonder artiesten én zonder bronnen draait dit blok de algemene bronnen.");
-    card.append(head, row, artistsEditor(b, bi), ol, add);
+    collapsible(card, head, "lb" + bi, [row, artistsEditor(b, bi), ol, add]);
     box.appendChild(card);
   });
 }
 $("addBlok").addEventListener("click", () => {
   data.site.live.blokken = data.site.live.blokken || [];
   data.site.live.blokken.push({ naam: "", van: "00:00", tot: "00:00", bronnen: [] });
+  openCards.add("lb" + (data.site.live.blokken.length - 1)); saveOpen();
   setDirty(true); renderZenders();
   $(`lb${data.site.live.blokken.length - 1}-naam`).focus();
 });
@@ -809,8 +848,8 @@ function renderZenders() {
     const nr = document.createElement("span"); nr.className = "nr"; nr.textContent = zi + 1;
     const title = document.createElement("span"); title.className = "title"; title.textContent = `${z.knop || "Nieuwe zender"} · ${z.nummers.length} ${z.nummers.length === 1 ? "item" : "items"}`;
     const tools = document.createElement("span"); tools.className = "tools";
-    const up = iconBtn("Zender omhoog", "↑", () => { move(data.zenders, zi, -1); setDirty(true); renderZenders(); }); up.disabled = zi === 0;
-    const dn = iconBtn("Zender omlaag", "↓", () => { move(data.zenders, zi, 1); setDirty(true); renderZenders(); }); dn.disabled = zi === data.zenders.length - 1;
+    const up = iconBtn("Zender omhoog", "↑", () => { move(data.zenders, zi, -1); swapOpen("z", zi, zi - 1); setDirty(true); renderZenders(); }); up.disabled = zi === 0;
+    const dn = iconBtn("Zender omlaag", "↓", () => { move(data.zenders, zi, 1); swapOpen("z", zi, zi + 1); setDirty(true); renderZenders(); }); dn.disabled = zi === data.zenders.length - 1;
     tools.append(up, dn);
     if (confirmDelete === zi) {
       const yes = document.createElement("button"); yes.type = "button"; yes.className = "btn red"; yes.textContent = "Ja, verwijder zender";
@@ -836,12 +875,13 @@ function renderZenders() {
     const cb = document.createElement("input"); cb.type = "checkbox"; cb.id = `z${zi}-live`; cb.checked = z.live !== false;
     cb.addEventListener("change", () => { if (cb.checked) delete z.live; else z.live = false; setDirty(true); });
     lv.append(cb, " Draait mee op LIVE");
-    card.append(head, fields, lv, scheduleEditor(z, zi), ol, add);
+    collapsible(card, head, "z" + zi, [fields, lv, scheduleEditor(z, zi), ol, add]);
     box.appendChild(card);
   });
 }
 $("addZender").addEventListener("click", () => {
   data.zenders.push({ knop: "Nieuw", onder: "", naam: "Nieuwe zender", nummers: [] });
+  openCards.add("z" + (data.zenders.length - 1)); saveOpen();
   setDirty(true); renderZenders();
   const i = data.zenders.length - 1;
   $(`z${i}-knop`).focus(); $(`z${i}-knop`).select();
