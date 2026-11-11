@@ -251,6 +251,7 @@ ul.alist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
           </label>
           <label class="f" for="l-volgorde">Volgorde op LIVE
             <select id="l-volgorde" data-live="volgorde">
+              <option value="populair">Populairste eerst + smaak van de luisteraar (aanbevolen)</option>
               <option value="mix">Willekeurig door elkaar</option>
               <option value="bpm">Op BPM (vergelijkbaar tempo na elkaar)</option>
             </select>
@@ -264,6 +265,15 @@ ul.alist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
               <option value="0">Uit</option><option value="3">3 seconden</option><option value="5">5 seconden</option><option value="8">8 seconden</option><option value="10">10 seconden</option>
             </select>
           </label>
+        </div>
+        <div class="zender" style="border-left-color: var(--gold)">
+          <div class="zender-head"><span class="title">Hits van je kanalen ophalen</span></div>
+          <p class="hint" style="margin:0">Haalt voor <b>elk YouTube-kanaal</b> in LIVE (algemene bronnen én tijdblokken) de <b>meest bekeken nummers</b> op, met views. Bij ‘Populairste eerst’ draait LIVE die vaker en eerder. Gebruikt je YouTube API-sleutel; doe dit af en toe opnieuw voor nieuwe hits.</p>
+          <div class="add">
+            <select id="hitsAantal" aria-label="Aantal hits per kanaal"><option value="10">10 hits per kanaal</option><option value="25" selected>25 hits per kanaal</option><option value="50">50 hits per kanaal</option></select>
+            <button class="btn gold" type="button" id="hitsGo">Hits van alle kanalen ophalen</button>
+          </div>
+          <p class="msg" id="hitsMsg"></p>
         </div>
         </div>
       </section>
@@ -743,7 +753,7 @@ function tracksBlock(z, key, emptyText, opts = {}) {
     tl.append(u, d, iconBtn("Verwijderen", "✕", () => { z.nummers.splice(ni, 1); setDirty(true); renderZenders(); }, "del"));
     const bpm = document.createElement("input"); bpm.type = "text"; bpm.inputMode = "numeric"; bpm.className = "bpm";
     bpm.id = `${key}-n${ni}-bpm`; bpm.setAttribute("aria-label", "BPM");
-    if (n.lijst) { bpm.disabled = true; bpm.placeholder = "—"; bpm.title = "BPM kan alleen per losse video"; }
+    if (n.lijst) { bpm.disabled = true; bpm.placeholder = n.populair && n.populair.length ? `${n.populair.length} hits` : "—"; bpm.title = n.populair && n.populair.length ? `${n.populair.length} populaire nummers opgehaald (${n.populair_datum || ""})` : "BPM kan alleen per losse video"; }
     else { bpm.placeholder = "BPM"; bpm.value = n.bpm || ""; }
     bpm.addEventListener("input", () => {
       const v = bpm.value.replace(/[^0-9]/g, "").slice(0, 3); if (bpm.value !== v) bpm.value = v;
@@ -905,6 +915,44 @@ function renderTop5() {
     "Nog leeg. Plak hieronder de YouTube-links van je top 5 (nummer 1 bovenaan), of gebruik ‘Vul met trending’.", { alleenVideo: true, max: 5 });
   box.append(ol, add);
 }
+// Populairste nummers per kanaal (UU… = uploads van kanaal UC…).
+async function channelHits(channelId, count, fallbackArtist) {
+  const res = await ytGet("search", { part: "snippet", type: "video", channelId, order: "viewCount", maxResults: 50, videoEmbeddable: "true" });
+  const ids = (res.items || []).map((it) => it.id && it.id.videoId).filter(Boolean);
+  if (!ids.length) return [];
+  const det = await ytGet("videos", { part: "statistics,contentDetails,snippet", id: ids.join(",") });
+  return (det.items || [])
+    .filter((v) => { const sec = isoSec(v.contentDetails && v.contentDetails.duration); return sec >= 60 && sec <= 20 * 60; })
+    .map((v) => ({ video: v.id, titel: decodeHtml(v.snippet.title), artiest: decodeHtml(v.snippet.channelTitle || fallbackArtist || ""), views: +((v.statistics || {}).viewCount) || 0 }))
+    .sort((a, b) => b.views - a.views).slice(0, count);
+}
+async function fetchAllHits() {
+  const count = +$("hitsAantal").value || 25;
+  const say = (t, c = "") => { $("hitsMsg").className = "msg " + c; $("hitsMsg").textContent = t; };
+  const live = data.site.live || {};
+  const bronnen = [].concat(live.bronnen || [], ...(live.blokken || []).map((b) => b.bronnen || []))
+    .filter((n) => n.lijst && /^UU[A-Za-z0-9_-]{22}$/.test(n.lijst));
+  const uniek = [...new Set(bronnen.map((n) => n.lijst))];      // elk kanaal één keer, ook als het in meerdere blokken staat
+  if (!uniek.length) { say("Er staan nog geen YouTube-kanalen in LIVE. Voeg ze toe bij Algemene bronnen of in een tijdblok.", "bad"); return; }
+  $("hitsGo").disabled = true;
+  let ok = 0, totaal = 0;
+  try {
+    for (const [k, lijst] of uniek.entries()) {
+      const voorbeeld = bronnen.find((n) => n.lijst === lijst);
+      say(`Ophalen ${k + 1}/${uniek.length}: ${voorbeeld.titel || lijst}…`);
+      const hits = await channelHits("UC" + lijst.slice(2), count, voorbeeld.titel);
+      bronnen.filter((n) => n.lijst === lijst).forEach((n) => { n.populair = hits; n.populair_datum = new Date().toISOString().slice(0, 10); });
+      ok++; totaal += hits.length;
+    }
+    setDirty(true); renderZenders();
+    say(`${totaal} hits opgehaald van ${ok} ${ok === 1 ? "kanaal" : "kanalen"}. Klik op Opslaan en publiceren.`, "ok");
+  } catch (e) {
+    if (ok) { setDirty(true); renderZenders(); }
+    say(e.message + (ok ? ` (${ok} kanalen wel gelukt; die worden bewaard als je opslaat.)` : ""), "bad");
+  } finally { $("hitsGo").disabled = false; }
+}
+$("hitsGo").addEventListener("click", fetchAllHits);
+
 async function fillTrending() {
   const term = $("trendTerm").value.trim() || "baithak gana";
   const days = +$("trendDays").value || 30;

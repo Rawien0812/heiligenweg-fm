@@ -654,14 +654,21 @@ function activeLiveBlock() {
 let liveBlockName = null;
 const bronNaarTrack = (n) => n.lijst
   ? { list: n.lijst, t: n.titel || "Afspeellijst", a: n.artiest || "" }
-  : { id: n.video, t: n.titel || "Nummer", a: n.artiest || "", bpm: +n.bpm || 0 };
+  : { id: n.video, t: n.titel || "Nummer", a: n.artiest || "", bpm: +n.bpm || 0, views: +n.views || 0 };
+// Een kanaal/afspeellijst + de populairste nummers die in /beheer/ voor dat kanaal zijn opgehaald (met views).
+function bronNaarTracks(n) {
+  const out = [bronNaarTrack(n)];
+  if (n.lijst && Array.isArray(n.populair)) n.populair.filter((x) => x.video).forEach((x) =>
+    out.push({ id: x.video, t: x.titel || "Nummer", a: x.artiest || n.titel || "", views: +x.views || 0, bpm: +x.bpm || 0 }));
+  return out;
+}
 // Nummers van een LIVE-blok: eigen kanalen/afspeellijsten + populaire nummers van de artiesten.
 function blockTracks(blk) {
-  const out = (Array.isArray(blk.bronnen) ? blk.bronnen : []).filter((n) => n.video || n.lijst).map(bronNaarTrack);
+  const out = (Array.isArray(blk.bronnen) ? blk.bronnen : []).filter((n) => n.video || n.lijst).flatMap(bronNaarTracks);
   (Array.isArray(blk.artiesten) ? blk.artiesten : []).forEach((a) => {
     const ns = (a.nummers || []).filter((x) => x.video).slice().sort((x, y) => (y.views || 0) - (x.views || 0));
     const top = Math.ceil(ns.length * 0.2), mid = Math.ceil(ns.length * 0.5);
-    ns.forEach((x, k) => out.push({ id: x.video, t: x.titel || "Nummer", a: x.artiest || a.naam, bpm: +x.bpm || 0,
+    ns.forEach((x, k) => out.push({ id: x.video, t: x.titel || "Nummer", a: x.artiest || a.naam, bpm: +x.bpm || 0, views: +x.views || 0,
                                      w: k < top ? 3 : k < mid ? 2 : 1 }));   // populair = vaker
   });
   return out;
@@ -670,8 +677,66 @@ function liveEigenBronnen() {
   const blk = activeLiveBlock();
   const bt = blk ? blockTracks(blk) : [];
   if (bt.length) return bt;                                   // blok met eigen muziek
-  return (LIVE.bronnen || []).filter((n) => n.video || n.lijst).map(bronNaarTrack);   // anders: algemene bronnen
+  return (LIVE.bronnen || []).filter((n) => n.video || n.lijst).flatMap(bronNaarTracks);   // anders: algemene bronnen
 }
+const fmtViews = (n) => n >= 1e6 ? (n / 1e6).toFixed(1).replace(".", ",") + " mln" : n >= 1e3 ? Math.round(n / 1e3) + "k" : String(n);
+// ---------- Smaak van de luisteraar (alleen in deze browser) ----------
+const profiel = (() => {
+  const def = { v: {}, a: {}, h: [] };
+  try { return Object.assign(def, JSON.parse(localStorage.getItem("hfm-profiel") || "{}")); } catch (e) { return def; }
+})();
+let profielTimer = null;
+function saveProfiel() { clearTimeout(profielTimer); profielTimer = setTimeout(() => { try { localStorage.setItem("hfm-profiel", JSON.stringify(profiel)); } catch (e) {} }, 400); }
+const artKey = (t) => String((t && (t.a || t.from)) || "").trim().toLowerCase();
+const clampN = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
+function smaak(vid, artist, delta) {                 // + = vindt het mooi, - = slaat over
+  if (vid) profiel.v[vid] = clampN((profiel.v[vid] || 0) + delta, -10, 20);
+  if (artist) profiel.a[artist] = clampN((profiel.a[artist] || 0) + delta * 0.5, -10, 20);
+  // niet eindeloos groeien
+  const vk = Object.keys(profiel.v); if (vk.length > 600) vk.slice(0, vk.length - 600).forEach((k) => delete profiel.v[k]);
+  saveProfiel();
+}
+function onthoud(vid) { if (!vid) return; profiel.h = [vid].concat(profiel.h.filter((x) => x !== vid)).slice(0, 40); saveProfiel(); }
+function huidig() {                                   // video-id + artiest van wat nu speelt
+  const tr = STATIONS[st] && STATIONS[st].tracks[idx];
+  if (!tr) return {};
+  return { vid: tr.list ? plIds[plIndex] : tr.id, artist: artKey(tr), tr };
+}
+let medViews = 1e5;                                   // midden van de views in de huidige mix
+function popGewicht(t) {                              // 4× zoveel views als het midden = 2× zo vaak/vroeg
+  if (t.list) return 1;                               // kanaal = verrassingsnummer
+  if (!t.views) return 0.7;
+  return clampN(Math.sqrt(t.views / medViews), 0.15, 8);
+}
+function smaakGewicht(t) {
+  const sc = (profiel.v[t.id] || 0) * 0.5 + (profiel.a[artKey(t)] || 0) * 0.3;
+  return clampN(Math.exp(sc * 0.35), 0.2, 4);
+}
+function recentGewicht(t) { const i = profiel.h.indexOf(t.id); return i < 0 ? 1 : i < 12 ? 0.03 : 0.4; }
+// Gewogen willekeurige volgorde: populair + jouw smaak komen vaker en eerder, maar nooit elke keer dezelfde rij.
+function rangschik(list) {
+  const vs = list.filter((t) => t.views).map((t) => t.views).sort((a, b) => a - b);
+  if (vs.length) medViews = vs[Math.floor(vs.length / 2)];
+  return list.map((t) => ({ t, k: Math.pow(Math.random(), 1 / Math.max(0.01, popGewicht(t) * smaakGewicht(t) * recentGewicht(t))) }))
+    .sort((x, y) => y.k - x.k).map((x) => x.t);
+}
+function herschikLive() {                             // na een keuze: de rest van de rij opnieuw ordenen
+  if (!isLive() || LIVE.volgorde !== "populair") return;
+  const q = STATIONS[st].tracks;
+  STATIONS[st].tracks = q.slice(0, idx + 1).concat(scheidDubbel(rangschik(q.slice(idx + 1))));
+  renderList();
+}
+function scheidDubbel(pool) {                         // niet twee keer hetzelfde direct na elkaar
+  const key = (t) => t.id || t.list;
+  for (let k = 1; k < pool.length; k++) {
+    if (key(pool[k]) === key(pool[k - 1])) {
+      const j = pool.findIndex((t, n) => n > k && key(t) !== key(pool[k]) && (n + 1 >= pool.length || key(pool[n + 1]) !== key(pool[k])));
+      if (j > 0) [pool[k], pool[j]] = [pool[j], pool[k]];
+    }
+  }
+  return pool;
+}
+
 function buildLiveQueue() {
   const seen = new Set(), items = [];
   const add = (t, from) => {
@@ -679,7 +744,8 @@ function buildLiveQueue() {
     if (seen.has(key)) return; seen.add(key);
     const it = Object.assign({}, t, { from });
     // Een afspeellijst of kanaal bevat veel nummers: laat hem vaker terugkomen.
-    const copies = t.list ? 4 : (t.w || 1);
+    // (Bij ‘populair eerst’ doet de weging het werk; dan elk nummer één keer, kanalen een paar keer.)
+    const copies = LIVE.volgorde === "populair" ? (t.list ? 3 : 1) : (t.list ? 4 : (t.w || 1));
     for (let k = 0; k < copies; k++) items.push(Object.assign({}, it));
   };
   const eigen = liveEigenBronnen();
@@ -698,6 +764,7 @@ function buildLiveQueue() {
     if (inRange.length >= 2) pool = inRange;
   }
   shuffle(pool);
+  if (LIVE.volgorde === "populair") pool = rangschik(pool);
   if (LIVE.volgorde === "bpm") {
     const known = pool.filter((t) => t.bpm), unknown = pool.filter((t) => !t.bpm);
     const out = [];
@@ -712,15 +779,7 @@ function buildLiveQueue() {
     unknown.forEach((t) => out.splice(Math.floor(Math.random() * (out.length + 1)), 0, t));
     pool = out;
   }
-  // Niet twee keer hetzelfde nummer of dezelfde afspeellijst direct na elkaar.
-  const key = (t) => t.id || t.list;
-  for (let k = 1; k < pool.length; k++) {
-    if (key(pool[k]) === key(pool[k - 1])) {
-      const j = pool.findIndex((t, n) => n > k && key(t) !== key(pool[k]) && (n + 1 >= pool.length || key(pool[n + 1]) !== key(pool[k])));
-      if (j > 0) [pool[k], pool[j]] = [pool[j], pool[k]];
-    }
-  }
-  return pool;
+  return scheidDubbel(pool);
 }
 
 // ---------- Programmering ----------
@@ -1033,6 +1092,7 @@ function requestSong(n) {
   }
   liveSeekPending = false; fails = 0; pendingSwitch = false;
   askedId = n.video; renderTop5();
+  smaak(n.video, artKey({ a: n.artiest }), 3);                   // zelf aangevraagd = sterk signaal
   userWants = true;
   load(true);
   setText("lcdArtist", `Aanvraag · ${n.artiest || ""}`.replace(/ · $/, ""));
@@ -1057,7 +1117,9 @@ function renderLiveList() {
       title = (vid && titles[vid] && titles[vid].t) || (i === idx ? title : "Verrassing uit: " + tr.t);
     }
     b.querySelector("strong").textContent = title;
-    b.querySelector(".t > span").textContent = [...new Set([tr.a, tr.from, tr.bpm ? tr.bpm + " BPM" : ""].filter(Boolean))].join(" · ");
+    const vw = tr.views ? fmtViews(tr.views) + " views" : "";
+    const jij = !tr.list && smaakGewicht(tr) >= 1.4 ? "♥ jouw smaak" : "";
+    b.querySelector(".t > span").textContent = [...new Set([tr.a, tr.from, vw, jij, tr.bpm ? tr.bpm + " BPM" : ""].filter(Boolean))].join(" · ");
     b.addEventListener("click", () => {
       if (i === idx && ready) { if (playing) { userWants = false; player.pauseVideo(); } else { userWants = true; player.playVideo(); } return; }
       idx = i; load(true);
@@ -1280,6 +1342,7 @@ function runFade() {
 }
 function finishFade() {
   const f = fade; clearInterval(f.timer); fade = null;
+  { const h = huidig(); smaak(h.vid, h.artist, 1); }          // vorige nummer liep tot het eind
   const old = player;
   try { old.stopVideo(); old.mute(); } catch (e) {}
   act = 1 - act; player = players[act];
@@ -1326,6 +1389,9 @@ window.onYouTubeIframeAPIReady = function () {
       },
       onStateChange: (e) => {
         if (e.target !== player) return onBackState(e);
+        if (e.data === YT.PlayerState.ENDED && !(fade && fade.stage === "run")) {   // helemaal uitgeluisterd = vindt het goed
+          const h = huidig(); smaak(h.vid, h.artist, 1);
+        }
         if (e.data === YT.PlayerState.ENDED && fade) {
           if (fade.stage === "run") { finishFade(); return; }   // nummer al afgelopen tijdens de overgang
           cancelFade();                                          // nog niet klaar: gewoon op de normale manier verder
@@ -1333,6 +1399,7 @@ window.onYouTubeIframeAPIReady = function () {
         const pl = track().list;
         if (e.data === YT.PlayerState.PLAYING) {
           playing = true; fails = 0;
+          onthoud(huidig().vid);
           if (randomizeOnPlay && pl) {                          // LIVE: willekeurig nummer uit de afspeellijst
             randomizeOnPlay = false;
             const l = player.getPlaylist();
@@ -1383,7 +1450,12 @@ $("play").addEventListener("click", () => {
   if (s === YT.PlayerState.UNSTARTED || s === YT.PlayerState.CUED || s === YT.PlayerState.PAUSED) { player.playVideo(); checkStarted(); }
   else load(true);
 });
-$("next").addEventListener("click", () => step(1));
+$("next").addEventListener("click", () => {
+  // Binnen 30 seconden overslaan = minder van dit nummer/deze artiest.
+  try { if (ready && playing && player.getCurrentTime() < 30) { const h = huidig(); smaak(h.vid, h.artist, -2); } } catch (e) {}
+  step(1);
+  herschikLive();
+});
 $("prev").addEventListener("click", () => step(-1));
 // ---------- Volume, mute, shuffle, herhalen (onthouden in deze browser) ----------
 function applyVolume() {
