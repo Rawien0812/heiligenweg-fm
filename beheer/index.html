@@ -104,6 +104,8 @@ ol.tracks { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
   .track .artist, .track .tools, .track .bpm { grid-column: 2; }
   .track .bpm { max-width: 120px; }
 }
+.livebox { display: inline-flex; gap: 8px; align-items: center; font-weight: 600; cursor: pointer; justify-self: start; }
+.livebox input { width: 20px; height: 20px; accent-color: var(--sr-red); }
 .sched { background: rgba(0,0,0,.2); border-radius: 10px; padding: 12px; display: grid; gap: 10px; }
 .sched-head { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
 .sched-head b { font: 400 .95rem/1.2 var(--display); color: var(--gold); }
@@ -199,7 +201,7 @@ ol.tracks { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
       <!-- LIVE en overgangen -->
       <section class="panel">
         <h2>LIVE en overgangen</h2>
-        <p class="hint">LIVE is de hoofdzender: hij draait alle muziek van de zenders die op dat moment op het programma staan, door elkaar en eindeloos. Vul bij nummers de <b>BPM</b> in (opzoeken kan op <a href="https://songbpm.com" target="_blank" rel="noopener">songbpm.com</a>) om op tempo te mixen.</p>
+        <p class="hint">LIVE is de hoofdzender: hij draait de muziek van de zenders met een vinkje bij <b>Draait mee op LIVE</b> die op dat moment op het programma staan, door elkaar en eindeloos. Vul bij nummers de <b>BPM</b> in (opzoeken kan op <a href="https://songbpm.com" target="_blank" rel="noopener">songbpm.com</a>) om op tempo te mixen.</p>
         <div class="grid2">
           <label class="f" for="l-aan">LIVE-zender
             <select id="l-aan" data-live="aan"><option value="true">Aan (eerste zender)</option><option value="false">Uit</option></select>
@@ -563,7 +565,11 @@ function renderZenders() {
       if (!item.lijst && !item.titel) $(`z${zi}-n${z.nummers.length - 1}-titel`).focus();
     });
 
-    card.append(head, fields, scheduleEditor(z, zi), ol, add);
+    const lv = document.createElement("label"); lv.className = "livebox"; lv.htmlFor = `z${zi}-live`;
+    const cb = document.createElement("input"); cb.type = "checkbox"; cb.id = `z${zi}-live`; cb.checked = z.live !== false;
+    cb.addEventListener("change", () => { if (cb.checked) delete z.live; else z.live = false; setDirty(true); });
+    lv.append(cb, " Draait mee op LIVE");
+    card.append(head, fields, lv, scheduleEditor(z, zi), ol, add);
     box.appendChild(card);
   });
 }

@@ -6,7 +6,15 @@
     "welkom": "Schuif door naar achter. De chauffeur zet baithak gana, kaseko en Trafassi op. Hard.",
     "onderaan": "Gemaakt door Rawien Paltoe • Powered By Cafe De Kroon Den Haag",
     "rechten": "Alle muziek wordt afgespeeld via YouTube. De rechten liggen bij de artiesten en uploaders.",
-    "tijdzone": "Europe/Amsterdam"
+    "tijdzone": "Europe/Amsterdam",
+    "live": {
+      "aan": true,
+      "knop": "Live",
+      "onder": "Hindoestaans",
+      "volgorde": "mix",
+      "bpm_van": "",
+      "bpm_tot": ""
+    }
   },
   "zenders": [
     {
@@ -83,7 +91,8 @@
           "artiest": "Sonic"
         }
       ],
-      "wanneer": []
+      "wanneer": [],
+      "live": false
     },
     {
       "knop": "Trafassi",
@@ -116,7 +125,8 @@
           "artiest": "Trafassi"
         }
       ],
-      "wanneer": []
+      "wanneer": [],
+      "live": false
     },
     {
       "knop": "Dewinder",

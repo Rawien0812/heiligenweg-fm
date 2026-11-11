@@ -390,7 +390,10 @@ const isLive = () => !!(STATIONS[st] && STATIONS[st].live);
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function buildLiveQueue() {
   const seen = new Set(), items = [];
-  visible.filter((i) => !STATIONS[i].live).forEach((i) => STATIONS[i].tracks.forEach((t) => {
+  // Zenders die meedoen op LIVE en nu op het programma staan; staat er niets op, dan alle LIVE-zenders.
+  let bron = visible.filter((i) => !STATIONS[i].live && STATIONS[i].opLive);
+  if (!bron.length) bron = STATIONS.map((z, i) => (!z.live && z.opLive ? i : -1)).filter((i) => i >= 0);
+  bron.forEach((i) => STATIONS[i].tracks.forEach((t) => {
     const key = t.id || t.list;
     if (seen.has(key)) return; seen.add(key);
     const it = Object.assign({}, t, { from: STATIONS[i].label });
@@ -555,11 +558,12 @@ async function loadZenders() {
   STATIONS = (data.zenders || []).filter((z) => z.nummers && z.nummers.length).map((z) => ({
     knop: z.knop, onder: z.onder, label: z.naam || z.knop, name: (z.knop || "").toUpperCase(),
     wanneer: Array.isArray(z.wanneer) ? z.wanneer : [],
+    opLive: z.live !== false,
     tracks: z.nummers.map((n) => n.lijst ? { list: n.lijst, t: n.titel || "Afspeellijst", a: n.artiest || "" }
                                          : { id: n.video, t: n.titel || "Nummer", a: n.artiest || "", bpm: +n.bpm || 0 }),
   }));
   if (LIVE.aan !== false && STATIONS.length) {
-    STATIONS.unshift({ live: true, knop: LIVE.knop || "Live", onder: LIVE.onder || "", label: (LIVE.knop || "Live") + ": alles door elkaar",
+    STATIONS.unshift({ live: true, knop: LIVE.knop || "Live", onder: LIVE.onder || "", label: LIVE.knop || "Live",
                        name: "LIVE", wanneer: [], tracks: [] });
   }
   visible = computeVisible();
@@ -923,8 +927,9 @@ window.onYouTubeIframeAPIReady = function () {
         ready = true;
         player.setVolume(+$("vol").value);
         $("idle").hidden = true;
-        setText("lcdTitle", wantPlay ? track().t : "Radio staat klaar: druk op ▶");
-        if (wantPlay || track().list) load(wantPlay);
+        const go = wantPlay;
+        load(go);                                   // eerste nummer altijd klaarzetten, anders heeft ▶ niets om te spelen
+        if (!go) setText("lcdTitle", "Radio staat klaar: druk op ▶");
       },
       onStateChange: (e) => {
         if (e.target !== player) return onBackState(e);
