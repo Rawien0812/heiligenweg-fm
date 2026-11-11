@@ -397,7 +397,23 @@
           "naam": "Bhajan",
           "van": "04:00",
           "tot": "09:00",
-          "bronnen": [],
+          "bronnen": [
+            {
+              "lijst": "UUDkpX0XPGUHsYn_DfCU5j7Q",
+              "titel": "Hele kanaal (alle uploads)",
+              "artiest": "Bhajan"
+            },
+            {
+              "lijst": "UUaF3MVnBYNnjAKF16k3mUjw",
+              "titel": "Hele kanaal (alle uploads)",
+              "artiest": "Bhajan"
+            },
+            {
+              "lijst": "UUfzYE5p3KDmRQKUpOLz1_tw",
+              "titel": "Hele kanaal (alle uploads)",
+              "artiest": "Bhajan"
+            }
+          ],
           "artiesten": [],
           "aantal": 50
         },
@@ -431,7 +447,7 @@
           "tot": "00:00",
           "bronnen": [],
           "artiesten": [],
-          "aantal": 15
+          "aantal": 50
         }
       ]
     },
