@@ -133,14 +133,17 @@ h1 {
 }
 .windshield .design { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
 .pennant {                       /* vlaggetje aan de binnenspiegel */
-  position: absolute; top: 0; left: 14%; width: 2px; height: clamp(18px, 5vw, 40px); background: #ccc;
+  position: absolute; top: 0; width: 2px; height: clamp(18px, 5vw, 40px); background: #ccc;
   transform-origin: top; z-index: 1;
 }
 .pennant .flag {
   position: absolute; left: 50%; top: 100%; width: clamp(30px, 6vw, 54px); height: auto; transform: translateX(-50%);
   border: 1px solid #222; box-shadow: 0 2px 4px rgba(0,0,0,.4); display: block;
 }
+.pennant.left { left: 14%; }
+.pennant.right { right: 14%; }
 .playing .pennant { animation: dangle 1.8s ease-in-out infinite; }
+.playing .pennant.right { animation-delay: -.9s; }
 @keyframes dangle { 0%,100% { transform: rotate(-12deg); } 50% { transform: rotate(12deg); } }
 
 /* ---------- Dashboard / radio ---------- */
@@ -293,7 +296,8 @@ footer .sig { font: 400 1.1rem/1.2 var(--display); color: var(--gold); display: 
 <main class="wrap">
   <div class="windshield" aria-hidden="true">
     <img class="design" src="images/voorruit.jpg" alt="51 jaar Srefidensi: de Suriname-rivier met de Wijdenboschbrug, het Presidentieel Paleis en de vlag" width="1500" height="640">
-    <div class="pennant"><svg class="flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#377e3f"/><rect y="4" width="30" height="12" fill="#fff"/><rect y="6" width="30" height="8" fill="#b40a2d"/><polygon points="15.00,6.00 15.90,8.76 18.80,8.76 16.45,10.47 17.35,13.24 15.00,11.53 12.65,13.24 13.55,10.47 11.20,8.76 14.10,8.76" fill="#ecc81d"/></svg></div>
+    <div class="pennant left"><svg class="flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#377e3f"/><rect y="4" width="30" height="12" fill="#fff"/><rect y="6" width="30" height="8" fill="#b40a2d"/><polygon points="15.00,6.00 15.90,8.76 18.80,8.76 16.45,10.47 17.35,13.24 15.00,11.53 12.65,13.24 13.55,10.47 11.20,8.76 14.10,8.76" fill="#ecc81d"/></svg></div>
+    <div class="pennant right"><svg class="flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#377e3f"/><rect y="4" width="30" height="12" fill="#fff"/><rect y="6" width="30" height="8" fill="#b40a2d"/><polygon points="15.00,6.00 15.90,8.76 18.80,8.76 16.45,10.47 17.35,13.24 15.00,11.53 12.65,13.24 13.55,10.47 11.20,8.76 14.10,8.76" fill="#ecc81d"/></svg></div>
   </div>
 
   <div class="dash">
