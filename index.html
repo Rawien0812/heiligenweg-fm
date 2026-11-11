@@ -535,13 +535,25 @@ function activeLiveBlock() {
   return blokken.find((b) => blockOn({ dagen: ALLE_DAGEN, van: b.van, tot: b.tot }, d, m)) || null;
 }
 let liveBlockName = null;
+const bronNaarTrack = (n) => n.lijst
+  ? { list: n.lijst, t: n.titel || "Afspeellijst", a: n.artiest || "" }
+  : { id: n.video, t: n.titel || "Nummer", a: n.artiest || "", bpm: +n.bpm || 0 };
+// Nummers van een LIVE-blok: eigen kanalen/afspeellijsten + populaire nummers van de artiesten.
+function blockTracks(blk) {
+  const out = (Array.isArray(blk.bronnen) ? blk.bronnen : []).filter((n) => n.video || n.lijst).map(bronNaarTrack);
+  (Array.isArray(blk.artiesten) ? blk.artiesten : []).forEach((a) => {
+    const ns = (a.nummers || []).filter((x) => x.video).slice().sort((x, y) => (y.views || 0) - (x.views || 0));
+    const top = Math.ceil(ns.length * 0.2), mid = Math.ceil(ns.length * 0.5);
+    ns.forEach((x, k) => out.push({ id: x.video, t: x.titel || "Nummer", a: x.artiest || a.naam, bpm: +x.bpm || 0,
+                                     w: k < top ? 3 : k < mid ? 2 : 1 }));   // populair = vaker
+  });
+  return out;
+}
 function liveEigenBronnen() {
   const blk = activeLiveBlock();
-  // Heeft het blok eigen bronnen? Dan die. Anders de algemene LIVE-bronnen.
-  const src = blk && Array.isArray(blk.bronnen) && blk.bronnen.some((n) => n.video || n.lijst) ? blk.bronnen : (LIVE.bronnen || []);
-  return src.filter((n) => n.video || n.lijst).map((n) => n.lijst
-    ? { list: n.lijst, t: n.titel || "Afspeellijst", a: n.artiest || "" }
-    : { id: n.video, t: n.titel || "Nummer", a: n.artiest || "", bpm: +n.bpm || 0 });
+  const bt = blk ? blockTracks(blk) : [];
+  if (bt.length) return bt;                                   // blok met eigen muziek
+  return (LIVE.bronnen || []).filter((n) => n.video || n.lijst).map(bronNaarTrack);   // anders: algemene bronnen
 }
 function buildLiveQueue() {
   const seen = new Set(), items = [];
@@ -550,7 +562,8 @@ function buildLiveQueue() {
     if (seen.has(key)) return; seen.add(key);
     const it = Object.assign({}, t, { from });
     // Een afspeellijst of kanaal bevat veel nummers: laat hem vaker terugkomen.
-    if (t.list) for (let k = 0; k < 4; k++) items.push(Object.assign({}, it)); else items.push(it);
+    const copies = t.list ? 4 : (t.w || 1);
+    for (let k = 0; k < copies; k++) items.push(Object.assign({}, it));
   };
   const eigen = liveEigenBronnen();
   if (eigen.length) {
@@ -582,10 +595,11 @@ function buildLiveQueue() {
     unknown.forEach((t) => out.splice(Math.floor(Math.random() * (out.length + 1)), 0, t));
     pool = out;
   }
-  // Niet twee keer dezelfde afspeellijst direct na elkaar.
+  // Niet twee keer hetzelfde nummer of dezelfde afspeellijst direct na elkaar.
+  const key = (t) => t.id || t.list;
   for (let k = 1; k < pool.length; k++) {
-    if (pool[k].list && pool[k].list === pool[k - 1].list) {
-      const j = pool.findIndex((t, n) => n > k && t.list !== pool[k].list);
+    if (key(pool[k]) === key(pool[k - 1])) {
+      const j = pool.findIndex((t, n) => n > k && key(t) !== key(pool[k]) && (n + 1 >= pool.length || key(pool[n + 1]) !== key(pool[k])));
       if (j > 0) [pool[k], pool[j]] = [pool[j], pool[k]];
     }
   }
