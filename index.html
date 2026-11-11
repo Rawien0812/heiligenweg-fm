@@ -271,6 +271,25 @@ ol.tracks { list-style: none; margin: 6px 0 4px 26px; padding: 0 0 0 14px; displ
 .tracks li.on .yt { color: var(--gold); }
 .tracks .loading strong { color: var(--muted); font-weight: 400; }
 
+/* ---------- Programma ---------- */
+section.programma { padding-block: 30px 0; }
+.programma h2 { font: 400 clamp(1.4rem, 4vw, 2rem)/1.1 var(--display); margin: 0 0 4px; color: var(--gold); display: flex; gap: 10px; align-items: center; }
+.programma .sub { margin: 0 0 14px; color: var(--muted); }
+.week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+@media (max-width: 760px) { .week { grid-template-columns: minmax(0, 1fr); } }
+.day { background: #123a21; border-radius: 8px; padding: 10px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.day h3 { margin: 0; font: 400 .95rem/1.1 var(--display); color: var(--ink); }
+.day.today { background: var(--sr-red); box-shadow: 0 0 0 2px var(--gold); }
+.day .slot { display: grid; gap: 1px; font-size: .85rem; background: rgba(0,0,0,.25); border-radius: 6px; padding: 6px 8px; min-width: 0; }
+.day .slot b { font: 1.05rem/1 var(--lcd); color: var(--sr-yellow); font-weight: 400; }
+.day .slot span { overflow-wrap: anywhere; }
+.day .slot.now { background: var(--gold); color: #2a1a00; }
+.day .slot.now b { color: var(--sr-red); }
+.day .none { font-size: .82rem; color: var(--muted); }
+.day.today .none { color: #ffe1e6; }
+.always { margin: 10px 0 0; color: var(--muted); font-size: .9rem; }
+.onair { display: inline-block; margin-left: 6px; font: 400 .8rem/1 var(--lcd); color: #2a1a00; background: var(--sr-yellow); padding: 2px 6px; border-radius: 3px; vertical-align: 2px; }
+
 .flagbar { height: 14px; background: linear-gradient(to bottom, var(--sr-green) 0 20%, #fff 20% 30%, var(--sr-red) 30% 70%, #fff 70% 80%, var(--sr-green) 80%); margin-top: 30px; }
 footer { padding-block: 22px 40px; color: var(--muted); font-size: .85rem; }
 footer p { margin: 0 0 6px; max-width: 70ch; }
@@ -334,6 +353,12 @@ footer .sig { font: 400 1.1rem/1.2 var(--display); color: var(--gold); display: 
     <p class="sub">Elk nummer is een halte. Tik erop om er meteen naartoe te rijden.</p>
     <ol class="list" id="list"></ol>
   </section>
+
+  <section class="programma" id="programma" aria-labelledby="progTitle" hidden>
+    <h2><span class="star" aria-hidden="true"></span><span id="progTitle">Programma</span></h2>
+    <p class="sub" id="progSub">Welke zender wanneer te horen is.</p>
+    <div class="week" id="week"></div>
+  </section>
 </main>
 
 <div class="flagbar" aria-hidden="true"></div>
@@ -345,6 +370,77 @@ footer .sig { font: 400 1.1rem/1.2 var(--display); color: var(--gold); display: 
 <script>
 // Zenders en teksten komen uit zenders.json (aan te passen op /beheer/).
 let STATIONS = [];
+let TZ = "Europe/Amsterdam";
+let visible = [];          // indexen van zenders die nu op het programma staan
+let pendingSwitch = false; // huidige zender is van de lucht: na dit nummer overschakelen
+
+// ---------- Programmering ----------
+const DAGEN = ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"];
+const toMin = (t) => { const [h, m] = String(t || "00:00").split(":").map(Number); return (h || 0) * 60 + (m || 0); };
+function nowParts() {
+  const f = new Intl.DateTimeFormat("en-GB", { timeZone: TZ, weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+  const o = {}; f.formatToParts(new Date()).forEach((p) => { o[p.type] = p.value; });
+  const d = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(o.weekday);
+  return { d, m: (+o.hour % 24) * 60 + +o.minute };
+}
+function blockOn(b, d, m) {
+  const v = toMin(b.van), t = (b.tot && b.tot !== "00:00") ? toMin(b.tot) : 1440;
+  const days = b.dagen || [];
+  if (v < t) return days.includes(d) && m >= v && m < t;
+  return (days.includes(d) && m >= v) || (days.includes((d + 6) % 7) && m < t);   // over middernacht
+}
+const hasSchedule = (z) => Array.isArray(z.wanneer) && z.wanneer.some((b) => (b.dagen || []).length);
+function isOn(z, d, m) { return !hasSchedule(z) || z.wanneer.some((b) => blockOn(b, d, m)); }
+function computeVisible() {
+  const { d, m } = nowParts();
+  let v = STATIONS.map((z, i) => (isOn(z, d, m) ? i : -1)).filter((i) => i >= 0);
+  if (!v.length) v = STATIONS.map((_, i) => i);   // niets gepland: dan alles tonen
+  // Zenders die volgens het programma nú lopen komen vooraan; daarmee start de radio.
+  return v.filter((i) => hasSchedule(STATIONS[i])).concat(v.filter((i) => !hasSchedule(STATIONS[i])));
+}
+function scheduleTick() {
+  const v = computeVisible();
+  const changed = v.join() !== visible.join();
+  visible = v;
+  if (changed) buildPresets();
+  if (!visible.includes(st)) {
+    if (!playing) { st = visible[0]; idx = 0; fails = 0; pendingSwitch = false; renderLcd(); renderList(); if (ready) load(false); }
+    else pendingSwitch = true;
+  } else pendingSwitch = false;
+  renderProgramma();
+}
+function renderProgramma() {
+  const sec = $("programma");
+  const planned = STATIONS.filter(hasSchedule);
+  sec.hidden = !planned.length;
+  if (!planned.length) return;
+  const { d: today, m } = nowParts();
+  const week = $("week"); week.innerHTML = "";
+  [1, 2, 3, 4, 5, 6, 0].forEach((d) => {
+    const col = document.createElement("div"); col.className = "day" + (d === today ? " today" : "");
+    const h = document.createElement("h3"); h.textContent = DAGEN[d] + (d === today ? " · vandaag" : ""); col.appendChild(h);
+    const slots = [];
+    planned.forEach((z) => z.wanneer.forEach((b) => { if ((b.dagen || []).includes(d)) slots.push({ z, b }); }));
+    slots.sort((a, b) => toMin(a.b.van) - toMin(b.b.van));
+    if (!slots.length) { const n = document.createElement("span"); n.className = "none"; n.textContent = "Alleen vaste zenders"; col.appendChild(n); }
+    slots.forEach(({ z, b }) => {
+      const el = document.createElement("div");
+      el.className = "slot" + (d === today && blockOn(b, today, m) ? " now" : "")
+        + (d === (today + 6) % 7 && blockOn(b, today, m) && toMin(b.van) > m ? " now" : "");
+      const tm = document.createElement("b");
+      const full = toMin(b.van) === 0 && (!b.tot || b.tot === "00:00");
+      tm.textContent = full ? "Hele dag" : `${b.van || "00:00"}–${b.tot && b.tot !== "00:00" ? b.tot : "24:00"}`;
+      const nm = document.createElement("span"); nm.textContent = z.label;
+      el.append(tm, nm); col.appendChild(el);
+    });
+    week.appendChild(col);
+  });
+  const vast = STATIONS.filter((z) => !hasSchedule(z)).map((z) => z.label);
+  let p = sec.querySelector(".always");
+  if (!p) { p = document.createElement("p"); p.className = "always"; sec.appendChild(p); }
+  p.textContent = vast.length ? `Altijd te horen: ${vast.join(", ")}.` : "";
+  $("progSub").textContent = `Welke zender wanneer te horen is (${TZ === "America/Paramaribo" ? "Surinaamse" : "Nederlandse"} tijd).`;
+}
 
 function applySite(site) {
   if (!site) return;
@@ -366,14 +462,15 @@ function applySite(site) {
 
 function buildPresets() {
   const box = $("presets"); box.innerHTML = "";
-  STATIONS.forEach((z, i) => {
+  visible.forEach((i, pos) => {
+    const z = STATIONS[i];
     const b = document.createElement("button");
     b.className = "preset"; b.id = "st-" + i; b.dataset.st = i;
     b.setAttribute("aria-pressed", String(i === st));
-    b.textContent = `${i + 1} ${z.knop}`;
+    b.textContent = `${pos + 1} ${z.knop}`;
     const sm = document.createElement("small"); sm.textContent = z.onder || "";
     b.appendChild(sm);
-    b.addEventListener("click", () => { st = i; idx = 0; fails = 0; load(true); });
+    b.addEventListener("click", () => { st = i; idx = 0; fails = 0; pendingSwitch = false; load(true); });
     box.appendChild(b);
   });
 }
@@ -383,12 +480,18 @@ async function loadZenders() {
   if (!r.ok) throw new Error("zenders.json " + r.status);
   const data = await r.json();
   applySite(data.site);
+  if (data.site && data.site.tijdzone) TZ = data.site.tijdzone;
   STATIONS = (data.zenders || []).filter((z) => z.nummers && z.nummers.length).map((z) => ({
     knop: z.knop, onder: z.onder, label: z.naam || z.knop, name: (z.knop || "").toUpperCase(),
+    wanneer: Array.isArray(z.wanneer) ? z.wanneer : [],
     tracks: z.nummers.map((n) => n.lijst ? { list: n.lijst, t: n.titel || "Afspeellijst", a: n.artiest || "" }
                                          : { id: n.video, t: n.titel || "Nummer", a: n.artiest || "" }),
   }));
+  visible = computeVisible();
+  st = visible[0] || 0;
   buildPresets();
+  renderProgramma();
+  setInterval(scheduleTick, 30000);
 }
 
 
@@ -510,12 +613,14 @@ function renderList() {
     if (isOpenable && tracksOpen) renderTracks(li);
     list.appendChild(li);
   });
-  $("stopsTitle").textContent = `Haltes op zender ${st + 1}: ${STATIONS[st].label}`;
+  const p2 = visible.indexOf(st);
+  $("stopsTitle").textContent = `Haltes op zender ${p2 >= 0 ? p2 + 1 : ""}: ${STATIONS[st].label}`;
 }
 
 function renderLcd() {
   const tr = track();
-  $("lcdStation").textContent = `ZENDER ${st + 1} · ${STATIONS[st].name}`;
+  const pos = visible.indexOf(st);
+  $("lcdStation").textContent = `ZENDER ${pos >= 0 ? pos + 1 : "–"} · ${STATIONS[st].name}`;
   if (tr.list && plIds.length && plIndex >= 0) showPlaylistLcd();
   else { setText("lcdTitle", tr.t); setText("lcdArtist", tr.a); }
   $("ytLink").href = tr.list ? `https://www.youtube.com/playlist?list=${tr.list}` : `https://www.youtube.com/watch?v=${tr.id}`;
@@ -570,6 +675,9 @@ function showError(code) {
 }
 
 function step(d) {
+  if (pendingSwitch || !visible.includes(st)) {          // zender is van de lucht: naar wat nu op het programma staat
+    pendingSwitch = false; st = visible[0]; idx = 0; fails = 0; buildPresets(); load(true); return;
+  }
   const n = STATIONS[st].tracks.length;
   idx = (idx + d + n) % n;
   load(true);
@@ -604,7 +712,7 @@ window.onYouTubeIframeAPIReady = function () {
         else if (e.data === YT.PlayerState.ENDED) {
           const list = player.getPlaylist && player.getPlaylist();
           // In een afspeellijst gaat YouTube zelf door; pas na het laatste nummer naar de volgende halte.
-          if (!pl || !list || player.getPlaylistIndex() >= list.length - 1) { playing = false; step(1); return; }
+          if (pendingSwitch || !pl || !list || player.getPlaylistIndex() >= list.length - 1) { playing = false; step(1); return; }
         }
         if (pl) {
           const list = player.getPlaylist && player.getPlaylist();

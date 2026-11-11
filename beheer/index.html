@@ -57,6 +57,11 @@ input[type=text], input[type=password], input[type=url] {
   width: 100%; min-width: 0; font: inherit; color: var(--ink); background: var(--field);
   border: 1px solid #2c5a3b; border-radius: 8px; padding: 9px 11px;
 }
+select, input[type=time] {
+  font: inherit; color: var(--ink); background: var(--field); border: 1px solid #2c5a3b; border-radius: 8px; padding: 8px 10px; min-width: 0;
+}
+input[type=time] { width: 120px; }
+select:focus-visible, input[type=time]:focus-visible { outline: 3px solid var(--sr-yellow); outline-offset: 2px; }
 input:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid var(--sr-yellow); outline-offset: 2px; }
 .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .grid3 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.4fr); gap: 12px; }
@@ -98,6 +103,19 @@ ol.tracks { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
   .track { grid-template-columns: 60px minmax(0, 1fr); }
   .track .artist, .track .tools { grid-column: 2; }
 }
+.sched { background: rgba(0,0,0,.2); border-radius: 10px; padding: 12px; display: grid; gap: 10px; }
+.sched-head { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.sched-head b { font: 400 .95rem/1.2 var(--display); color: var(--gold); }
+.sched-head .sum { color: var(--muted); font-size: .88rem; }
+.quick { display: flex; gap: 6px; flex-wrap: wrap; }
+.quick button { padding: 6px 10px; font-size: .85rem; font-weight: 600; background: var(--field); color: var(--ink); border: 1px solid #3c6b4b; }
+.quick button[aria-pressed="true"] { background: var(--gold); color: #2a1a00; border-color: var(--gold); }
+.block { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; background: var(--field); border-radius: 8px; padding: 8px; }
+.days { display: flex; gap: 4px; flex-wrap: wrap; }
+.days button { width: 38px; height: 34px; padding: 0; font-size: .82rem; font-weight: 800; background: #0d2a17; color: var(--muted); border: 1px solid #2c5a3b; }
+.days button[aria-pressed="true"] { background: var(--sr-red); color: #fff; border-color: var(--gold); }
+.times { display: flex; gap: 6px; align-items: center; color: var(--muted); font-size: .88rem; }
+.block .icon { margin-left: auto; }
 .empty { color: var(--muted); font-size: .9rem; padding: 6px 2px; }
 
 .add { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -159,7 +177,7 @@ ol.tracks { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
     <div style="display:grid; gap:18px">
       <!-- Teksten -->
       <section class="panel">
-        <h2>Teksten van de site</h2>
+        <h2>Teksten en instellingen</h2>
         <p class="hint">Een <code>★</code> in de busroute wordt op de site een gele ster.</p>
         <div class="grid2">
           <label class="f" for="s-titel">Titel bovenaan<input type="text" id="s-titel" data-site="titel"></label>
@@ -168,6 +186,12 @@ ol.tracks { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
           <label class="f" for="s-welkom">Welkomsttekst<input type="text" id="s-welkom" data-site="welkom"></label>
           <label class="f" for="s-onderaan">Tekst onderaan<input type="text" id="s-onderaan" data-site="onderaan"></label>
           <label class="f" for="s-rechten">Regel over rechten<input type="text" id="s-rechten" data-site="rechten"></label>
+          <label class="f" for="s-tijdzone">Tijdzone van het programma
+            <select id="s-tijdzone" data-site="tijdzone">
+              <option value="Europe/Amsterdam">Nederlandse tijd</option>
+              <option value="America/Paramaribo">Surinaamse tijd</option>
+            </select>
+          </label>
         </div>
       </section>
 
@@ -270,10 +294,11 @@ async function login(t) {
 
 // ---------- Teksten ----------
 function fillSite() {
+  if (!data.site.tijdzone) data.site.tijdzone = "Europe/Amsterdam";
   document.querySelectorAll("[data-site]").forEach((inp) => { inp.value = data.site[inp.dataset.site] || ""; });
 }
-document.querySelectorAll("[data-site]").forEach((inp) =>
-  inp.addEventListener("input", () => { data.site[inp.dataset.site] = inp.value; setDirty(true); }));
+document.querySelectorAll("[data-site]").forEach((inp) => ["input", "change"].forEach((ev) =>
+  inp.addEventListener(ev, () => { data.site[inp.dataset.site] = inp.value; setDirty(true); })));
 
 // ---------- YouTube-links herkennen ----------
 function parseLink(raw) {
@@ -330,6 +355,84 @@ function field(label, value, onInput, id) {
   i.addEventListener("input", () => { onInput(i.value); setDirty(true); });
   l.appendChild(i);
   return l;
+}
+
+// ---------- Programmering per zender ----------
+const DAG_KORT = [["Ma", 1], ["Di", 2], ["Wo", 3], ["Do", 4], ["Vr", 5], ["Za", 6], ["Zo", 0]];
+const QUICK = [
+  ["Altijd", null],
+  ["Ma t/m do", [1, 2, 3, 4]],
+  ["Ma t/m vr", [1, 2, 3, 4, 5]],
+  ["Vr en za", [5, 6]],
+  ["Za en zo", [6, 0]],
+  ["Zondag", [0]],
+];
+function dagenTekst(d) {
+  const set = DAG_KORT.filter(([, n]) => d.includes(n)).map(([k]) => k.toLowerCase());
+  return set.length === 7 ? "elke dag" : set.join(", ");
+}
+function describe(w) {
+  const blocks = (w || []).filter((b) => (b.dagen || []).length);
+  if (!blocks.length) return "Altijd te horen";
+  return blocks.map((b) => {
+    const full = (b.van || "00:00") === "00:00" && (!b.tot || b.tot === "00:00");
+    return `${dagenTekst(b.dagen)} ${full ? "(hele dag)" : `${b.van || "00:00"}–${b.tot && b.tot !== "00:00" ? b.tot : "24:00"}`}`;
+  }).join(" · ");
+}
+function sameDays(a, b) { return a.length === b.length && a.every((x) => b.includes(x)); }
+function scheduleEditor(z, zi) {
+  z.wanneer = Array.isArray(z.wanneer) ? z.wanneer : [];
+  const box = document.createElement("div"); box.className = "sched";
+  const head = document.createElement("div"); head.className = "sched-head";
+  const t = document.createElement("b"); t.textContent = "Wanneer te horen?";
+  const sum = document.createElement("span"); sum.className = "sum"; sum.textContent = describe(z.wanneer);
+  head.append(t, sum);
+
+  const quick = document.createElement("div"); quick.className = "quick";
+  QUICK.forEach(([label, days]) => {
+    const b = document.createElement("button"); b.type = "button"; b.textContent = label;
+    const w = z.wanneer.filter((x) => (x.dagen || []).length);
+    const on = days === null ? !w.length
+      : w.length === 1 && sameDays(w[0].dagen, days) && (w[0].van || "00:00") === "00:00" && (!w[0].tot || w[0].tot === "00:00");
+    b.setAttribute("aria-pressed", String(on));
+    b.addEventListener("click", () => {
+      z.wanneer = days === null ? [] : [{ dagen: days.slice(), van: "00:00", tot: "00:00" }];
+      setDirty(true); renderZenders();
+    });
+    quick.appendChild(b);
+  });
+
+  box.append(head, quick);
+  z.wanneer.forEach((bl, bi) => {
+    bl.dagen = bl.dagen || [];
+    const row = document.createElement("div"); row.className = "block";
+    const days = document.createElement("div"); days.className = "days"; days.setAttribute("role", "group"); days.setAttribute("aria-label", "Dagen");
+    DAG_KORT.forEach(([k, n]) => {
+      const b = document.createElement("button"); b.type = "button"; b.textContent = k;
+      b.setAttribute("aria-pressed", String(bl.dagen.includes(n)));
+      b.addEventListener("click", () => {
+        bl.dagen = bl.dagen.includes(n) ? bl.dagen.filter((x) => x !== n) : bl.dagen.concat(n);
+        setDirty(true); renderZenders();
+      });
+      days.appendChild(b);
+    });
+    const times = document.createElement("span"); times.className = "times";
+    const van = document.createElement("input"); van.type = "time"; van.value = bl.van || "00:00"; van.id = `z${zi}-b${bi}-van`; van.setAttribute("aria-label", "Van");
+    const tot = document.createElement("input"); tot.type = "time"; tot.value = bl.tot || "00:00"; tot.id = `z${zi}-b${bi}-tot`; tot.setAttribute("aria-label", "Tot");
+    [van, tot].forEach((inp) => inp.addEventListener("change", () => {
+      bl.van = van.value || "00:00"; bl.tot = tot.value || "00:00"; setDirty(true); sum.textContent = describe(z.wanneer);
+    }));
+    times.append("van", van, "tot", tot);
+    row.append(days, times, iconBtn("Tijdblok verwijderen", "✕", () => { z.wanneer.splice(bi, 1); setDirty(true); renderZenders(); }, "del"));
+    box.appendChild(row);
+  });
+  const add = document.createElement("button"); add.type = "button"; add.className = "btn ghost"; add.textContent = "+ Tijdblok";
+  add.style.justifySelf = "start";
+  add.addEventListener("click", () => { z.wanneer.push({ dagen: [1, 2, 3, 4, 5], van: "06:00", tot: "12:00" }); setDirty(true); renderZenders(); });
+  const hint = document.createElement("p"); hint.className = "hint"; hint.style.margin = "0";
+  hint.textContent = "‘tot 00:00’ betekent tot middernacht. Een blok van 22:00 tot 02:00 loopt door tot na middernacht. Zonder tijdblok is de zender altijd te horen.";
+  box.append(add, hint);
+  return box;
 }
 
 let confirmDelete = null; // zender-index die op bevestiging wacht
@@ -414,7 +517,7 @@ function renderZenders() {
       if (!item.lijst && !item.titel) $(`z${zi}-n${z.nummers.length - 1}-titel`).focus();
     });
 
-    card.append(head, fields, ol, add);
+    card.append(head, fields, scheduleEditor(z, zi), ol, add);
     box.appendChild(card);
   });
 }
