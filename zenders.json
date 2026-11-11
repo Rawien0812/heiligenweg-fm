@@ -11,10 +11,23 @@
       "aan": true,
       "knop": "Live",
       "onder": "Hindoestaans",
-      "volgorde": "mix",
-      "bpm_van": "",
-      "bpm_tot": ""
-    }
+      "volgorde": "bpm",
+      "bpm_van": "110",
+      "bpm_tot": "160",
+      "bronnen": [
+        {
+          "lijst": "UUq-JyvYhPf5np5QzHiYlZpg",
+          "titel": "Muziekformatie Goodvibezz",
+          "artiest": ""
+        },
+        {
+          "lijst": "UUoAxYc2W1fBiHMsylavYWlg",
+          "titel": "Muziekformatie The Starzz_Suriname",
+          "artiest": ""
+        }
+      ]
+    },
+    "overgang": "5"
   },
   "zenders": [
     {
