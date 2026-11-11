@@ -451,7 +451,9 @@
         }
       ]
     },
-    "overgang": "5"
+    "overgang": "5",
+    "lcd_powered": "Powered by Rawgfx & Cafe de Kroon - Den Haag",
+    "lcd_rechten": "Alle muziek wordt afgespeeld via YouTube. De rechten liggen bij de artiesten en uploaders."
   },
   "zenders": []
 }

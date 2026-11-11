@@ -177,6 +177,14 @@ h1 {
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .lcd .artist { font-size: 1.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lcd .artist:empty { display: none; }
+.lcd .credit { font-size: 1.1rem; line-height: 1.15; margin-top: 6px; color: var(--sr-yellow); opacity: .9; white-space: nowrap; overflow: hidden; }
+.lcd .credit.small { font-size: .98rem; margin-top: 2px; color: var(--lcd-fg); opacity: .6; }
+.lcd .credit:empty { display: none; }
+/* LIVE-knop over de volle breedte, net zo breed als het scherm erboven */
+.presets .preset.is-live { grid-column: 1 / -1; padding-block: 14px; font-size: 1.15rem; }
+.presets .preset.is-live small { font-size: .78rem; }
+.presets .preset.is-live .livedot { position: absolute; left: 14px; top: 50%; margin-top: -.3em; }
 .lcd .scroll { text-overflow: clip; }
 .lcd .scroll > span { display: inline-block; padding-right: 3em; animation: marquee var(--dur, 12s) linear infinite; }
 @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
@@ -428,6 +436,8 @@ footer .sig { font: 400 1.1rem/1.2 var(--display); color: var(--gold); display: 
         <div class="row"><span id="lcdStation">ZENDER 1 · BAITHAK</span><span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span></div>
         <div class="title" id="lcdTitle">Druk op ▶ en rij mee</div>
         <div class="artist" id="lcdArtist">Halte Heiligenweg</div>
+        <div class="credit" id="lcdPowered">Powered by Rawgfx &amp; Cafe de Kroon - Den Haag</div>
+        <div class="credit small" id="lcdRechten">Alle muziek wordt afgespeeld via YouTube. De rechten liggen bij de artiesten en uploaders.</div>
       </div>
 
       <div class="presets" id="presets" role="group" aria-label="Zenders">
@@ -704,6 +714,13 @@ function renderProgramma() {
   $("progSub").textContent = `Welke zender wanneer te horen is (${TZ === "America/Paramaribo" ? "Surinaamse" : "Nederlandse"} tijd).`;
 }
 
+const credits = { p: "Powered by Rawgfx & Cafe de Kroon - Den Haag", r: "Alle muziek wordt afgespeeld via YouTube. De rechten liggen bij de artiesten en uploaders." };
+function refreshCredits() { setText("lcdPowered", credits.p); setText("lcdRechten", credits.r); }
+// Opnieuw meten als het lettertype geladen is of het scherm van grootte verandert (schuiven alleen als het niet past).
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(refreshCredits);
+let creditTimer = null;
+window.addEventListener("resize", () => { clearTimeout(creditTimer); creditTimer = setTimeout(refreshCredits, 200); });
+
 function applySite(site) {
   if (!site) return;
   const txt = (id, v) => { if (v != null && $(id)) $(id).textContent = v; };
@@ -712,6 +729,10 @@ function applySite(site) {
   txt("siteWelkom", site.welkom);
   txt("siteOnderaan", site.onderaan);
   txt("siteRechten", site.rechten);
+  // Vaste regels op het radioschermpje, onder de titel van het nummer.
+  if (site.lcd_powered != null) credits.p = site.lcd_powered;
+  if (site.lcd_rechten != null) credits.r = site.lcd_rechten;
+  refreshCredits();
   if (site.titel) document.title = site.titel;
   if (site.route != null) {
     const r = $("siteRoute"); r.textContent = "";
@@ -727,7 +748,7 @@ function buildPresets() {
   visible.forEach((i, pos) => {
     const z = STATIONS[i];
     const b = document.createElement("button");
-    b.className = "preset"; b.id = "st-" + i; b.dataset.st = i;
+    b.className = "preset" + (z.live ? " is-live" : ""); b.id = "st-" + i; b.dataset.st = i;
     b.setAttribute("aria-pressed", String(i === st));
     b.textContent = `${pos + 1} ${z.knop}`;
     if (z.live) { b.textContent = ""; const dot = document.createElement("span"); dot.className = "livedot"; dot.setAttribute("aria-hidden", "true"); b.append(dot, `${z.knop}`); }
