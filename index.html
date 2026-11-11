@@ -440,6 +440,7 @@ const STATIONS = [
 ];
 
 let st = 0, idx = 0, player = null, ready = false, wantPlay = false, playing = false, fails = 0;
+let userWants = false; // wil de luisteraar muziek? (los van pauzes door de telefoon)
 const $ = (id) => document.getElementById(id);
 const track = () => STATIONS[st].tracks[idx];
 
@@ -517,7 +518,7 @@ function renderTracks(li) {
       <span class="t"><strong></strong><span></span></span><span class="yt">${j === plIndex && playing ? "nu" : "▶"}</span>`;
     b.querySelector("strong").textContent = titles[vid] ? titles[vid].t : "Titel laden…";
     b.querySelector(".t > span").textContent = titles[vid] ? titles[vid].a : "";
-    b.addEventListener("click", () => { if (ready) { player.playVideoAt(j); checkStarted(); } });
+    b.addEventListener("click", () => { if (ready) { userWants = true; player.playVideoAt(j); checkStarted(); } });
     item.appendChild(b);
     ol.appendChild(item);
     wantTitle(vid);
@@ -547,7 +548,7 @@ function renderList() {
     b.addEventListener("click", () => {
       if (isOpenable) { tracksOpen = !tracksOpen; renderList(); return; }   // alleen open/dicht
       if (i === idx && ready && !tr.list) {                                // huidig nummer: pauze/verder
-        if (playing) player.pauseVideo(); else player.playVideo();
+        if (playing) { userWants = false; player.pauseVideo(); } else { userWants = true; player.playVideo(); }
         return;
       }
       idx = i; load(true);
@@ -573,6 +574,7 @@ function renderLcd() {
 
 function load(autoplay) {
   wantPlay = autoplay;
+  if (autoplay) userWants = true;
   plIds = []; plIndex = -1; tracksOpen = true;
   renderLcd(); renderList();
   if (!ready) { ensureApi(); return; }
@@ -673,7 +675,8 @@ window.onYouTubeIframeAPIReady = function () {
 
 $("play").addEventListener("click", () => {
   if (!ready) { wantPlay = true; setText("lcdTitle", "Radio wordt geladen…"); ensureApi(); return; }
-  if (playing) { player.pauseVideo(); return; }
+  if (playing) { userWants = false; player.pauseVideo(); return; }
+  userWants = true;
   const s = player.getPlayerState();
   if (s === YT.PlayerState.UNSTARTED || s === YT.PlayerState.CUED || s === YT.PlayerState.PAUSED) { player.playVideo(); checkStarted(); }
   else load(true);
@@ -707,6 +710,19 @@ $("bell").addEventListener("click", () => {
 // YouTube meteen laden, zodat een tik op ▶ direct geluid geeft (telefoons eisen dat).
 setText("lcdTitle", "Radio wordt geladen…");
 ensureApi();
+
+// Telefoon ontgrendeld of terug naar dit tabblad: pauzeerde de telefoon de muziek, speel dan verder.
+function resumeIfWanted() {
+  if (document.visibilityState !== "visible" || !ready || !userWants) return;
+  const s = player.getPlayerState();
+  if (s === YT.PlayerState.PAUSED || s === YT.PlayerState.CUED) {
+    player.playVideo();
+    checkStarted();
+  }
+}
+document.addEventListener("visibilitychange", () => setTimeout(resumeIfWanted, 300));
+window.addEventListener("pageshow", () => setTimeout(resumeIfWanted, 300));
+window.addEventListener("focus", () => setTimeout(resumeIfWanted, 300));
 
 // Aftellen naar Srefidensi (25 november 1975).
 (function countdown() {
