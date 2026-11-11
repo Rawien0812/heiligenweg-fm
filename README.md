@@ -19,5 +19,5 @@ Alles staat in `zenders.json`; de beheerpagina slaat wijzigingen via de GitHub-A
 Inloggen gaat met een fine-grained GitHub-token met alleen toegang tot deze repo (Contents: Read and write).
 
 ## Tv-modus
-Open de site met `#tv` erachter (bijvoorbeeld `https://rawien0812.github.io/heiligenweg-fm/#tv`) voor een tv-weergave: video schermvullend, nu-speelt-info, Top 5 met QR-code. Bediening met de afstandsbediening: OK = afspelen/pauze, ← → = vorige/volgende, ↑ ↓ = volume.
+Open `https://rawien0812.github.io/heiligenweg-fm/tv` (of de site met `#tv` erachter) voor een tv-weergave: video schermvullend, nu-speelt-info, Top 5 met QR-code. Bediening met de afstandsbediening: OK = afspelen/pauze, ← → = vorige/volgende, ↑ ↓ = volume.
 De QR-code wordt gemaakt met `js/qrcode.js` (qrcode-generator van Kazuhiko Arase, MIT-licentie).
