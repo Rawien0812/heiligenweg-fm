@@ -1,0 +1,274 @@
+{
+  "site": {
+    "titel": "Heiligenweg FM",
+    "route": "Lijn PL ★ Heiligenweg ⇄ Lelydorp ★ SRD 7,50",
+    "welkom_groot": "Kon na ini!",
+    "welkom": "Schuif door naar achter. De chauffeur zet baithak gana, kaseko en Trafassi op. Hard.",
+    "onderaan": "Gemaakt door Rawien Paltoe.",
+    "rechten": "Alle muziek wordt afgespeeld via YouTube. De rechten liggen bij de artiesten en uploaders."
+  },
+  "zenders": [
+    {
+      "knop": "Baithak",
+      "onder": "Sarnami",
+      "naam": "Baithak gana",
+      "nummers": [
+        {
+          "video": "BTxPMSib_-w",
+          "titel": "Siya Ram Milan Kab Hoi",
+          "artiest": "Ramdew Chaitoe"
+        },
+        {
+          "video": "aT4LU66gcpw",
+          "titel": "Bhaija Bharat Ghar Djawo",
+          "artiest": "Ramdew Chaitoe"
+        },
+        {
+          "video": "qsyU4fYSRhg",
+          "titel": "Koyele Bina Begia",
+          "artiest": "Ramdew Chaitoe"
+        },
+        {
+          "video": "AxMDGpICupc",
+          "titel": "Koi Na Banai",
+          "artiest": "Ramdew Chaitoe"
+        },
+        {
+          "video": "Cs995YwpO_0",
+          "titel": "Gowri Pooja",
+          "artiest": "Dropati"
+        },
+        {
+          "video": "ICRemvNmXps",
+          "titel": "Live, met Remy Mangal op tabla",
+          "artiest": "Ramdew Chaitoe"
+        }
+      ]
+    },
+    {
+      "knop": "Kaseko",
+      "onder": "Sranan",
+      "naam": "Kaseko & Sranan",
+      "nummers": [
+        {
+          "video": "G4CMPyuXAo0",
+          "titel": "Adjossi",
+          "artiest": "Max Nijman"
+        },
+        {
+          "video": "Mgg7QY0eL2c",
+          "titel": "Ai Sranang",
+          "artiest": "Max Nijman"
+        },
+        {
+          "video": "-1OlYc9WQFg",
+          "titel": "Carolina",
+          "artiest": "Max Nijman"
+        },
+        {
+          "video": "OwcH4bTm3mc",
+          "titel": "Farawé",
+          "artiest": "Max Nijman"
+        },
+        {
+          "video": "So3GnNn6AE8",
+          "titel": "Katibo (album, 1975)",
+          "artiest": "Max Nijman"
+        },
+        {
+          "video": "1LOapHwR_Bs",
+          "titel": "Meri Mi Kaseko Medley",
+          "artiest": "Sonic"
+        }
+      ]
+    },
+    {
+      "knop": "Trafassi",
+      "onder": "Feestband",
+      "naam": "Trafassi",
+      "nummers": [
+        {
+          "video": "DgH-byHczE0",
+          "titel": "Asema",
+          "artiest": "Trafassi"
+        },
+        {
+          "video": "TQFri3RCwqs",
+          "titel": "Wasmasjien",
+          "artiest": "Trafassi"
+        },
+        {
+          "video": "kCDItTkse50",
+          "titel": "Bigarh Gailie Baba Paiman",
+          "artiest": "Trafassi"
+        },
+        {
+          "video": "u8Jg-2c4dmU",
+          "titel": "Oh Oh Tonight",
+          "artiest": "Trafassi"
+        },
+        {
+          "video": "uLG1i7Xwq-Y",
+          "titel": "Brombere",
+          "artiest": "Trafassi"
+        }
+      ]
+    },
+    {
+      "knop": "Dewinder",
+      "onder": "Sewnath",
+      "naam": "Dewindersingh Sewnath",
+      "nummers": [
+        {
+          "lijst": "PL-dj7aGnOdlIla0_fNhGUhp6kNVFlXLhe",
+          "titel": "Best of (hele afspeellijst)",
+          "artiest": "Dewindersingh Sewnath"
+        },
+        {
+          "lijst": "PLDt039exsD-UiQm3-LIyVE05lSktCQuEc",
+          "titel": "Volume 15 (hele afspeellijst)",
+          "artiest": "Dewindersingh Sewnath"
+        },
+        {
+          "video": "6cXOJN316iA",
+          "titel": "Hamaar Machiniya",
+          "artiest": "Dewindersingh Sewnath"
+        },
+        {
+          "video": "e4S5SnWeBQs",
+          "titel": "Fly Butterfly",
+          "artiest": "Dewindersingh Sewnath"
+        },
+        {
+          "video": "hhGuwyrSWfc",
+          "titel": "Do Sathi",
+          "artiest": "Dewindersingh Sewnath & Savita Singh"
+        },
+        {
+          "video": "o5yJ10ohNJg",
+          "titel": "Behni Ki Yehi Armaan V2",
+          "artiest": "Dewindersingh Sewnath"
+        },
+        {
+          "video": "Ckp1_nExQdk",
+          "titel": "Soete Na Dewe",
+          "artiest": "Dewindersingh Sewnath"
+        },
+        {
+          "video": "PWV4t2WSvxY",
+          "titel": "Jab Gaile Choetie",
+          "artiest": "Dewindersingh Sewnath"
+        },
+        {
+          "video": "o6ycpeFp7h0",
+          "titel": "Shirley Gyal / Gorkie Sugharkie",
+          "artiest": "Dewindersingh Sewnath"
+        },
+        {
+          "video": "b4E5kcIEpEM",
+          "titel": "Ek Dil Ka Lagana",
+          "artiest": "Dewindersingh Sewnath"
+        },
+        {
+          "video": "cDUWcy3Ohi0",
+          "titel": "Mehndi Lagi Meri Haath",
+          "artiest": "Dewindersingh Sewnath"
+        },
+        {
+          "video": "ulbnuGww3VE",
+          "titel": "Gori Ratiya Ke Nindiya",
+          "artiest": "Dewindersingh Sewnath"
+        },
+        {
+          "video": "S6O_baNwVgY",
+          "titel": "Arhar Ke Daal",
+          "artiest": "Dewindersingh Sewnath"
+        },
+        {
+          "video": "Soo-l0gMoPY",
+          "titel": "Jhini Jhini Boeniya (live)",
+          "artiest": "Dewindersingh Sewnath"
+        },
+        {
+          "video": "Edy4SGlUQPE",
+          "titel": "Koiye Na Ledjaiye (live)",
+          "artiest": "Dewindersingh Sewnath"
+        },
+        {
+          "video": "-IuO86_rqbw",
+          "titel": "Chali Re Moehwa Chikni (live)",
+          "artiest": "Dewindersingh Sewnath"
+        },
+        {
+          "video": "vQdt11Db_90",
+          "titel": "Medley",
+          "artiest": "Dewindersingh Sewnath & Swastika"
+        },
+        {
+          "video": "FPSfrErWp2o",
+          "titel": "Baithak Gana Group Swastika",
+          "artiest": "Dewindersingh Sewnath & Swastika"
+        },
+        {
+          "video": "wdoITJlVujM",
+          "titel": "Live met Swastika",
+          "artiest": "Dewindersingh Sewnath & Swastika"
+        },
+        {
+          "video": "s9eit1LYAY8",
+          "titel": "The Lion of Baithakgana (live)",
+          "artiest": "Dewindersingh Sewnath"
+        },
+        {
+          "video": "Hj53v0ImSjg",
+          "titel": "Live",
+          "artiest": "Dewindersingh Sewnath"
+        },
+        {
+          "video": "1ONvwr-C-3E",
+          "titel": "Volume 10",
+          "artiest": "Dewindersingh Sewnath"
+        },
+        {
+          "video": "g_2M3XrhsDs",
+          "titel": "Volume 18 (live)",
+          "artiest": "Dewindersingh Sewnath"
+        }
+      ]
+    },
+    {
+      "knop": "Krishwam",
+      "onder": "Chedi",
+      "naam": "Krishwam Chedi",
+      "nummers": [
+        {
+          "lijst": "PLaN1CATOpp3Q",
+          "titel": "Alle nummers (afspeellijst)",
+          "artiest": "Krishwam Chedi"
+        }
+      ]
+    },
+    {
+      "knop": "Goodvibezz",
+      "onder": "Muziekformatie",
+      "naam": "Muziekformatie Goodvibezz",
+      "nummers": [
+        {
+          "lijst": "UUq-JyvYhPf5np5QzHiYlZpg",
+          "titel": "Hele kanaal (alle uploads)",
+          "artiest": "Muziekformatie Goodvibezz"
+        },
+        {
+          "video": "_aioKAVQ220",
+          "titel": "Goodvibezz Mixtape 3.0",
+          "artiest": "DJ Venom · Goodvibezz"
+        },
+        {
+          "video": "_PubxSGcMEo",
+          "titel": "Aaja Re O Sanam",
+          "artiest": "Krishwam Chedi & Goodvibezz"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Heiligenweg FM Beheer</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Archivo:wght@400;600;800&family=VT323&display=swap">
+<style>
+/* Layout: één kolom werkblad. Bovenaan inloggen, dan teksten van de site, dan per zender een kaart
+   met de nummers. Onderaan een vaste balk met Opslaan. Zelfde groen/goud als de radio. */
+:root {
+  --sr-green: #377e3f;
+  --sr-red: #b40a2d;
+  --sr-yellow: #ecc81d;
+  --gold: #f6c64a;
+  --gold-deep: #b8860b;
+  --forest: #0b2413;
+  --card: #123a21;
+  --card-2: #0f3019;
+  --field: #0a1f11;
+  --ink: #f4f7f2;
+  --muted: #b7cbb9;
+  --ok: #6fdc8c;
+  --bad: #ff7a8a;
+  --display: "Bungee", "Impact", system-ui, sans-serif;
+  --body: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "VT323", ui-monospace, "Courier New", monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body {
+  background: var(--forest); color: var(--ink); font: 16px/1.5 var(--body);
+  padding-top: env(safe-area-inset-top, 0px); padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px));
+}
+.wrap {
+  max-width: 860px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.flag { height: 12px; background: linear-gradient(to bottom, var(--sr-green) 0 20%, #fff 20% 30%, var(--sr-red) 30% 70%, #fff 70% 80%, var(--sr-green) 80%); }
+header .wrap { padding-block: 22px 8px; display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+h1 { margin: 0; font: 400 clamp(1.4rem, 4vw, 2rem)/1.1 var(--display); color: var(--gold); }
+h1 small { display: block; font: 600 .8rem/1.2 var(--body); color: var(--muted); letter-spacing: .08em; text-transform: uppercase; margin-top: 4px; }
+h2 { margin: 0 0 4px; font: 400 1.2rem/1.2 var(--display); color: var(--gold); }
+.hint { margin: 0 0 12px; color: var(--muted); font-size: .9rem; max-width: 65ch; }
+main { display: grid; gap: 18px; padding-block: 12px 30px; }
+section.panel { background: var(--card); border-radius: 12px; padding: 18px; border: 1px solid rgba(246,198,74,.25); min-width: 0; }
+
+label.f { display: grid; gap: 4px; font-weight: 600; font-size: .9rem; min-width: 0; }
+label.f span.sub { font-weight: 400; color: var(--muted); font-size: .8rem; }
+input[type=text], input[type=password], input[type=url] {
+  width: 100%; min-width: 0; font: inherit; color: var(--ink); background: var(--field);
+  border: 1px solid #2c5a3b; border-radius: 8px; padding: 9px 11px;
+}
+input:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid var(--sr-yellow); outline-offset: 2px; }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.grid3 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.4fr); gap: 12px; }
+@media (max-width: 640px) { .grid2, .grid3 { grid-template-columns: minmax(0, 1fr); } }
+
+button { font: inherit; cursor: pointer; border: 0; border-radius: 8px; }
+.btn { padding: 9px 14px; font-weight: 800; background: #fff; color: #111; }
+.btn.gold { background: linear-gradient(180deg, #ffe58a, var(--gold) 55%, #d9a21f); color: #2a1a00; box-shadow: 0 3px 0 #7a5200; }
+.btn.red { background: var(--sr-red); color: #fff; }
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid #3c6b4b; font-weight: 600; }
+.icon { width: 36px; height: 36px; display: inline-grid; place-items: center; background: var(--field); color: var(--ink); border: 1px solid #2c5a3b; font-size: 1rem; }
+.icon.del { color: var(--bad); }
+.icon:disabled { opacity: .35; cursor: default; }
+
+.login-row { display: flex; gap: 10px; align-items: end; flex-wrap: wrap; }
+.login-row label.f { flex: 1 1 260px; }
+details.help { margin-top: 12px; background: var(--card-2); border-radius: 8px; padding: 10px 14px; }
+details.help summary { cursor: pointer; font-weight: 600; }
+details.help ol { margin: 8px 0 4px; padding-left: 20px; display: grid; gap: 4px; }
+details.help a, .hint a { color: var(--gold); }
+code { font-family: var(--mono); font-size: 1.1em; background: #000; padding: 0 5px; border-radius: 4px; color: var(--sr-yellow); }
+
+/* Zender-kaart */
+.zender { background: var(--card-2); border-radius: 12px; padding: 14px; display: grid; gap: 12px; border-left: 5px solid var(--sr-red); }
+.zender-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.zender-head .nr { font: 400 1.1rem/1 var(--display); color: #2a1a00; background: var(--gold); border-radius: 6px; padding: 6px 10px; }
+.zender-head .title { font: 400 1.05rem/1.2 var(--display); flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.zender-head .tools { display: flex; gap: 6px; }
+.zenders { display: grid; gap: 14px; }
+
+ol.tracks { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.track { display: grid; grid-template-columns: 70px minmax(0, 1fr) minmax(0, .8fr) auto; gap: 8px; align-items: center; background: var(--field); border-radius: 8px; padding: 8px; }
+.track .kind { font: 1rem/1 var(--mono); text-align: center; padding: 5px 0; border-radius: 4px; background: #000; color: var(--sr-yellow); }
+.track .kind.pl { background: var(--gold); color: #2a1a00; }
+.track input { padding: 6px 8px; }
+.track .tools { display: flex; gap: 4px; }
+.track .tools .icon { width: 32px; height: 32px; }
+@media (max-width: 640px) {
+  .track { grid-template-columns: 60px minmax(0, 1fr); }
+  .track .artist, .track .tools { grid-column: 2; }
+}
+.empty { color: var(--muted); font-size: .9rem; padding: 6px 2px; }
+
+.add { display: flex; gap: 8px; flex-wrap: wrap; }
+.add input { flex: 1 1 260px; }
+.msg { font-size: .88rem; margin: 0; min-height: 1.3em; }
+.msg.ok { color: var(--ok); }
+.msg.bad { color: var(--bad); }
+
+/* Vaste balk onderaan */
+.savebar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
+  background: #071a0d; border-top: 3px solid var(--gold-deep);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.savebar .wrap { padding-block: 12px; display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.savebar .state { font-size: .9rem; color: var(--muted); min-width: 0; }
+.savebar .state.dirty { color: var(--gold); font-weight: 600; }
+.savebar .state.ok { color: var(--ok); }
+.savebar .state.bad { color: var(--bad); }
+.savebar .state a { color: var(--gold); }
+.savebar .actions { display: flex; gap: 8px; }
+</style>
+</head>
+<body>
+<div class="flag" aria-hidden="true"></div>
+<header>
+  <div class="wrap">
+    <h1>Heiligenweg FM<small>Beheer van zenders en teksten</small></h1>
+    <a class="btn ghost" href="../" target="_blank" rel="noopener" style="text-decoration:none">Bekijk de site ↗</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- Inloggen -->
+  <section class="panel" id="loginPanel">
+    <h2>Inloggen</h2>
+    <p class="hint">Je wijzigingen worden direct in je GitHub-repo opgeslagen. Daarvoor heb je één keer een sleutel (token) van GitHub nodig. Die blijft alleen in deze browser.</p>
+    <form class="login-row" id="loginForm">
+      <label class="f" for="token">GitHub-sleutel
+        <input type="password" id="token" autocomplete="off" placeholder="github_pat_…" required>
+      </label>
+      <button class="btn gold" type="submit" id="loginBtn">Inloggen</button>
+    </form>
+    <p class="msg" id="loginMsg"></p>
+    <details class="help" id="helpBox">
+      <summary>Hoe maak ik een GitHub-sleutel? (eenmalig, 2 minuten)</summary>
+      <ol>
+        <li>Open <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com/settings/personal-access-tokens/new</a> (ingelogd op GitHub).</li>
+        <li><b>Token name</b>: bijvoorbeeld <code>Heiligenweg beheer</code>. <b>Expiration</b>: kies zelf, bijvoorbeeld 1 jaar.</li>
+        <li><b>Repository access</b>: kies <b>Only select repositories</b> en selecteer <code id="repoName">heiligenweg-fm</code>.</li>
+        <li><b>Permissions</b> → <b>Repository permissions</b> → <b>Contents</b>: zet op <b>Read and write</b>.</li>
+        <li>Klik onderaan op <b>Generate token</b>, kopieer de sleutel (begint met <code>github_pat_</code>) en plak hem hierboven.</li>
+      </ol>
+      <p class="hint" style="margin:6px 0 0">Deze sleutel kan alleen deze ene repo aanpassen. Deel hem met niemand.</p>
+    </details>
+  </section>
+
+  <div id="editor" hidden>
+    <div style="display:grid; gap:18px">
+      <!-- Teksten -->
+      <section class="panel">
+        <h2>Teksten van de site</h2>
+        <p class="hint">Een <code>★</code> in de busroute wordt op de site een gele ster.</p>
+        <div class="grid2">
+          <label class="f" for="s-titel">Titel bovenaan<input type="text" id="s-titel" data-site="titel"></label>
+          <label class="f" for="s-route">Busroute (zwart bordje)<input type="text" id="s-route" data-site="route"></label>
+          <label class="f" for="s-welkom_groot">Welkom (in goud)<input type="text" id="s-welkom_groot" data-site="welkom_groot"></label>
+          <label class="f" for="s-welkom">Welkomsttekst<input type="text" id="s-welkom" data-site="welkom"></label>
+          <label class="f" for="s-onderaan">Tekst onderaan<input type="text" id="s-onderaan" data-site="onderaan"></label>
+          <label class="f" for="s-rechten">Regel over rechten<input type="text" id="s-rechten" data-site="rechten"></label>
+        </div>
+      </section>
+
+      <!-- Zenders -->
+      <section class="panel">
+        <h2>Zenders</h2>
+        <p class="hint">Plak een YouTube-link bij een zender om muziek toe te voegen. Dat kan een <b>video</b>, een <b>afspeellijst</b> (<code>list=</code>) of een <b>kanaal</b> (<code>/channel/UC…</code> of alleen de kanaal-ID <code>UC…</code>) zijn. Een afspeellijst of kanaal speelt op de site <b>alle</b> nummers af.</p>
+        <div class="zenders" id="zenders"></div>
+        <div style="margin-top:14px"><button class="btn ghost" type="button" id="addZender">+ Zender toevoegen</button></div>
+      </section>
+
+      <section class="panel">
+        <h2>Uitloggen</h2>
+        <p class="hint">Gebruik je een computer die niet van jou is? Log dan uit als je klaar bent; de sleutel wordt dan uit deze browser verwijderd.</p>
+        <button class="btn ghost" type="button" id="logout">Uitloggen</button>
+      </section>
+    </div>
+  </div>
+</main>
+
+<div class="savebar" id="savebar" hidden>
+  <div class="wrap">
+    <span class="state" id="saveState">Alles is opgeslagen.</span>
+    <span class="actions">
+      <button class="btn ghost" type="button" id="reload">Opnieuw laden</button>
+      <button class="btn gold" type="button" id="save">Opslaan en publiceren</button>
+    </span>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+
+// Welke repo? Op rawien0812.github.io/heiligenweg-fm/beheer/ halen we het uit het adres.
+const REPO = (() => {
+  const h = location.hostname, seg = location.pathname.split("/").filter(Boolean);
+  if (h.endsWith(".github.io") && seg.length) return { owner: h.split(".")[0], name: seg[0] };
+  return { owner: "Rawien0812", name: "heiligenweg-fm" };
+})();
+const FILE = "zenders.json", BRANCH = "main";
+const API = `https://api.github.com/repos/${REPO.owner}/${REPO.name}/contents/${FILE}`;
+$("repoName").textContent = REPO.name;
+
+let token = "", sha = null, data = null, dirty = false;
+const store = {
+  get() { try { return localStorage.getItem("hfm-token") || ""; } catch (e) { return ""; } },
+  set(v) { try { localStorage.setItem("hfm-token", v); } catch (e) {} },
+  clear() { try { localStorage.removeItem("hfm-token"); } catch (e) {} },
+};
+
+// ---------- Base64 met UTF-8 (voor é, ★, ⇄ …) ----------
+function toB64(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+function fromB64(b64) {
+  const bin = atob(b64.replace(/\s/g, ""));
+  return new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0)));
+}
+
+// ---------- GitHub ----------
+async function gh(method, body) {
+  const r = await fetch(API + (method === "GET" ? `?ref=${BRANCH}&t=${Date.now()}` : ""), {
+    method,
+    headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28",
+               ...(body ? { "Content-Type": "application/json" } : {}) },
+    body: body ? JSON.stringify(body) : undefined,
+    cache: "no-store",
+  });
+  const json = await r.json().catch(() => ({}));
+  if (!r.ok) { const e = new Error(json.message || r.statusText); e.status = r.status; throw e; }
+  return json;
+}
+function explain(e) {
+  if (e.status === 401) return "De sleutel klopt niet of is verlopen. Maak een nieuwe aan (zie uitleg hieronder).";
+  if (e.status === 403) return "De sleutel mag deze repo niet aanpassen. Zet bij Permissions → Contents op ‘Read and write’ en kies de repo " + REPO.name + ".";
+  if (e.status === 404) return "Repo of bestand niet gevonden. Heb je bij ‘Repository access’ de repo " + REPO.name + " gekozen?";
+  if (e.status === 409 || e.status === 422) return "Iemand anders heeft net ook opgeslagen. Klik op ‘Opnieuw laden’ en doe je wijziging nog een keer.";
+  return "Er ging iets mis: " + e.message + ". Controleer je internetverbinding en probeer het opnieuw.";
+}
+
+async function login(t) {
+  token = t.trim();
+  $("loginMsg").className = "msg"; $("loginMsg").textContent = "Bezig met inloggen…";
+  try {
+    const res = await gh("GET");
+    sha = res.sha;
+    data = JSON.parse(fromB64(res.content));
+    data.site = data.site || {}; data.zenders = data.zenders || [];
+    store.set(token);
+    $("loginPanel").hidden = true; $("editor").hidden = false; $("savebar").hidden = false;
+    fillSite(); renderZenders(); setDirty(false);
+  } catch (e) {
+    $("loginMsg").className = "msg bad"; $("loginMsg").textContent = explain(e);
+    $("helpBox").open = true;
+  }
+}
+
+// ---------- Teksten ----------
+function fillSite() {
+  document.querySelectorAll("[data-site]").forEach((inp) => { inp.value = data.site[inp.dataset.site] || ""; });
+}
+document.querySelectorAll("[data-site]").forEach((inp) =>
+  inp.addEventListener("input", () => { data.site[inp.dataset.site] = inp.value; setDirty(true); }));
+
+// ---------- YouTube-links herkennen ----------
+function parseLink(raw) {
+  const s = raw.trim();
+  if (!s) return { error: "Plak eerst een YouTube-link." };
+  if (/^UC[\w-]{22}$/.test(s)) return { lijst: "UU" + s.slice(2), kind: "kanaal" };
+  if (/^(PL|UU|OL|RD|FL)[\w-]{8,}$/.test(s)) return { lijst: s, kind: "afspeellijst" };
+  if (/^[\w-]{11}$/.test(s)) return { video: s, kind: "video" };
+  let u;
+  try { u = new URL(/^https?:\/\//i.test(s) ? s : "https://" + s); } catch (e) { return { error: "Dit is geen geldige link." }; }
+  const host = u.hostname.replace(/^www\.|^m\.|^music\./, "");
+  if (!/^(youtube\.com|youtu\.be|youtube-nocookie\.com)$/.test(host)) return { error: "Dit is geen YouTube-link." };
+  const p = u.pathname;
+  const ch = p.match(/^\/channel\/(UC[\w-]{22})/);
+  if (ch) return { lijst: "UU" + ch[1].slice(2), kind: "kanaal" };
+  if (/^\/@/.test(p) || /^\/(c|user)\//.test(p))
+    return { error: "Een kanaal met @-naam kan ik niet direct gebruiken. Ga op YouTube naar het kanaal → ‘…meer’ → ‘Kanaal delen’ → ‘Kanaal-ID kopiëren’ en plak die code (begint met UC)." };
+  const list = u.searchParams.get("list");
+  let v = u.searchParams.get("v");
+  if (host === "youtu.be") v = p.slice(1, 12);
+  const m = p.match(/^\/(shorts|live|embed)\/([\w-]{11})/);
+  if (m) v = m[2];
+  if (p.startsWith("/playlist") && list) return { lijst: list, kind: "afspeellijst" };
+  if (v && /^[\w-]{11}$/.test(v)) return { video: v, kind: "video" };
+  if (list) return { lijst: list, kind: "afspeellijst" };
+  return { error: "Ik herken deze YouTube-link niet. Plak de link van een video, afspeellijst of kanaal." };
+}
+async function fetchTitle(vid) {
+  const url = encodeURIComponent("https://www.youtube.com/watch?v=" + vid);
+  for (const api of ["https://www.youtube.com/oembed?format=json&url=", "https://noembed.com/embed?url="]) {
+    try {
+      const r = await fetch(api + url);
+      if (!r.ok) continue;
+      const d = await r.json();
+      if (d && d.title) return { titel: d.title, artiest: d.author_name || "" };
+    } catch (e) {}
+  }
+  return null;
+}
+const ytUrl = (n) => n.lijst ? `https://www.youtube.com/playlist?list=${n.lijst}` : `https://www.youtube.com/watch?v=${n.video}`;
+
+// ---------- Zenders tekenen ----------
+function move(arr, i, d) { const j = i + d; if (j < 0 || j >= arr.length) return; [arr[i], arr[j]] = [arr[j], arr[i]]; }
+function iconBtn(label, text, onClick, cls = "") {
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "icon " + cls; b.title = label; b.setAttribute("aria-label", label); b.textContent = text;
+  b.addEventListener("click", onClick);
+  return b;
+}
+function field(label, value, onInput, id) {
+  const l = document.createElement("label"); l.className = "f"; l.htmlFor = id;
+  l.append(label);
+  const i = document.createElement("input"); i.type = "text"; i.id = id; i.value = value || "";
+  i.addEventListener("input", () => { onInput(i.value); setDirty(true); });
+  l.appendChild(i);
+  return l;
+}
+
+let confirmDelete = null; // zender-index die op bevestiging wacht
+function renderZenders() {
+  const box = $("zenders"); box.innerHTML = "";
+  if (!data.zenders.length) { const p = document.createElement("p"); p.className = "empty"; p.textContent = "Nog geen zenders. Klik op ‘+ Zender toevoegen’."; box.appendChild(p); }
+  data.zenders.forEach((z, zi) => {
+    z.nummers = z.nummers || [];
+    const card = document.createElement("article"); card.className = "zender";
+
+    const head = document.createElement("div"); head.className = "zender-head";
+    const nr = document.createElement("span"); nr.className = "nr"; nr.textContent = zi + 1;
+    const title = document.createElement("span"); title.className = "title"; title.textContent = `${z.knop || "Nieuwe zender"} · ${z.nummers.length} ${z.nummers.length === 1 ? "item" : "items"}`;
+    const tools = document.createElement("span"); tools.className = "tools";
+    const up = iconBtn("Zender omhoog", "↑", () => { move(data.zenders, zi, -1); setDirty(true); renderZenders(); }); up.disabled = zi === 0;
+    const dn = iconBtn("Zender omlaag", "↓", () => { move(data.zenders, zi, 1); setDirty(true); renderZenders(); }); dn.disabled = zi === data.zenders.length - 1;
+    tools.append(up, dn);
+    if (confirmDelete === zi) {
+      const yes = document.createElement("button"); yes.type = "button"; yes.className = "btn red"; yes.textContent = "Ja, verwijder zender";
+      yes.addEventListener("click", () => { data.zenders.splice(zi, 1); confirmDelete = null; setDirty(true); renderZenders(); });
+      const no = document.createElement("button"); no.type = "button"; no.className = "btn ghost"; no.textContent = "Nee";
+      no.addEventListener("click", () => { confirmDelete = null; renderZenders(); });
+      tools.append(yes, no);
+    } else {
+      tools.append(iconBtn("Zender verwijderen", "🗑", () => { confirmDelete = zi; renderZenders(); }, "del"));
+    }
+    head.append(nr, title, tools);
+
+    const fields = document.createElement("div"); fields.className = "grid3";
+    fields.append(
+      field("Naam op de knop", z.knop, (v) => { z.knop = v; title.textContent = `${v || "Nieuwe zender"} · ${z.nummers.length} items`; }, `z${zi}-knop`),
+      field("Kleine tekst op de knop", z.onder, (v) => { z.onder = v; }, `z${zi}-onder`),
+      field("Volledige naam (boven de lijst)", z.naam, (v) => { z.naam = v; }, `z${zi}-naam`),
+    );
+
+    const ol = document.createElement("ol"); ol.className = "tracks";
+    if (!z.nummers.length) { const li = document.createElement("li"); li.className = "empty"; li.textContent = "Nog geen muziek. Een zender zonder muziek verschijnt niet op de site."; ol.appendChild(li); }
+    z.nummers.forEach((n, ni) => {
+      const li = document.createElement("li"); li.className = "track";
+      const kind = document.createElement("a"); kind.className = "kind" + (n.lijst ? " pl" : ""); kind.textContent = n.lijst ? (n.lijst.startsWith("UU") ? "KANAAL" : "LIJST") : "VIDEO";
+      kind.href = ytUrl(n); kind.target = "_blank"; kind.rel = "noopener"; kind.title = "Open op YouTube"; kind.style.textDecoration = "none";
+      const t = document.createElement("input"); t.type = "text"; t.value = n.titel || ""; t.placeholder = "Titel"; t.id = `z${zi}-n${ni}-titel`; t.setAttribute("aria-label", "Titel");
+      t.addEventListener("input", () => { n.titel = t.value; setDirty(true); });
+      const a = document.createElement("input"); a.type = "text"; a.value = n.artiest || ""; a.placeholder = "Artiest"; a.className = "artist"; a.id = `z${zi}-n${ni}-artiest`; a.setAttribute("aria-label", "Artiest");
+      a.addEventListener("input", () => { n.artiest = a.value; setDirty(true); });
+      const tl = document.createElement("span"); tl.className = "tools";
+      const u = iconBtn("Omhoog", "↑", () => { move(z.nummers, ni, -1); setDirty(true); renderZenders(); }); u.disabled = ni === 0;
+      const d = iconBtn("Omlaag", "↓", () => { move(z.nummers, ni, 1); setDirty(true); renderZenders(); }); d.disabled = ni === z.nummers.length - 1;
+      tl.append(u, d, iconBtn("Verwijderen", "✕", () => { z.nummers.splice(ni, 1); setDirty(true); renderZenders(); }, "del"));
+      li.append(kind, t, a, tl);
+      ol.appendChild(li);
+    });
+
+    const add = document.createElement("form"); add.className = "add";
+    const inp = document.createElement("input"); inp.type = "text"; inp.inputMode = "url"; inp.autocomplete = "off"; inp.id = `z${zi}-add`; inp.placeholder = "Plak hier een YouTube-link (video, afspeellijst of kanaal)"; inp.setAttribute("aria-label", "YouTube-link toevoegen");
+    const ab = document.createElement("button"); ab.type = "submit"; ab.className = "btn gold"; ab.textContent = "Toevoegen";
+    const msg = document.createElement("p"); msg.className = "msg"; msg.style.flexBasis = "100%";
+    add.append(inp, ab, msg);
+    add.addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      const r = parseLink(inp.value);
+      if (r.error) { msg.className = "msg bad"; msg.textContent = r.error; msg.style.flexBasis = "100%"; return; }
+      const exists = z.nummers.some((n) => (r.video && n.video === r.video) || (r.lijst && n.lijst === r.lijst));
+      if (exists) { msg.className = "msg bad"; msg.textContent = "Deze staat al bij deze zender."; msg.style.flexBasis = "100%"; return; }
+      let item;
+      if (r.video) {
+        ab.disabled = true; msg.className = "msg"; msg.textContent = "Titel ophalen…"; msg.style.flexBasis = "100%";
+        const info = await fetchTitle(r.video);
+        ab.disabled = false;
+        item = { video: r.video, titel: info ? info.titel : "", artiest: info ? info.artiest : "" };
+      } else {
+        item = { lijst: r.lijst, titel: r.kind === "kanaal" ? "Hele kanaal (alle uploads)" : "Alle nummers (afspeellijst)", artiest: z.naam || z.knop || "" };
+      }
+      // Afspeellijsten en kanalen bovenaan, losse video's onderaan.
+      if (item.lijst) z.nummers.splice(z.nummers.filter((n) => n.lijst).length, 0, item); else z.nummers.push(item);
+      setDirty(true);
+      renderZenders();
+      const m2 = $(`z${zi}-add`).parentElement.querySelector(".msg");
+      m2.className = "msg ok"; m2.style.flexBasis = "100%";
+      m2.textContent = item.lijst ? `${r.kind === "kanaal" ? "Kanaal" : "Afspeellijst"} toegevoegd.` :
+        (item.titel ? `Toegevoegd: ${item.titel}` : "Toegevoegd. Ik kon de titel niet ophalen; vul hem zelf in.");
+      if (!item.lijst && !item.titel) $(`z${zi}-n${z.nummers.length - 1}-titel`).focus();
+    });
+
+    card.append(head, fields, ol, add);
+    box.appendChild(card);
+  });
+}
+$("addZender").addEventListener("click", () => {
+  data.zenders.push({ knop: "Nieuw", onder: "", naam: "Nieuwe zender", nummers: [] });
+  setDirty(true); renderZenders();
+  const i = data.zenders.length - 1;
+  $(`z${i}-knop`).focus(); $(`z${i}-knop`).select();
+});
+
+// ---------- Opslaan ----------
+function setDirty(v, text, cls) {
+  dirty = v;
+  const s = $("saveState");
+  s.className = "state " + (cls || (v ? "dirty" : ""));
+  if (text) s.innerHTML = text;
+  else s.textContent = v ? "Je hebt wijzigingen die nog niet zijn opgeslagen." : "Alles is opgeslagen.";
+}
+function problems() {
+  const out = [];
+  data.zenders.forEach((z, i) => { if (!String(z.knop || "").trim()) out.push(`Zender ${i + 1} heeft geen naam op de knop.`); });
+  return out;
+}
+$("save").addEventListener("click", async () => {
+  const p = problems();
+  if (p.length) { setDirty(true, p.join(" "), "bad"); return; }
+  $("save").disabled = true;
+  setDirty(dirty, "Bezig met opslaan…");
+  try {
+    const clean = JSON.parse(JSON.stringify(data));
+    const res = await gh("PUT", {
+      message: "Zenders en teksten bijgewerkt via beheer",
+      content: toB64(JSON.stringify(clean, null, 2) + "\n"),
+      sha, branch: BRANCH,
+    });
+    sha = res.content.sha;
+    setDirty(false, `Opgeslagen! Binnen 1 à 2 minuten staat het op de <a href="../" target="_blank" rel="noopener">site</a> (druk daar op Ctrl+F5).`, "ok");
+  } catch (e) {
+    setDirty(true, explain(e), "bad");
+  } finally {
+    $("save").disabled = false;
+  }
+});
+$("reload").addEventListener("click", () => {
+  if (dirty && !$("reload").dataset.sure) {
+    $("reload").dataset.sure = "1"; $("reload").textContent = "Wijzigingen weggooien?";
+    setTimeout(() => { delete $("reload").dataset.sure; $("reload").textContent = "Opnieuw laden"; }, 4000);
+    return;
+  }
+  delete $("reload").dataset.sure; $("reload").textContent = "Opnieuw laden";
+  login(token);
+});
+$("logout").addEventListener("click", () => {
+  store.clear(); token = ""; data = null; sha = null;
+  $("editor").hidden = true; $("savebar").hidden = true; $("loginPanel").hidden = false;
+  $("token").value = ""; $("loginMsg").className = "msg ok"; $("loginMsg").textContent = "Je bent uitgelogd.";
+});
+window.addEventListener("beforeunload", (e) => { if (dirty) { e.preventDefault(); e.returnValue = ""; } });
+
+$("loginForm").addEventListener("submit", (e) => { e.preventDefault(); login($("token").value); });
+const saved = store.get();
+if (saved) login(saved);
+</script>
+</body>
+</html>

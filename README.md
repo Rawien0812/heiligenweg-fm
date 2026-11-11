@@ -12,3 +12,8 @@ Een nostalgische muzieksite van **Rawien Paltoe**: je zit voorin een Surinaamse 
 
 ## Screenshots
 ![Desktop](screenshots/preview-desktop.png)
+
+## Beheer
+Zenders, muziek en teksten pas je aan op **/beheer/** (bijvoorbeeld `https://rawien0812.github.io/heiligenweg-fm/beheer/`).
+Alles staat in `zenders.json`; de beheerpagina slaat wijzigingen via de GitHub-API op in deze repo, waarna de site vanzelf opnieuw online gaat.
+Inloggen gaat met een fine-grained GitHub-token met alleen toegang tot deze repo (Contents: Read and write).
