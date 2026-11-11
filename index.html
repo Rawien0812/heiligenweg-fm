@@ -123,34 +123,22 @@ h1 {
 .windshield {
   margin-top: 22px;
   position: relative;
-  height: clamp(150px, 26vw, 230px);
+  aspect-ratio: 1500 / 640;
+  max-width: 100%;
   border-radius: 28px 28px 8px 8px;
   overflow: hidden;
   border: 8px solid #1b130c;
   box-shadow: 0 0 0 3px var(--gold-deep);
-  background: linear-gradient(#f7a33f 0%, #ee6b4d 30%, #a03b5a 52%, #3a2f5f 70%);
+  background: #1c3a5c;
 }
-.windshield svg.scene { position: absolute; inset: 0; width: 100%; height: 100%; }
-.road {
-  position: absolute; left: 0; right: 0; bottom: 0; height: 26%;
-  background: #23201f;
-  clip-path: polygon(0 100%, 40% 0, 60% 0, 100% 100%);
-}
-.lane {
-  position: absolute; left: 50%; bottom: 0; width: 6px; height: 26%; margin-left: -3px;
-  background: repeating-linear-gradient(to top, var(--sr-yellow) 0 12px, transparent 12px 26px);
-  clip-path: polygon(0 100%, 30% 0, 70% 0, 100% 100%);
-}
-.playing .lane { animation: drive .5s linear infinite; }
-@keyframes drive { to { background-position: 0 -26px; } }
+.windshield .design { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
 .pennant {                       /* vlaggetje aan de binnenspiegel */
-  position: absolute; top: 0; left: 50%; width: 2px; height: 34px; background: #ccc; transform-origin: top;
+  position: absolute; top: 0; left: 14%; width: 2px; height: clamp(18px, 5vw, 40px); background: #ccc;
+  transform-origin: top; z-index: 1;
 }
-.pennant::after {
-  content: ""; position: absolute; left: -17px; top: 32px; width: 36px; height: 24px; border: 1px solid #222;
-  background:
-    radial-gradient(circle at 50% 50%, var(--sr-yellow) 0 3px, transparent 3.5px),
-    linear-gradient(to bottom, var(--sr-green) 0 20%, #fff 20% 30%, var(--sr-red) 30% 70%, #fff 70% 80%, var(--sr-green) 80%);
+.pennant .flag {
+  position: absolute; left: 50%; top: 100%; width: clamp(30px, 6vw, 54px); height: auto; transform: translateX(-50%);
+  border: 1px solid #222; box-shadow: 0 2px 4px rgba(0,0,0,.4); display: block;
 }
 .playing .pennant { animation: dangle 1.8s ease-in-out infinite; }
 @keyframes dangle { 0%,100% { transform: rotate(-12deg); } 50% { transform: rotate(12deg); } }
@@ -304,31 +292,8 @@ footer .sig { font: 400 1.1rem/1.2 var(--display); color: var(--gold); display: 
 
 <main class="wrap">
   <div class="windshield" aria-hidden="true">
-    <svg class="scene" viewBox="0 0 1000 230" preserveAspectRatio="xMidYMax slice">
-      <circle cx="500" cy="118" r="34" fill="#ffd36b"/>
-      <!-- oerwoud aan de overkant -->
-      <path d="M0 132 Q60 112 120 128 T250 122 T380 130 T520 120 T660 128 T800 118 T1000 128 V146 H0Z" fill="#14301d"/>
-      <!-- Suriname-rivier -->
-      <rect x="0" y="144" width="1000" height="86" fill="#3b3a66"/>
-      <g fill="#f7a33f" opacity=".55"><rect x="470" y="152" width="60" height="3"/><rect x="455" y="162" width="90" height="3"/><rect x="480" y="172" width="40" height="3"/></g>
-      <!-- Wijdenboschbrug -->
-      <g stroke="#1b1424" fill="none">
-        <path d="M120 150 Q500 108 880 150" stroke-width="7"/>
-        <path d="M300 128 V60 M700 128 V60" stroke-width="9"/>
-        <path d="M300 62 L190 140 M300 62 L240 134 M300 62 L360 122 M300 62 L410 117 M700 62 L590 117 M700 62 L640 122 M700 62 L760 134 M700 62 L810 140" stroke-width="2.5"/>
-        <path d="M300 128 V150 M700 128 V150" stroke-width="7"/>
-      </g>
-      <!-- palmen op de oever -->
-      <g fill="#0b1f12" stroke="#0b1f12">
-        <path d="M70 230 Q80 180 64 140" stroke-width="7" fill="none"/>
-        <path d="M64 140 q-40 -6 -58 18 q30 -10 58 -18 q-24 -26 -54 -22 q32 4 54 22 q4 -30 30 -40 q-14 22 -30 40 q30 -16 60 -2 q-34 -2 -60 2z"/>
-        <path d="M940 230 Q930 175 950 132" stroke-width="7" fill="none"/>
-        <path d="M950 132 q-40 -6 -58 18 q30 -10 58 -18 q-24 -26 -54 -22 q32 4 54 22 q4 -30 30 -40 q-14 22 -30 40 q30 -16 60 -2 q-34 -2 -60 2z"/>
-      </g>
-    </svg>
-    <div class="road"></div>
-    <div class="lane"></div>
-    <div class="pennant"></div>
+    <img class="design" src="images/voorruit.jpg" alt="51 jaar Srefidensi: de Suriname-rivier met de Wijdenboschbrug, het Presidentieel Paleis en de vlag" width="1500" height="640">
+    <div class="pennant"><svg class="flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#377e3f"/><rect y="4" width="30" height="12" fill="#fff"/><rect y="6" width="30" height="8" fill="#b40a2d"/><polygon points="15.00,6.00 15.90,8.76 18.80,8.76 16.45,10.47 17.35,13.24 15.00,11.53 12.65,13.24 13.55,10.47 11.20,8.76 14.10,8.76" fill="#ecc81d"/></svg></div>
   </div>
 
   <div class="dash">
