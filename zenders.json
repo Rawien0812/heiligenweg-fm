@@ -399,13 +399,24 @@
           "tot": "09:00",
           "bronnen": [],
           "artiesten": [],
-          "aantal": 15
+          "aantal": 50
         },
         {
           "naam": "Bollywood",
           "van": "09:00",
           "tot": "12:00",
-          "bronnen": [],
+          "bronnen": [
+            {
+              "lijst": "UUMVar5jq91jrfi0-mbjn6vg",
+              "titel": "Alle nummers (afspeellijst)",
+              "artiest": "Bollywood Mashups"
+            },
+            {
+              "lijst": "UUdwEg4V4VpOiYIm9eBCwyLA",
+              "titel": "Alle nummers (afspeellijst)",
+              "artiest": "Bollywood Mashups"
+            }
+          ],
           "artiesten": [],
           "aantal": 15
         },
