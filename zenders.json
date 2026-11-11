@@ -82,25 +82,33 @@
               "titel": "Alle nummers (afspeellijst)",
               "artiest": "The best of Oemar Wagid Hosain"
             }
-          ]
+          ],
+          "artiesten": [],
+          "aantal": 15
         },
         {
           "naam": "Bhajan",
           "van": "04:00",
           "tot": "09:00",
-          "bronnen": []
+          "bronnen": [],
+          "artiesten": [],
+          "aantal": 15
         },
         {
           "naam": "Bollywood",
           "van": "09:00",
           "tot": "12:00",
-          "bronnen": []
+          "bronnen": [],
+          "artiesten": [],
+          "aantal": 15
         },
         {
           "naam": "Lokaal",
           "van": "12:00",
           "tot": "00:00",
-          "bronnen": []
+          "bronnen": [],
+          "artiesten": [],
+          "aantal": 15
         }
       ]
     },
