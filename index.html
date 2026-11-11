@@ -223,7 +223,13 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
   background: #000; border-radius: 10px; overflow: hidden; border: 6px solid #0a0a0a;
   box-shadow: 0 0 0 3px var(--gold-deep);
 }
-.screen iframe, .screen #yt { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.screen iframe, .screen .deck { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; transition: opacity 1.2s ease; }
+.screen .back { opacity: 0; pointer-events: none; }
+.list .when { font: 1rem/1 var(--lcd); color: var(--sr-yellow); letter-spacing: .04em; }
+.list li.past button { opacity: .6; }
+.livedot { display: inline-block; width: .6em; height: .6em; border-radius: 50%; background: #ff3b5c; margin-right: 6px; vertical-align: .05em; }
+.playing .livedot { animation: blink 1.2s ease-in-out infinite; }
+@keyframes blink { 50% { opacity: .25; } }
 .screen .idle {
   position: absolute; inset: 0; display: grid; place-items: center; align-content: center; gap: 6px; text-align: center; padding: 12px;
   font: 1.3rem/1.2 var(--lcd); color: #fff;
@@ -341,7 +347,8 @@ footer .sig { font: 400 1.1rem/1.2 var(--display); color: var(--gold); display: 
 
     <div class="tv">
       <div class="screen">
-        <div id="yt"></div>
+        <div id="ytA" class="deck"></div>
+        <div id="ytB" class="deck"></div>
         <div class="idle" id="idle"><span>TV BOVEN DE CHAUFFEUR</span><span>▶ om te starten</span></div>
       </div>
       <p class="note" id="note">Muziek komt van YouTube. Lukt een nummer niet, dan springt de radio door. <a id="ytLink" href="https://www.youtube.com" target="_blank" rel="noopener">Open op YouTube ↗</a></p>
@@ -374,6 +381,53 @@ let TZ = "Europe/Amsterdam";
 let visible = [];          // indexen van zenders die nu op het programma staan
 let pendingSwitch = false; // huidige zender is van de lucht: na dit nummer overschakelen
 
+// ---------- LIVE: alles door elkaar, met BPM ----------
+let LIVE = { aan: true, knop: "Live", onder: "Alles door elkaar", volgorde: "mix", bpm_van: "", bpm_tot: "" };
+let liveSeekPending = false;   // eerste keer LIVE: midden in een nummer beginnen, zoals een radio aanzetten
+let randomizeOnPlay = false;   // afspeellijst in LIVE: willekeurig nummer kiezen
+const plCache = {};            // afspeellijst-id -> video-id's (zodra YouTube ze één keer gaf)
+const isLive = () => !!(STATIONS[st] && STATIONS[st].live);
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function buildLiveQueue() {
+  const seen = new Set(), items = [];
+  visible.filter((i) => !STATIONS[i].live).forEach((i) => STATIONS[i].tracks.forEach((t) => {
+    const key = t.id || t.list;
+    if (seen.has(key)) return; seen.add(key);
+    const it = Object.assign({}, t, { from: STATIONS[i].label });
+    // Een afspeellijst of kanaal bevat veel nummers: laat hem vaker terugkomen.
+    if (t.list) for (let k = 0; k < 4; k++) items.push(Object.assign({}, it)); else items.push(it);
+  }));
+  const lo = +LIVE.bpm_van || 0, hi = +LIVE.bpm_tot || 0;
+  let pool = items;
+  if (lo || hi) {
+    const inRange = items.filter((t) => t.bpm && (!lo || t.bpm >= lo) && (!hi || t.bpm <= hi));
+    if (inRange.length >= 2) pool = inRange;
+  }
+  shuffle(pool);
+  if (LIVE.volgorde === "bpm") {
+    const known = pool.filter((t) => t.bpm), unknown = pool.filter((t) => !t.bpm);
+    const out = [];
+    if (known.length) {
+      let cur = known.splice(Math.floor(Math.random() * known.length), 1)[0]; out.push(cur);
+      while (known.length) {        // steeds het nummer met de dichtstbijzijnde BPM
+        let best = 0;
+        known.forEach((t, k) => { if (Math.abs(t.bpm - cur.bpm) < Math.abs(known[best].bpm - cur.bpm)) best = k; });
+        cur = known.splice(best, 1)[0]; out.push(cur);
+      }
+    }
+    unknown.forEach((t) => out.splice(Math.floor(Math.random() * (out.length + 1)), 0, t));
+    pool = out;
+  }
+  // Niet twee keer dezelfde afspeellijst direct na elkaar.
+  for (let k = 1; k < pool.length; k++) {
+    if (pool[k].list && pool[k].list === pool[k - 1].list) {
+      const j = pool.findIndex((t, n) => n > k && t.list !== pool[k].list);
+      if (j > 0) [pool[k], pool[j]] = [pool[j], pool[k]];
+    }
+  }
+  return pool;
+}
+
 // ---------- Programmering ----------
 const DAGEN = ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"];
 const toMin = (t) => { const [h, m] = String(t || "00:00").split(":").map(Number); return (h || 0) * 60 + (m || 0); };
@@ -396,13 +450,23 @@ function computeVisible() {
   let v = STATIONS.map((z, i) => (isOn(z, d, m) ? i : -1)).filter((i) => i >= 0);
   if (!v.length) v = STATIONS.map((_, i) => i);   // niets gepland: dan alles tonen
   // Zenders die volgens het programma nú lopen komen vooraan; daarmee start de radio.
-  return v.filter((i) => hasSchedule(STATIONS[i])).concat(v.filter((i) => !hasSchedule(STATIONS[i])));
+  const live = v.filter((i) => STATIONS[i].live);
+  const rest = v.filter((i) => !STATIONS[i].live);
+  return live.concat(rest.filter((i) => hasSchedule(STATIONS[i])), rest.filter((i) => !hasSchedule(STATIONS[i])));
 }
 function scheduleTick() {
   const v = computeVisible();
   const changed = v.join() !== visible.join();
   visible = v;
-  if (changed) buildPresets();
+  if (changed) {
+    buildPresets();
+    const L = STATIONS[0];
+    if (L && L.live) {
+      const keep = st === 0 ? L.tracks.slice(0, idx + 1) : [];
+      L.tracks = keep.concat(buildLiveQueue());
+      if (st === 0) renderList();
+    }
+  }
   if (!visible.includes(st)) {
     if (!playing) { st = visible[0]; idx = 0; fails = 0; pendingSwitch = false; renderLcd(); renderList(); if (ready) load(false); }
     else pendingSwitch = true;
@@ -468,9 +532,14 @@ function buildPresets() {
     b.className = "preset"; b.id = "st-" + i; b.dataset.st = i;
     b.setAttribute("aria-pressed", String(i === st));
     b.textContent = `${pos + 1} ${z.knop}`;
+    if (z.live) { b.textContent = ""; const dot = document.createElement("span"); dot.className = "livedot"; dot.setAttribute("aria-hidden", "true"); b.append(dot, `${z.knop}`); }
     const sm = document.createElement("small"); sm.textContent = z.onder || "";
     b.appendChild(sm);
-    b.addEventListener("click", () => { st = i; idx = 0; fails = 0; pendingSwitch = false; load(true); });
+    b.addEventListener("click", () => {
+      st = i; idx = 0; fails = 0; pendingSwitch = false;
+      if (z.live) { z.tracks = buildLiveQueue(); liveSeekPending = true; }
+      load(true);
+    });
     box.appendChild(b);
   });
 }
@@ -481,13 +550,20 @@ async function loadZenders() {
   const data = await r.json();
   applySite(data.site);
   if (data.site && data.site.tijdzone) TZ = data.site.tijdzone;
+  LIVE = Object.assign({ aan: true, knop: "Live", onder: "Alles door elkaar", volgorde: "mix", bpm_van: "", bpm_tot: "" }, (data.site && data.site.live) || {});
+  if (data.site && data.site.overgang != null && data.site.overgang !== "") FADE = Math.max(0, Math.min(12, +data.site.overgang || 0));
   STATIONS = (data.zenders || []).filter((z) => z.nummers && z.nummers.length).map((z) => ({
     knop: z.knop, onder: z.onder, label: z.naam || z.knop, name: (z.knop || "").toUpperCase(),
     wanneer: Array.isArray(z.wanneer) ? z.wanneer : [],
     tracks: z.nummers.map((n) => n.lijst ? { list: n.lijst, t: n.titel || "Afspeellijst", a: n.artiest || "" }
-                                         : { id: n.video, t: n.titel || "Nummer", a: n.artiest || "" }),
+                                         : { id: n.video, t: n.titel || "Nummer", a: n.artiest || "", bpm: +n.bpm || 0 }),
   }));
+  if (LIVE.aan !== false && STATIONS.length) {
+    STATIONS.unshift({ live: true, knop: LIVE.knop || "Live", onder: LIVE.onder || "", label: (LIVE.knop || "Live") + ": alles door elkaar",
+                       name: "LIVE", wanneer: [], tracks: [] });
+  }
   visible = computeVisible();
+  if (STATIONS[0] && STATIONS[0].live) { STATIONS[0].tracks = buildLiveQueue(); liveSeekPending = true; }
   st = visible[0] || 0;
   buildPresets();
   renderProgramma();
@@ -537,7 +613,7 @@ function pump() {
           titles[vid] = { t: d.title, a: d.author_name || "" };
           try { localStorage.setItem("hfm-titles", JSON.stringify(titles)); } catch (e) {}
           fillTrack(vid);
-          if (plIds[plIndex] === vid) showPlaylistLcd();
+          if (plIds[plIndex] === vid) { if (isLive()) { renderLcd(); renderList(); } else showPlaylistLcd(); }
         }
       })
       .catch(() => {})
@@ -584,7 +660,35 @@ function renderTracks(li) {
   if (on) ol.scrollTop = Math.max(0, on.offsetTop - ol.offsetTop - 60);
 }
 
+function renderLiveList() {
+  const list = $("list"); list.innerHTML = "";
+  const q = STATIONS[st].tracks;
+  for (let i = Math.max(0, idx - 1); i < Math.min(q.length, idx + 7); i++) {
+    const tr = q[i];
+    const li = document.createElement("li");
+    li.className = (i === idx ? "current " : "") + (i < idx ? "past" : "");
+    const b = document.createElement("button");
+    const when = i < idx ? "ZOJUIST" : i === idx ? (playing ? "NU" : "KLAAR") : "STRAKS";
+    b.innerHTML = `<span class="num when"></span><span class="t"><strong></strong><span></span></span><span class="yt">${i === idx && playing ? "nu" : "▶"}</span>`;
+    b.querySelector(".when").textContent = when;
+    let title = tr.t;
+    if (tr.list) {
+      const vid = i === idx && plIds[plIndex];
+      title = (vid && titles[vid] && titles[vid].t) || (i === idx ? title : "Verrassing uit: " + tr.t);
+    }
+    b.querySelector("strong").textContent = title;
+    b.querySelector(".t > span").textContent = [...new Set([tr.a, tr.from, tr.bpm ? tr.bpm + " BPM" : ""].filter(Boolean))].join(" · ");
+    b.addEventListener("click", () => {
+      if (i === idx && ready) { if (playing) { userWants = false; player.pauseVideo(); } else { userWants = true; player.playVideo(); } return; }
+      idx = i; load(true);
+    });
+    li.appendChild(b); list.appendChild(li);
+  }
+  $("stopsTitle").textContent = `${STATIONS[st].knop}: nu en straks`;
+}
+
 function renderList() {
+  if (isLive()) return renderLiveList();
   const list = $("list");
   list.innerHTML = "";
   STATIONS[st].tracks.forEach((tr, i) => {
@@ -620,8 +724,15 @@ function renderList() {
 function renderLcd() {
   const tr = track();
   const pos = visible.indexOf(st);
-  $("lcdStation").textContent = `ZENDER ${pos >= 0 ? pos + 1 : "–"} · ${STATIONS[st].name}`;
-  if (tr.list && plIds.length && plIndex >= 0) showPlaylistLcd();
+  $("lcdStation").textContent = isLive() ? `● ${STATIONS[st].name} · ${LIVE.volgorde === "bpm" ? "OP BPM" : "MIX"}` : `ZENDER ${pos >= 0 ? pos + 1 : "–"} · ${STATIONS[st].name}`;
+  if (isLive()) {
+    const vid = tr.list ? plIds[plIndex] : tr.id;
+    const d = player && player.getVideoData ? player.getVideoData() : null;
+    const title = (vid && titles[vid] && titles[vid].t) || (tr.list ? (d && d.title) || "Even zoeken…" : tr.t);
+    setText("lcdTitle", title);
+    setText("lcdArtist", [...new Set([tr.a, tr.from, tr.bpm ? tr.bpm + " BPM" : ""].filter(Boolean))].join(" · "));
+    if (vid) wantTitle(vid);
+  } else if (tr.list && plIds.length && plIndex >= 0) showPlaylistLcd();
   else { setText("lcdTitle", tr.t); setText("lcdArtist", tr.a); }
   $("ytLink").href = tr.list ? `https://www.youtube.com/playlist?list=${tr.list}` : `https://www.youtube.com/watch?v=${tr.id}`;
   document.querySelectorAll(".preset").forEach((p) => p.setAttribute("aria-pressed", String(+p.dataset.st === st)));
@@ -631,15 +742,24 @@ function renderLcd() {
 }
 
 function load(autoplay) {
+  cancelFade();
   wantPlay = autoplay;
   if (autoplay) userWants = true;
   plIds = []; plIndex = -1; tracksOpen = true;
+  if (isLive() && !STATIONS[st].tracks.length) STATIONS[st].tracks = buildLiveQueue();
+  if (!STATIONS[st].tracks.length) { setText("lcdTitle", "Geen muziek op deze zender"); return; }
   renderLcd(); renderList();
   if (!ready) { ensureApi(); return; }
   $("idle").hidden = true;
   const tr = track();
   if (tr.list) {
-    const o = { list: tr.list, listType: "playlist", index: 0 };
+    let index = 0;
+    randomizeOnPlay = false;
+    if (isLive()) {                                   // LIVE: willekeurig nummer uit de lijst
+      const c = plCache[tr.list];
+      if (c && c.length) index = Math.floor(Math.random() * c.length); else randomizeOnPlay = true;
+    }
+    const o = { list: tr.list, listType: "playlist", index };
     autoplay ? player.loadPlaylist(o) : player.cuePlaylist(o);
   } else if (autoplay) player.loadVideoById(tr.id);
   else player.cueVideoById(tr.id);
@@ -679,6 +799,9 @@ function step(d) {
     pendingSwitch = false; st = visible[0]; idx = 0; fails = 0; buildPresets(); load(true); return;
   }
   const n = STATIONS[st].tracks.length;
+  if (isLive() && idx + d >= n) {                         // LIVE-wachtrij op: nieuwe mix erachter
+    const q = STATIONS[st].tracks; STATIONS[st].tracks = q.slice(-1).concat(buildLiveQueue()); idx = 1; load(true); return;
+  }
   idx = (idx + d + n) % n;
   load(true);
 }
@@ -693,10 +816,108 @@ function ensureApi() {
   document.head.appendChild(s);
 }
 
+// ---------- Twee spelers: het volgende nummer vloeit in de laatste seconden in ---------
+let FADE = 5;                         // seconden overlap (instelbaar in /beheer/)
+const IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+let players = [], act = 0, readyB = false;
+let fade = null;                      // { target, stage: "prep" | "ready" | "run", timer, t0 }
+const backPlayer = () => players[1 - act];
+
+// Wat komt er hierna? (zonder de toestand te veranderen)
+function nextTarget() {
+  if (pendingSwitch || !visible.includes(st)) return null;            // zenderwissel: gewoon na het nummer
+  const z = STATIONS[st], tr = track();
+  if (!isLive() && tr.list && plIds.length && plIndex < plIds.length - 1)
+    return { st, idx, list: tr.list, index: plIndex + 1 };
+  if (isLive() && idx + 1 >= z.tracks.length) z.tracks = z.tracks.concat(buildLiveQueue());
+  const ni = (idx + 1) % z.tracks.length, nt = z.tracks[ni];
+  if (nt.list) {
+    if (!isLive()) return { st, idx: ni, list: nt.list, index: 0 };
+    const c = plCache[nt.list];
+    return c && c.length ? { st, idx: ni, list: nt.list, index: Math.floor(Math.random() * c.length) }
+                         : { st, idx: ni, list: nt.list, index: 0, randomize: true };
+  }
+  return { st, idx: ni, id: nt.id };
+}
+function cancelFade() {
+  if (!fade) return;
+  clearInterval(fade.timer);
+  try { backPlayer().stopVideo(); backPlayer().mute(); } catch (e) {}
+  try { player.setVolume(+$("vol").value); } catch (e) {}
+  fade = null;
+}
+function prepareNext() {
+  const target = nextTarget();
+  if (!target) return;
+  const bp = backPlayer();
+  fade = { target, stage: "prep", firstPlay: true };
+  bp.mute(); bp.setVolume(0);
+  if (target.list) bp.loadPlaylist({ list: target.list, listType: "playlist", index: target.index });
+  else bp.loadVideoById(target.id);
+}
+function onBackState(e) {
+  if (!fade || fade.stage !== "prep") return;
+  const bp = backPlayer();
+  if (e.data !== YT.PlayerState.PLAYING) return;
+  if (fade.target.randomize && fade.firstPlay) {          // LIVE-afspeellijst: eerst een willekeurig nummer kiezen
+    fade.firstPlay = false;
+    const list = bp.getPlaylist();
+    if (list && list.length) { plCache[fade.target.list] = list; const j = Math.floor(Math.random() * list.length); if (j !== bp.getPlaylistIndex()) { bp.playVideoAt(j); return; } }
+  }
+  bp.pauseVideo(); bp.seekTo(0, true);
+  fade.stage = "ready";
+}
+function runFade() {
+  const bp = backPlayer(), V = +$("vol").value;
+  fade.stage = "run"; fade.t0 = Date.now();
+  bp.setVolume(0); bp.unMute(); bp.playVideo();
+  // Laat de browser de tweede speler niet starten (sommige telefoons)? Dan zonder overlap verder.
+  setTimeout(() => {
+    if (fade && fade.stage === "run" && bp.getPlayerState() !== YT.PlayerState.PLAYING) { FADE = 0; cancelFade(); }
+  }, 1500);
+  fade.timer = setInterval(() => {
+    const k = Math.min(1, (Date.now() - fade.t0) / (FADE * 1000));
+    try { player.setVolume(Math.round(V * (1 - k))); bp.setVolume(Math.round(V * k)); } catch (e) {}
+    if (k >= 1) finishFade();
+  }, 100);
+}
+function finishFade() {
+  const f = fade; clearInterval(f.timer); fade = null;
+  const old = player;
+  try { old.stopVideo(); old.mute(); } catch (e) {}
+  act = 1 - act; player = players[act];
+  player.setVolume(+$("vol").value);
+  $(act ? "ytB" : "ytA").classList.remove("back"); $(act ? "ytA" : "ytB").classList.add("back");
+  // De nieuwe toestand overnemen.
+  if (f.target.idx !== idx) { idx = f.target.idx; tracksOpen = true; }
+  plIds = []; plIndex = -1;
+  if (f.target.list) { const l = player.getPlaylist(); if (l && l.length) { plIds = l; plIndex = player.getPlaylistIndex(); plCache[f.target.list] = l; } }
+  playing = true; fails = 0;
+  renderLcd(); renderList();
+}
+setInterval(() => {
+  if (!ready || !readyB || FADE <= 0 || IOS || !playing || !userWants) return;
+  let d = 0, t = 0;
+  try { d = player.getDuration(); t = player.getCurrentTime(); } catch (e) { return; }
+  if (!d || d < FADE * 3) return;
+  const left = d - t;
+  if (!fade && left <= FADE + 6 && left > FADE) prepareNext();
+  else if (fade && fade.stage === "ready" && left <= FADE + 0.3) runFade();
+}, 200);
+
 window.onYouTubeIframeAPIReady = function () {
-  player = new YT.Player("yt", {
-    videoId: track().id || undefined,
-    playerVars: { playsinline: 1, rel: 0, modestbranding: 1, ...(location.protocol.startsWith("http") ? { origin: location.origin } : {}) },
+  const vars = { playsinline: 1, rel: 0, modestbranding: 1, ...(location.protocol.startsWith("http") ? { origin: location.origin } : {}) };
+  players[1] = new YT.Player("ytB", {
+    playerVars: vars,
+    events: {
+      onReady: () => { readyB = true; players[1].mute(); },
+      onStateChange: (e) => { if (e.target !== player) onBackState(e); },
+      onError: (e) => { if (e.target !== player) cancelFade(); },
+    },
+  });
+  $("ytB").classList.add("back");
+  player = players[0] = new YT.Player("ytA", {
+    playerVars: vars,
     events: {
       onReady: () => {
         ready = true;
@@ -706,23 +927,41 @@ window.onYouTubeIframeAPIReady = function () {
         if (wantPlay || track().list) load(wantPlay);
       },
       onStateChange: (e) => {
+        if (e.target !== player) return onBackState(e);
+        if (e.data === YT.PlayerState.ENDED && fade) {
+          if (fade.stage === "run") { finishFade(); return; }   // nummer al afgelopen tijdens de overgang
+          cancelFade();                                          // nog niet klaar: gewoon op de normale manier verder
+        }
         const pl = track().list;
-        if (e.data === YT.PlayerState.PLAYING) { playing = true; fails = 0; }
+        if (e.data === YT.PlayerState.PLAYING) {
+          playing = true; fails = 0;
+          if (randomizeOnPlay && pl) {                          // LIVE: willekeurig nummer uit de afspeellijst
+            randomizeOnPlay = false;
+            const l = player.getPlaylist();
+            if (l && l.length) { plCache[pl] = l; const j = Math.floor(Math.random() * l.length); if (j !== player.getPlaylistIndex()) { player.playVideoAt(j); return; } }
+          }
+          if (liveSeekPending && isLive()) {                   // zoals een radio aanzetten: midden in een nummer
+            liveSeekPending = false;
+            const d = player.getDuration();
+            if (d > 90) player.seekTo(d * (0.15 + Math.random() * 0.4), true);
+          }
+        }
         else if (e.data === YT.PlayerState.PAUSED) playing = false;
         else if (e.data === YT.PlayerState.ENDED) {
           const list = player.getPlaylist && player.getPlaylist();
           // In een afspeellijst gaat YouTube zelf door; pas na het laatste nummer naar de volgende halte.
-          if (pendingSwitch || !pl || !list || player.getPlaylistIndex() >= list.length - 1) { playing = false; step(1); return; }
+          if (isLive() || pendingSwitch || !pl || !list || player.getPlaylistIndex() >= list.length - 1) { playing = false; step(1); return; }
         }
         if (pl) {
           const list = player.getPlaylist && player.getPlaylist();
-          if (list && list.length) { plIds = list; plIndex = player.getPlaylistIndex(); }
+          if (list && list.length) { plIds = list; plIndex = player.getPlaylistIndex(); plCache[pl] = list; }
         }
         renderLcd(); renderList();
       },
       onError: (e) => {
+        if (e.target !== player) { cancelFade(); return; }
         showError(e.data);
-        if (track().list) {
+        if (track().list && !isLive()) {
           const list = player.getPlaylist && player.getPlaylist();
           if (list && list.length && player.getPlaylistIndex() < list.length - 1) { player.nextVideo(); return; }
         }
@@ -736,7 +975,7 @@ window.onYouTubeIframeAPIReady = function () {
 
 $("play").addEventListener("click", () => {
   if (!ready) { wantPlay = true; setText("lcdTitle", "Radio wordt geladen…"); ensureApi(); return; }
-  if (playing) { userWants = false; player.pauseVideo(); return; }
+  if (playing) { userWants = false; cancelFade(); player.pauseVideo(); return; }
   userWants = true;
   const s = player.getPlayerState();
   if (s === YT.PlayerState.UNSTARTED || s === YT.PlayerState.CUED || s === YT.PlayerState.PAUSED) { player.playVideo(); checkStarted(); }
@@ -744,7 +983,7 @@ $("play").addEventListener("click", () => {
 });
 $("next").addEventListener("click", () => step(1));
 $("prev").addEventListener("click", () => step(-1));
-$("vol").addEventListener("input", (e) => { if (ready) player.setVolume(+e.target.value); });
+$("vol").addEventListener("input", (e) => { if (ready && !fade) player.setVolume(+e.target.value); });
 
 // Stop-bel: twee keer "ding", radio pauzeert even zoals bij een echte halte.
 $("bell").addEventListener("click", () => {
@@ -761,6 +1000,7 @@ $("bell").addEventListener("click", () => {
     });
   } catch (e) {}
   const was = playing;
+  cancelFade();
   if (ready && playing) player.pauseVideo();
   setText("lcdTitle", "Halte! Iemand stapt uit…");
   setTimeout(() => { if (was && ready) player.playVideo(); else renderLcd(); }, 2500);

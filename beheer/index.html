@@ -93,7 +93,7 @@ code { font-family: var(--mono); font-size: 1.1em; background: #000; padding: 0 
 .zenders { display: grid; gap: 14px; }
 
 ol.tracks { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-.track { display: grid; grid-template-columns: 70px minmax(0, 1fr) minmax(0, .8fr) auto; gap: 8px; align-items: center; background: var(--field); border-radius: 8px; padding: 8px; }
+.track { display: grid; grid-template-columns: 70px minmax(0, 1fr) minmax(0, .8fr) 64px auto; gap: 8px; align-items: center; background: var(--field); border-radius: 8px; padding: 8px; }
 .track .kind { font: 1rem/1 var(--mono); text-align: center; padding: 5px 0; border-radius: 4px; background: #000; color: var(--sr-yellow); }
 .track .kind.pl { background: var(--gold); color: #2a1a00; }
 .track input { padding: 6px 8px; }
@@ -101,7 +101,8 @@ ol.tracks { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .track .tools .icon { width: 32px; height: 32px; }
 @media (max-width: 640px) {
   .track { grid-template-columns: 60px minmax(0, 1fr); }
-  .track .artist, .track .tools { grid-column: 2; }
+  .track .artist, .track .tools, .track .bpm { grid-column: 2; }
+  .track .bpm { max-width: 120px; }
 }
 .sched { background: rgba(0,0,0,.2); border-radius: 10px; padding: 12px; display: grid; gap: 10px; }
 .sched-head { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
@@ -190,6 +191,32 @@ ol.tracks { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
             <select id="s-tijdzone" data-site="tijdzone">
               <option value="Europe/Amsterdam">Nederlandse tijd</option>
               <option value="America/Paramaribo">Surinaamse tijd</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <!-- LIVE en overgangen -->
+      <section class="panel">
+        <h2>LIVE en overgangen</h2>
+        <p class="hint">LIVE is de hoofdzender: hij draait alle muziek van de zenders die op dat moment op het programma staan, door elkaar en eindeloos. Vul bij nummers de <b>BPM</b> in (opzoeken kan op <a href="https://songbpm.com" target="_blank" rel="noopener">songbpm.com</a>) om op tempo te mixen.</p>
+        <div class="grid2">
+          <label class="f" for="l-aan">LIVE-zender
+            <select id="l-aan" data-live="aan"><option value="true">Aan (eerste zender)</option><option value="false">Uit</option></select>
+          </label>
+          <label class="f" for="l-volgorde">Volgorde op LIVE
+            <select id="l-volgorde" data-live="volgorde">
+              <option value="mix">Willekeurig door elkaar</option>
+              <option value="bpm">Op BPM (vergelijkbaar tempo na elkaar)</option>
+            </select>
+          </label>
+          <label class="f" for="l-knop">Naam op de knop<input type="text" id="l-knop" data-live="knop"></label>
+          <label class="f" for="l-onder">Kleine tekst op de knop<input type="text" id="l-onder" data-live="onder"></label>
+          <label class="f" for="l-bpm_van">Alleen BPM vanaf <span class="sub">leeg = geen grens</span><input type="text" inputmode="numeric" id="l-bpm_van" data-live="bpm_van" placeholder="bijv. 110"></label>
+          <label class="f" for="l-bpm_tot">Alleen BPM tot en met <span class="sub">leeg = geen grens</span><input type="text" inputmode="numeric" id="l-bpm_tot" data-live="bpm_tot" placeholder="bijv. 130"></label>
+          <label class="f" for="s-overgang">Overgang tussen nummers <span class="sub">seconden dat nummers in elkaar overlopen (0 = uit). Werkt op computer en Android, niet op iPhone.</span>
+            <select id="s-overgang" data-site="overgang">
+              <option value="0">Uit</option><option value="3">3 seconden</option><option value="5">5 seconden</option><option value="8">8 seconden</option><option value="10">10 seconden</option>
             </select>
           </label>
         </div>
@@ -295,8 +322,19 @@ async function login(t) {
 // ---------- Teksten ----------
 function fillSite() {
   if (!data.site.tijdzone) data.site.tijdzone = "Europe/Amsterdam";
-  document.querySelectorAll("[data-site]").forEach((inp) => { inp.value = data.site[inp.dataset.site] || ""; });
+  if (data.site.overgang == null) data.site.overgang = "5";
+  data.site.live = Object.assign({ aan: true, knop: "Live", onder: "Alles door elkaar", volgorde: "mix", bpm_van: "", bpm_tot: "" }, data.site.live || {});
+  document.querySelectorAll("[data-site]").forEach((inp) => { inp.value = data.site[inp.dataset.site] ?? ""; });
+  document.querySelectorAll("[data-live]").forEach((inp) => { inp.value = String(data.site.live[inp.dataset.live] ?? ""); });
 }
+document.querySelectorAll("[data-live]").forEach((inp) => ["input", "change"].forEach((ev) =>
+  inp.addEventListener(ev, () => {
+    const k = inp.dataset.live;
+    let v = inp.value;
+    if (k === "aan") v = v === "true";
+    if (k === "bpm_van" || k === "bpm_tot") { v = v.replace(/[^0-9]/g, ""); if (inp.value !== v) inp.value = v; }
+    data.site.live[k] = v; setDirty(true);
+  })));
 document.querySelectorAll("[data-site]").forEach((inp) => ["input", "change"].forEach((ev) =>
   inp.addEventListener(ev, () => { data.site[inp.dataset.site] = inp.value; setDirty(true); })));
 
@@ -482,7 +520,15 @@ function renderZenders() {
       const u = iconBtn("Omhoog", "↑", () => { move(z.nummers, ni, -1); setDirty(true); renderZenders(); }); u.disabled = ni === 0;
       const d = iconBtn("Omlaag", "↓", () => { move(z.nummers, ni, 1); setDirty(true); renderZenders(); }); d.disabled = ni === z.nummers.length - 1;
       tl.append(u, d, iconBtn("Verwijderen", "✕", () => { z.nummers.splice(ni, 1); setDirty(true); renderZenders(); }, "del"));
-      li.append(kind, t, a, tl);
+      const bpm = document.createElement("input"); bpm.type = "text"; bpm.inputMode = "numeric"; bpm.className = "bpm";
+      bpm.id = `z${zi}-n${ni}-bpm`; bpm.setAttribute("aria-label", "BPM");
+      if (n.lijst) { bpm.disabled = true; bpm.placeholder = "—"; bpm.title = "BPM kan alleen per losse video"; }
+      else { bpm.placeholder = "BPM"; bpm.value = n.bpm || ""; }
+      bpm.addEventListener("input", () => {
+        const v = bpm.value.replace(/[^0-9]/g, "").slice(0, 3); if (bpm.value !== v) bpm.value = v;
+        if (v) n.bpm = +v; else delete n.bpm; setDirty(true);
+      });
+      li.append(kind, t, a, bpm, tl);
       ol.appendChild(li);
     });
 
