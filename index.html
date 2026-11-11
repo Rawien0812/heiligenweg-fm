@@ -34,6 +34,7 @@
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
+html { overflow-x: hidden; overflow-x: clip; }   /* wapperende franje mag de pagina niet breder maken */
 [hidden] { display: none !important; }
 html, body { margin: 0; }
 body {
@@ -213,14 +214,81 @@ h1 {
   background: var(--sr-yellow); clip-path: var(--star-shape);
 }
 
-.controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.btn {
-  font: 1rem/1 var(--display); border: 0; border-radius: 999px; cursor: pointer;
-  background: #fff; color: #111; padding: 12px 16px; min-width: 48px;
+/* ---- Moderne bediening ---- */
+.radio { grid-template-columns: minmax(0, 1fr); }
+.deckctl { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; background: linear-gradient(180deg, #161616, #0d0d0d); border: 1px solid #2a2a2a; border-radius: 14px; padding: 12px 12px 10px; }
+.progress { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+.time { font: 1.05rem/1 var(--lcd); color: var(--muted); font-variant-numeric: tabular-nums; min-width: 3ch; }
+.time.live { color: #ff5c74; letter-spacing: .08em; }
+input[type=range] { -webkit-appearance: none; appearance: none; background: transparent; height: 22px; margin: 0; cursor: pointer; min-width: 0; }
+input[type=range]::-webkit-slider-runnable-track { height: 6px; border-radius: 999px;
+  background: linear-gradient(90deg, var(--gold) 0 var(--p, 0%), #3a3a3a var(--p, 0%) 100%); }
+input[type=range]::-moz-range-track { height: 6px; border-radius: 999px; background: #3a3a3a; }
+input[type=range]::-moz-range-progress { height: 6px; border-radius: 999px; background: var(--gold); }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; margin-top: -5px; border-radius: 50%; background: #fff; border: 0; box-shadow: 0 0 0 4px rgba(246,198,74,.25); }
+input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 0; box-shadow: 0 0 0 4px rgba(246,198,74,.25); }
+input[type=range]:disabled { cursor: default; }
+input[type=range]:disabled::-webkit-slider-thumb { opacity: 0; }
+input[type=range]:disabled::-moz-range-thumb { opacity: 0; }
+#seek { width: 100%; }
+
+.controls { display: flex; gap: 10px 14px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.ctl-main, .ctl-side { display: flex; gap: 6px; align-items: center; }
+.ctl-side { gap: 8px; flex: 1 1 auto; justify-content: flex-end; min-width: 0; }
+#vol { min-width: 70px; }
+.ic {
+  position: relative; display: inline-grid; place-items: center; width: 42px; height: 42px; padding: 0;
+  border: 0; border-radius: 50%; background: transparent; color: #f2f2f2; cursor: pointer;
+  transition: background-color .15s, color .15s, transform .1s;
 }
-.btn.play { background: linear-gradient(180deg, #ffe58a, var(--gold) 55%, #d9a21f); padding-inline: 22px; font-size: 1.1rem; box-shadow: 0 3px 0 #7a5200; }
-.btn.stop { background: var(--sr-red); color: #fff; margin-left: auto; }
-.btn:active { transform: translateY(2px); }
+.ic:hover { background: rgba(255,255,255,.08); }
+.ic:active { transform: scale(.94); }
+.ic svg { width: 22px; height: 22px; fill: currentColor; }
+.ic svg.stroke { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ic.sm { width: 38px; height: 38px; }
+.ic.sm svg { width: 20px; height: 20px; }
+.ic.toggle { color: #8d8d8d; }
+.ic.toggle[aria-pressed="true"] { color: var(--gold); }
+.ic.toggle[aria-pressed="true"]::after { content: ""; position: absolute; bottom: 3px; left: 50%; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: var(--gold); }
+.ic:disabled { opacity: .3; cursor: default; }
+.ic:disabled:hover { background: transparent; }
+#repeat .one { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -52%); font: 800 .55rem/1 var(--body); color: inherit; }
+.ic.play {
+  width: 58px; height: 58px; color: #2a1a00;
+  background: radial-gradient(circle at 35% 30%, #fff1b0, var(--gold) 45%, #c98f12);
+  box-shadow: 0 4px 14px rgba(246,198,74,.35), inset 0 -3px 0 rgba(0,0,0,.18);
+}
+.ic.play:hover { background: radial-gradient(circle at 35% 30%, #fff6cc, #ffd25e 45%, #d79c1a); }
+.ic.play svg { width: 26px; height: 26px; }
+.ic.play .i-pause { display: none; }
+.ic.play.is-playing .i-play { display: none; }
+.ic.play.is-playing .i-pause { display: block; }
+.playing .ic.play { box-shadow: 0 0 0 0 rgba(246,198,74,.5), 0 4px 14px rgba(246,198,74,.35); animation: pulse 2.4s ease-out infinite; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(246,198,74,.45), 0 4px 14px rgba(246,198,74,.35); } 100% { box-shadow: 0 0 0 14px rgba(246,198,74,0), 0 4px 14px rgba(246,198,74,.35); } }
+#mute .x { display: none; }
+#mute.lvl-0 .w1, #mute.lvl-0 .w2, #mute.lvl-1 .w2 { display: none; }
+#mute[aria-pressed="true"] .w1, #mute[aria-pressed="true"] .w2 { display: none; }
+#mute[aria-pressed="true"] .x, #mute.lvl-0 .x { display: inline; }
+#mute[aria-pressed="true"] { color: #ff5c74; }
+#vol { width: 110px; }
+.bellbtn {
+  display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 14px 0 11px;
+  border: 0; border-radius: 999px; background: var(--sr-red); color: #fff; cursor: pointer;
+  font: 400 .95rem/1 var(--display); letter-spacing: .02em;
+}
+.bellbtn svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.bellbtn:hover { background: #cc1238; }
+.bellbtn:active { transform: scale(.96); }
+@media (max-width: 520px) {
+  .deckctl { padding: 10px 8px 8px; }
+  .ic { width: 38px; height: 38px; }
+  .ic.play { width: 54px; height: 54px; }
+  .ctl-main { gap: 2px; }
+  .controls { justify-content: center; }
+  .ctl-main { width: 100%; justify-content: space-between; }
+  .ctl-side { width: 100%; }
+  #vol { flex: 1 1 auto; width: auto; }
+}
 button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid var(--sr-yellow); outline-offset: 3px; }
 .vol { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: .85rem; }
 .vol input { accent-color: var(--sr-yellow); width: 110px; }
@@ -344,12 +412,48 @@ footer .sig { font: 400 1.1rem/1.2 var(--display); color: var(--gold); display: 
       <div class="presets" id="presets" role="group" aria-label="Zenders">
       </div>
 
-      <div class="controls">
-        <button class="btn" id="prev" aria-label="Vorig nummer">⏮</button>
-        <button class="btn play" id="play" aria-label="Afspelen">▶</button>
-        <button class="btn" id="next" aria-label="Volgend nummer">⏭</button>
-        <label class="vol" for="vol">Volume <input id="vol" type="range" min="0" max="100" value="80"></label>
-        <button class="btn stop" id="bell" title="Laat de chauffeur stoppen">Stop!</button>
+      <div class="deckctl">
+        <div class="progress">
+          <span class="time" id="tCur">0:00</span>
+          <input type="range" id="seek" min="0" max="1000" value="0" step="1" aria-label="Positie in het nummer">
+          <span class="time" id="tDur">0:00</span>
+        </div>
+        <div class="controls">
+          <div class="ctl-main">
+            <button class="ic toggle" id="shuffle" aria-pressed="false" aria-label="Willekeurige volgorde" title="Willekeurige volgorde">
+              <svg viewBox="0 0 24 24" aria-hidden="true" class="stroke"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
+            </button>
+            <button class="ic" id="prev" aria-label="Vorig nummer" title="Vorig nummer">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h2.2v12H6zM9.5 12 18 6v12z"/></svg>
+            </button>
+            <button class="ic play" id="play" aria-label="Afspelen" title="Afspelen / pauze">
+              <svg viewBox="0 0 24 24" aria-hidden="true" class="i-play"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.4-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>
+              <svg viewBox="0 0 24 24" aria-hidden="true" class="i-pause"><rect x="6" y="5" width="4" height="14" rx="1.2"/><rect x="14" y="5" width="4" height="14" rx="1.2"/></svg>
+            </button>
+            <button class="ic" id="next" aria-label="Volgend nummer" title="Volgend nummer">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.8 6H18v12h-2.2zM6 18l8.5-6L6 6z"/></svg>
+            </button>
+            <button class="ic toggle" id="repeat" aria-pressed="false" aria-label="Herhaal dit nummer" title="Herhaal dit nummer">
+              <svg viewBox="0 0 24 24" aria-hidden="true" class="stroke"><path d="M17 2l3 3-3 3M4 11V9a4 4 0 0 1 4-4h12M7 22l-3-3 3-3M20 13v2a4 4 0 0 1-4 4H4"/></svg>
+              <span class="one" aria-hidden="true">1</span>
+            </button>
+          </div>
+          <div class="ctl-side">
+            <button class="ic sm" id="mute" aria-pressed="false" aria-label="Geluid uit" title="Geluid uit (M)">
+              <svg viewBox="0 0 24 24" aria-hidden="true" class="stroke">
+                <path class="spk" d="M11 5 6 9H3v6h3l5 4z"/>
+                <path class="w1" d="M15.5 9a4.5 4.5 0 0 1 0 6"/>
+                <path class="w2" d="M18.5 6a9 9 0 0 1 0 12"/>
+                <path class="x" d="M16 9.5l5 5M21 9.5l-5 5"/>
+              </svg>
+            </button>
+            <input type="range" id="vol" min="0" max="100" value="80" aria-label="Volume">
+            <button class="bellbtn" id="bell" title="Laat de chauffeur stoppen">
+              <svg viewBox="0 0 24 24" aria-hidden="true" class="stroke"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+              Stop!
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -385,6 +489,10 @@ footer .sig { font: 400 1.1rem/1.2 var(--display); color: var(--gold); display: 
 <script>
 // Zenders en teksten komen uit zenders.json (aan te passen op /beheer/).
 let STATIONS = [];
+const prefs = (() => {
+  const def = { vol: 80, muted: false, shuffle: false, repeat: false };
+  try { return Object.assign(def, JSON.parse(localStorage.getItem("hfm-prefs") || "{}")); } catch (e) { return def; }
+})();
 let TZ = "Europe/Amsterdam";
 let visible = [];          // indexen van zenders die nu op het programma staan
 let pendingSwitch = false; // huidige zender is van de lucht: na dit nummer overschakelen
@@ -759,8 +867,9 @@ function renderLcd() {
   else { setText("lcdTitle", tr.t); setText("lcdArtist", tr.a); }
   $("ytLink").href = tr.list ? `https://www.youtube.com/playlist?list=${tr.list}` : `https://www.youtube.com/watch?v=${tr.id}`;
   document.querySelectorAll(".preset").forEach((p) => p.setAttribute("aria-pressed", String(+p.dataset.st === st)));
-  $("play").textContent = playing ? "❚❚" : "▶";
+  $("play").classList.toggle("is-playing", playing);
   $("play").setAttribute("aria-label", playing ? "Pauzeren" : "Afspelen");
+  ["shuffle", "repeat"].forEach((id) => { $(id).disabled = isLive(); });
   document.body.classList.toggle("playing", playing);
 }
 
@@ -825,7 +934,9 @@ function step(d) {
   if (isLive() && idx + d >= n) {                         // LIVE-wachtrij op: nieuwe mix erachter
     const q = STATIONS[st].tracks; STATIONS[st].tracks = q.slice(-1).concat(buildLiveQueue()); idx = 1; load(true); return;
   }
-  idx = (idx + d + n) % n;
+  if (prefs.shuffle && d > 0 && n > 1 && !isLive()) {      // willekeurig: elk ander nummer van deze zender
+    let j; do { j = Math.floor(Math.random() * n); } while (j === idx); idx = j;
+  } else idx = (idx + d + n) % n;
   load(true);
 }
 
@@ -850,8 +961,15 @@ const backPlayer = () => players[1 - act];
 function nextTarget() {
   if (pendingSwitch || !visible.includes(st)) return null;            // zenderwissel: gewoon na het nummer
   const z = STATIONS[st], tr = track();
+  if (prefs.repeat && !isLive())                                     // herhalen: hetzelfde nummer nog eens
+    return tr.list && plIds.length ? { st, idx, list: tr.list, index: plIndex } : (tr.list ? null : { st, idx, id: tr.id });
   if (!isLive() && tr.list && plIds.length && plIndex < plIds.length - 1)
-    return { st, idx, list: tr.list, index: plIndex + 1 };
+    return { st, idx, list: tr.list, index: prefs.shuffle && plIds.length > 1 ? (plIndex + 1 + Math.floor(Math.random() * (plIds.length - 1))) % plIds.length : plIndex + 1 };
+  if (!isLive() && prefs.shuffle && z.tracks.length > 1) {
+    let j; do { j = Math.floor(Math.random() * z.tracks.length); } while (j === idx);
+    const t2 = z.tracks[j];
+    return t2.list ? { st, idx: j, list: t2.list, index: 0 } : { st, idx: j, id: t2.id };
+  }
   if (isLive() && idx + 1 >= z.tracks.length) z.tracks = z.tracks.concat(buildLiveQueue());
   const ni = (idx + 1) % z.tracks.length, nt = z.tracks[ni];
   if (nt.list) {
@@ -866,8 +984,8 @@ function cancelFade() {
   if (!fade) return;
   clearInterval(fade.timer);
   try { backPlayer().stopVideo(); backPlayer().mute(); } catch (e) {}
-  try { player.setVolume(+$("vol").value); } catch (e) {}
   fade = null;
+  applyVolume();
 }
 function prepareNext() {
   const target = nextTarget();
@@ -893,7 +1011,7 @@ function onBackState(e) {
 function runFade() {
   const bp = backPlayer(), V = +$("vol").value;
   fade.stage = "run"; fade.t0 = Date.now();
-  bp.setVolume(0); bp.unMute(); bp.playVideo();
+  bp.setVolume(0); if (!prefs.muted) bp.unMute(); bp.playVideo();
   // Laat de browser de tweede speler niet starten (sommige telefoons)? Dan zonder overlap verder.
   setTimeout(() => {
     if (fade && fade.stage === "run" && bp.getPlayerState() !== YT.PlayerState.PLAYING) { FADE = 0; cancelFade(); }
@@ -909,7 +1027,7 @@ function finishFade() {
   const old = player;
   try { old.stopVideo(); old.mute(); } catch (e) {}
   act = 1 - act; player = players[act];
-  player.setVolume(+$("vol").value);
+  applyVolume();
   $(act ? "ytB" : "ytA").classList.remove("back"); $(act ? "ytA" : "ytB").classList.add("back");
   // De nieuwe toestand overnemen.
   if (f.target.idx !== idx) { idx = f.target.idx; tracksOpen = true; }
@@ -944,7 +1062,7 @@ window.onYouTubeIframeAPIReady = function () {
     events: {
       onReady: () => {
         ready = true;
-        player.setVolume(+$("vol").value);
+        applyVolume();
         $("idle").hidden = true;
         const go = wantPlay;
         load(go);                                   // eerste nummer altijd klaarzetten, anders heeft ▶ niets om te spelen
@@ -974,6 +1092,10 @@ window.onYouTubeIframeAPIReady = function () {
         else if (e.data === YT.PlayerState.ENDED) {
           const list = player.getPlaylist && player.getPlaylist();
           // In een afspeellijst gaat YouTube zelf door; pas na het laatste nummer naar de volgende halte.
+          if (prefs.repeat && !isLive() && !pendingSwitch) {     // herhalen
+            if (pl && plIndex >= 0) player.playVideoAt(plIndex); else { player.seekTo(0, true); player.playVideo(); }
+            return;
+          }
           if (isLive() || pendingSwitch || !pl || !list || player.getPlaylistIndex() >= list.length - 1) { playing = false; step(1); return; }
         }
         if (pl) {
@@ -1007,7 +1129,75 @@ $("play").addEventListener("click", () => {
 });
 $("next").addEventListener("click", () => step(1));
 $("prev").addEventListener("click", () => step(-1));
-$("vol").addEventListener("input", (e) => { if (ready && !fade) player.setVolume(+e.target.value); });
+// ---------- Volume, mute, shuffle, herhalen (onthouden in deze browser) ----------
+function applyVolume() {
+  const v = +$("vol").value;
+  $("vol").style.setProperty("--p", v + "%");
+  const m = $("mute");
+  m.setAttribute("aria-pressed", String(prefs.muted));
+  m.setAttribute("aria-label", prefs.muted ? "Geluid aan" : "Geluid uit");
+  m.title = prefs.muted ? "Geluid aan (M)" : "Geluid uit (M)";
+  m.classList.remove("lvl-0", "lvl-1", "lvl-2");
+  m.classList.add(v === 0 ? "lvl-0" : v < 50 ? "lvl-1" : "lvl-2");
+  if (!ready || fade) return;
+  try { if (prefs.muted || v === 0) player.mute(); else { player.unMute(); player.setVolume(v); } } catch (e) {}
+}
+function savePrefs() { try { localStorage.setItem("hfm-prefs", JSON.stringify(Object.assign({}, prefs, { vol: +$("vol").value }))); } catch (e) {} }
+function renderToggles() {
+  $("shuffle").setAttribute("aria-pressed", String(prefs.shuffle));
+  $("repeat").setAttribute("aria-pressed", String(prefs.repeat));
+}
+$("vol").value = prefs.vol;
+$("vol").addEventListener("input", () => {
+  if (prefs.muted && +$("vol").value > 0) prefs.muted = false;
+  applyVolume(); savePrefs();
+});
+$("mute").addEventListener("click", () => {
+  if (+$("vol").value === 0) { $("vol").value = 60; prefs.muted = false; } else prefs.muted = !prefs.muted;
+  applyVolume(); savePrefs();
+});
+$("shuffle").addEventListener("click", () => { prefs.shuffle = !prefs.shuffle; cancelFade(); renderToggles(); savePrefs(); });
+$("repeat").addEventListener("click", () => { prefs.repeat = !prefs.repeat; cancelFade(); renderToggles(); savePrefs(); });
+applyVolume(); renderToggles();
+
+// ---------- Voortgang en doorspoelen ----------
+const fmt = (x) => { x = Math.max(0, Math.floor(x || 0)); const h = Math.floor(x / 3600), m = Math.floor(x / 60) % 60, s2 = x % 60;
+  return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(s2).padStart(2, "0"); };
+let seeking = false;
+setInterval(() => {
+  let d = 0, t = 0;
+  if (ready) { try { d = player.getDuration() || 0; t = player.getCurrentTime() || 0; } catch (e) {} }
+  const live = isLive();
+  $("seek").disabled = live || !d;
+  $("tDur").classList.toggle("live", live);
+  $("tDur").textContent = live ? "● LIVE" : fmt(d);
+  if (!seeking) {
+    $("tCur").textContent = fmt(t);
+    const pct = d ? Math.min(100, t / d * 100) : 0;
+    $("seek").value = Math.round(pct * 10);
+    $("seek").style.setProperty("--p", pct + "%");
+  }
+}, 250);
+$("seek").addEventListener("input", () => {
+  seeking = true;
+  const d = ready ? player.getDuration() : 0;
+  $("seek").style.setProperty("--p", $("seek").value / 10 + "%");
+  $("tCur").textContent = fmt(d * $("seek").value / 1000);
+});
+$("seek").addEventListener("change", () => {
+  const d = ready ? player.getDuration() : 0;
+  if (d && !isLive()) { cancelFade(); player.seekTo(d * $("seek").value / 1000, true); }
+  seeking = false;
+});
+
+// ---------- Toetsen (computer) ----------
+document.addEventListener("keydown", (e) => {
+  if (e.target.closest("input, textarea, select") || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.code === "Space" && !e.target.closest("button, a")) { e.preventDefault(); $("play").click(); }
+  else if (e.key === "m" || e.key === "M") $("mute").click();
+  else if (e.key === "ArrowRight") $("next").click();
+  else if (e.key === "ArrowLeft") $("prev").click();
+});
 
 // Stop-bel: twee keer "ding", radio pauzeert even zoals bij een echte halte.
 $("bell").addEventListener("click", () => {
