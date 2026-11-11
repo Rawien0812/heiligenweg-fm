@@ -453,7 +453,14 @@
     },
     "overgang": "5",
     "lcd_powered": "Powered by Rawgfx & Cafe de Kroon - Den Haag",
-    "lcd_rechten": "Alle muziek wordt afgespeeld via YouTube. De rechten liggen bij de artiesten en uploaders."
+    "lcd_rechten": "Alle muziek wordt afgespeeld via YouTube. De rechten liggen bij de artiesten en uploaders.",
+    "top5": [
+      {
+        "video": "tRyetN610NI",
+        "titel": "AUW AUW AUW || GOODVIBEZZ #music",
+        "artiest": "Muziekformatie Goodvibezz"
+      }
+    ]
   },
   "zenders": []
 }
