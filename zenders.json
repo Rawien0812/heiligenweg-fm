@@ -5,7 +5,8 @@
     "welkom_groot": "Kon na ini!",
     "welkom": "Schuif door naar achter. De chauffeur zet baithak gana, kaseko en Trafassi op. Hard.",
     "onderaan": "Gemaakt door Rawien Paltoe • Powered By Cafe De Kroon Den Haag",
-    "rechten": "Alle muziek wordt afgespeeld via YouTube. De rechten liggen bij de artiesten en uploaders."
+    "rechten": "Alle muziek wordt afgespeeld via YouTube. De rechten liggen bij de artiesten en uploaders.",
+    "tijdzone": "Europe/Amsterdam"
   },
   "zenders": [
     {
@@ -43,7 +44,8 @@
           "titel": "Live, met Remy Mangal op tabla",
           "artiest": "Ramdew Chaitoe"
         }
-      ]
+      ],
+      "wanneer": []
     },
     {
       "knop": "Kaseko",
@@ -80,7 +82,8 @@
           "titel": "Meri Mi Kaseko Medley",
           "artiest": "Sonic"
         }
-      ]
+      ],
+      "wanneer": []
     },
     {
       "knop": "Trafassi",
@@ -112,7 +115,8 @@
           "titel": "Brombere",
           "artiest": "Trafassi"
         }
-      ]
+      ],
+      "wanneer": []
     },
     {
       "knop": "Dewinder",
@@ -234,6 +238,21 @@
           "titel": "Volume 18 (live)",
           "artiest": "Dewindersingh Sewnath"
         }
+      ],
+      "wanneer": [
+        {
+          "dagen": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            0
+          ],
+          "van": "06:00",
+          "tot": "12:00"
+        }
       ]
     },
     {
@@ -245,6 +264,19 @@
           "lijst": "PLaN1CATOpp3Q",
           "titel": "Alle nummers (afspeellijst)",
           "artiest": "Krishwam Chedi"
+        }
+      ],
+      "wanneer": [
+        {
+          "dagen": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "van": "06:00",
+          "tot": "12:00"
         }
       ]
     },
@@ -268,7 +300,8 @@
           "titel": "Aaja Re O Sanam",
           "artiest": "Krishwam Chedi & Goodvibezz"
         }
-      ]
+      ],
+      "wanneer": []
     }
   ]
 }
