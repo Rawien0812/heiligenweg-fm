@@ -627,6 +627,28 @@ body.tv .tvhint.gone { opacity: 0; }
 <script>
 // Zenders en teksten komen uit zenders.json (aan te passen op /beheer/).
 let STATIONS = [];
+// ---------- Kwaliteitsfilter: geen live-opnames, vlogs, reels/shorts (instelbaar in /beheer/) ----------
+const KW_STANDAARD = ["live", "vlog", "vlogs", "reel", "reels", "short", "shorts", "#shorts", "tiktok", "status", "behind the scenes", "bts",
+  "rehearsal", "repetitie", "oefenen", "practice", "riyaz", "soundcheck", "interview", "podcast", "aftermovie", "teaser", "trailer",
+  "promo", "unboxing", "q&a", "full show", "full concert", "volledige show", "jam session"];
+let KW = { aan: true, woorden: KW_STANDAARD, min: 100, max: 720 };
+const escRe = (w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+let kwRegex = null;
+function bouwKwRegex() {
+  const ws = (KW.woorden || []).map((w) => String(w).trim().toLowerCase()).filter(Boolean);
+  kwRegex = ws.length ? new RegExp("(^|[^\\p{L}\\p{N}])(" + ws.map(escRe).join("|") + ")(?=$|[^\\p{L}\\p{N}])", "iu") : null;
+}
+bouwKwRegex();
+// Geeft de reden terug als een nummer niet door de keuring komt, anders "".
+function slechtNummer(title, dur) {
+  if (!KW.aan) return "";
+  const m = kwRegex && String(title || "").match(kwRegex);
+  if (m) return `‘${m[2]}’ in de titel`;
+  if (dur && KW.min && dur < KW.min) return "te kort (short/reel)";
+  if (dur && KW.max && dur > KW.max) return "te lang (vlog/show)";
+  return "";
+}
+let guardSkips = 0, noFadeKey = null;
 let TOP5 = [], askedId = null;
 const prefs = (() => {
   const def = { vol: 80, muted: false, shuffle: false, repeat: false };
@@ -940,6 +962,11 @@ async function loadZenders() {
   renderTop5();
   if (typeof applyTvMode === "function" && location.hash === "#tv") $("tvLogo").textContent = document.title;
   if (data.site && data.site.tijdzone) TZ = data.site.tijdzone;
+  if (data.site && data.site.kwaliteit) {
+    const k = data.site.kwaliteit;
+    KW = { aan: k.aan !== false, woorden: Array.isArray(k.woorden) ? k.woorden : KW_STANDAARD, min: +k.min || 0, max: +k.max || 0 };
+    bouwKwRegex();
+  }
   LIVE = Object.assign({ aan: true, knop: "Live", onder: "Alles door elkaar", volgorde: "mix", bpm_van: "", bpm_tot: "" }, (data.site && data.site.live) || {});
   if (data.site && data.site.overgang != null && data.site.overgang !== "") FADE = Math.max(0, Math.min(12, +data.site.overgang || 0));
   STATIONS = (data.zenders || []).filter((z) => z.nummers && z.nummers.length).map((z) => ({
@@ -1183,7 +1210,7 @@ function renderLcd() {
     if (vid) wantTitle(vid);
   } else if (tr.list && plIds.length && plIndex >= 0) showPlaylistLcd();
   else { setText("lcdTitle", tr.t); setText("lcdArtist", tr.a); }
-  $("ytLink").href = tr.list ? `https://www.youtube.com/playlist?list=${tr.list}` : `https://www.youtube.com/watch?v=${tr.id}`;
+  if ($("ytLink")) $("ytLink").href = tr.list ? `https://www.youtube.com/playlist?list=${tr.list}` : `https://www.youtube.com/watch?v=${tr.id}`;
   document.querySelectorAll(".preset").forEach((p) => p.setAttribute("aria-pressed", String(+p.dataset.st === st)));
   $("play").classList.toggle("is-playing", playing);
   $("play").setAttribute("aria-label", playing ? "Pauzeren" : "Afspelen");
@@ -1234,6 +1261,14 @@ const YT_ERRORS = {
   101: "eigenaar staat insluiten niet toe", 150: "eigenaar staat insluiten niet toe",
   153: "YouTube mist de herkomst van de pagina",
 };
+// Melding onder het tv-scherm, met de link "Open op YouTube" erachter.
+function setNote(text) {
+  const href = ($("ytLink") && $("ytLink").href) || "https://www.youtube.com";
+  $("note").textContent = text + " ";
+  const a = document.createElement("a");
+  a.href = href; a.target = "_blank"; a.rel = "noopener"; a.id = "ytLink"; a.textContent = "Open op YouTube ↗";
+  $("note").append(a);
+}
 function showError(code) {
   const tr = track();
   $("note").innerHTML = "";
@@ -1323,6 +1358,16 @@ function onBackState(e) {
     const list = bp.getPlaylist();
     if (list && list.length) { plCache[fade.target.list] = list; const j = Math.floor(Math.random() * list.length); if (j !== bp.getPlaylistIndex()) { bp.playVideoAt(j); return; } }
   }
+  {                                                          // kwaliteitsfilter, nog onhoorbaar
+    const vd = bp.getVideoData ? bp.getVideoData() : {};
+    if (slechtNummer(vd && vd.title, bp.getDuration())) {
+      fade.tries = (fade.tries || 0) + 1;
+      const l = fade.target.list && bp.getPlaylist();
+      if (l && l.length > 1 && fade.tries < 6) { bp.playVideoAt(Math.floor(Math.random() * l.length)); return; }
+      noFadeKey = `${st}:${idx}:${plIndex}`;                   // deze keer geen overloop; het filter vangt het straks op
+      cancelFade(); return;
+    }
+  }
   bp.pauseVideo(); bp.seekTo(0, true);
   fade.stage = "ready";
 }
@@ -1361,7 +1406,7 @@ setInterval(() => {
   try { d = player.getDuration(); t = player.getCurrentTime(); } catch (e) { return; }
   if (!d || d < FADE * 3) return;
   const left = d - t;
-  if (!fade && left <= FADE + 6 && left > FADE) prepareNext();
+  if (!fade && left <= FADE + 6 && left > FADE && noFadeKey !== `${st}:${idx}:${plIndex}`) prepareNext();
   else if (fade && fade.stage === "ready" && left <= FADE + 0.3) runFade();
 }, 200);
 
@@ -1404,6 +1449,21 @@ window.onYouTubeIframeAPIReady = function () {
             randomizeOnPlay = false;
             const l = player.getPlaylist();
             if (l && l.length) { plCache[pl] = l; const j = Math.floor(Math.random() * l.length); if (j !== player.getPlaylistIndex()) { player.playVideoAt(j); return; } }
+          }
+          {                                                      // kwaliteitsfilter
+            const vd = player.getVideoData ? player.getVideoData() : {};
+            const why = slechtNummer(vd && vd.title, player.getDuration());
+            if (why && guardSkips < 15) {
+              guardSkips++;
+              setNote(`Overgeslagen door het kwaliteitsfilter (${why}): “${(vd && vd.title) || "nummer"}”.`);
+              const l = pl && player.getPlaylist();
+              if (l && l.length > 1) {
+                if (isLive()) { player.playVideoAt(Math.floor(Math.random() * l.length)); return; }
+                if (player.getPlaylistIndex() < l.length - 1) { player.nextVideo(); return; }
+              }
+              playing = false; step(1); return;
+            }
+            if (!why) guardSkips = 0;
           }
           if (liveSeekPending && isLive()) {                   // zoals een radio aanzetten: midden in een nummer
             liveSeekPending = false;

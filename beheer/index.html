@@ -316,6 +316,28 @@ ul.alist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
           <div id="liveBronnen" style="display:grid; gap:12px"></div>
         </div>
       </section>
+      <section class="panel fold" data-key="p-kwaliteit">
+        <h2 class="panel-head"><button type="button" class="icon fold" aria-expanded="false" aria-controls="p-kwaliteit-body" aria-label="Uitklappen">▾</button><span class="ptitle">Kwaliteitsfilter<small>Geen live-opnames, vlogs, reels of shorts; alleen HD</small></span></h2>
+        <div class="panel-body" id="p-kwaliteit-body" hidden>
+          <p class="hint">Werkt bij het <b>ophalen</b> (artiesten, hits van kanalen, trending) én tijdens het <b>afspelen</b> op de site: een nummer uit een kanaal of afspeellijst dat niet door de keuring komt, wordt meteen overgeslagen. Losse video’s die je zelf plakt, laat de beheerpagina altijd staan.</p>
+          <label class="livebox" for="kw-aan"><input type="checkbox" id="kw-aan"> Kwaliteitsfilter aan</label>
+          <label class="f" for="kw-woorden">Woorden die niet in de titel mogen staan <span class="sub">gescheiden door komma’s; alleen hele woorden (‘live’ raakt ‘Alive’ niet)</span>
+            <textarea id="kw-woorden" rows="4" style="font: inherit; color: var(--ink); background: var(--field); border: 1px solid #2c5a3b; border-radius: 8px; padding: 9px 11px; resize: vertical;"></textarea>
+          </label>
+          <div class="grid2">
+            <label class="f" for="kw-min">Korter dan dit valt af <span class="sub">shorts en reels</span>
+              <select id="kw-min"><option value="0">geen grens</option><option value="60">1:00</option><option value="90">1:30</option><option value="100">1:40</option><option value="120">2:00</option><option value="150">2:30</option></select>
+            </label>
+            <label class="f" for="kw-max">Langer dan dit valt af <span class="sub">vlogs, hele shows, jukeboxen</span>
+              <select id="kw-max"><option value="420">7:00</option><option value="600">10:00</option><option value="720">12:00</option><option value="900">15:00</option><option value="1200">20:00</option><option value="0">geen grens</option></select>
+            </label>
+          </div>
+          <label class="livebox" for="kw-hd"><input type="checkbox" id="kw-hd"> Alleen HD-video’s ophalen (720p of hoger; beter geluid en beeld)</label>
+          <div class="add"><button class="btn gold" type="button" id="kwClean">Opgeslagen nummers keuren en afgekeurde weghalen</button></div>
+          <p class="msg" id="kwMsg"></p>
+        </div>
+      </section>
+
       <section class="panel fold" data-key="p-top5">
         <h2 class="panel-head"><button type="button" class="icon fold" aria-expanded="false" aria-controls="p-top5-body" aria-label="Uitklappen">▾</button><span class="ptitle">Top 5 (aanvragen)<small>Staat onder het tv-scherm; luisteraars tikken erop om het nummer aan te vragen</small></span></h2>
         <div class="panel-body" id="p-top5-body" hidden>
@@ -433,12 +455,60 @@ async function login(t) {
 }
 
 // ---------- Teksten ----------
+// ---------- Kwaliteitsfilter ----------
+const KW_STANDAARD = ["live", "vlog", "vlogs", "reel", "reels", "short", "shorts", "#shorts", "tiktok", "status", "behind the scenes", "bts",
+  "rehearsal", "repetitie", "oefenen", "practice", "riyaz", "soundcheck", "interview", "podcast", "aftermovie", "teaser", "trailer",
+  "promo", "unboxing", "q&a", "full show", "full concert", "volledige show", "jam session"];
+function kw() {
+  data.site.kwaliteit = Object.assign({ aan: true, woorden: KW_STANDAARD.slice(), min: 100, max: 720, hd: true }, data.site.kwaliteit || {});
+  return data.site.kwaliteit;
+}
+function kwRegex() {
+  const ws = (kw().woorden || []).map((w) => String(w).trim().toLowerCase()).filter(Boolean);
+  const esc = (w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return ws.length ? new RegExp("(^|[^\\p{L}\\p{N}])(" + ws.map(esc).join("|") + ")(?=$|[^\\p{L}\\p{N}])", "iu") : null;
+}
+// "" = goedgekeurd, anders de reden
+function afgekeurd(title, sec) {
+  const k = kw(); if (!k.aan) return "";
+  const re = kwRegex(); const m = re && String(title || "").match(re);
+  if (m) return `‘${m[2]}’ in de titel`;
+  if (sec && k.min && sec < k.min) return "te kort";
+  if (sec && k.max && sec > k.max) return "te lang";
+  return "";
+}
+const hdParam = () => (kw().aan && kw().hd ? { videoDefinition: "high" } : {});
+function fillKw() {
+  const k = kw();
+  $("kw-aan").checked = k.aan !== false; $("kw-hd").checked = !!k.hd;
+  $("kw-woorden").value = (k.woorden || []).join(", ");
+  $("kw-min").value = String(k.min || 0); $("kw-max").value = String(k.max || 0);
+}
+$("kw-aan").addEventListener("change", () => { kw().aan = $("kw-aan").checked; setDirty(true); });
+$("kw-hd").addEventListener("change", () => { kw().hd = $("kw-hd").checked; setDirty(true); });
+$("kw-woorden").addEventListener("input", () => { kw().woorden = $("kw-woorden").value.split(",").map((w) => w.trim()).filter(Boolean); setDirty(true); });
+$("kw-min").addEventListener("change", () => { kw().min = +$("kw-min").value; setDirty(true); });
+$("kw-max").addEventListener("change", () => { kw().max = +$("kw-max").value; setDirty(true); });
+$("kwClean").addEventListener("click", () => {
+  // Alleen opgehaalde lijsten keuren (artiesten, hits van kanalen, Top 5); zelf geplakte video's blijven staan.
+  let weg = 0; const voorbeelden = [];
+  const keur = (arr) => arr.filter((n) => { const why = afgekeurd(n.titel, 0); if (why) { weg++; if (voorbeelden.length < 4) voorbeelden.push(n.titel); } return !why; });
+  const live = data.site.live || {};
+  [].concat(live.bronnen || [], ...(live.blokken || []).map((b) => b.bronnen || [])).forEach((n) => { if (Array.isArray(n.populair)) n.populair = keur(n.populair); });
+  (live.blokken || []).forEach((b) => (b.artiesten || []).forEach((a) => { if (Array.isArray(a.nummers)) a.nummers = keur(a.nummers); }));
+  if (Array.isArray(data.site.top5)) data.site.top5 = keur(data.site.top5);
+  $("kwMsg").className = "msg " + (weg ? "ok" : "");
+  $("kwMsg").textContent = weg ? `${weg} nummers weggehaald, o.a.: ${voorbeelden.join(" · ")}. Klik op Opslaan en publiceren.` : "Alles is goedgekeurd; er is niets weggehaald.";
+  if (weg) { setDirty(true); renderZenders(); }
+});
+
 function fillSite() {
   if (!data.site.tijdzone) data.site.tijdzone = "Europe/Amsterdam";
   if (data.site.overgang == null) data.site.overgang = "5";
   data.site.live = Object.assign({ aan: true, knop: "Live", onder: "Alles door elkaar", volgorde: "mix", bpm_van: "", bpm_tot: "" }, data.site.live || {});
   document.querySelectorAll("[data-site]").forEach((inp) => { inp.value = data.site[inp.dataset.site] ?? ""; });
   document.querySelectorAll("[data-live]").forEach((inp) => { inp.value = String(data.site.live[inp.dataset.live] ?? ""); });
+  fillKw();
 }
 document.querySelectorAll("[data-live]").forEach((inp) => ["input", "change"].forEach((ev) =>
   inp.addEventListener(ev, () => {
@@ -511,7 +581,7 @@ async function popularSongs(artist, count) {
   let pageToken = "";
   for (let page = 0; page < 3 && found.size < count * 2; page++) {
     const res = await ytGet("search", { part: "snippet", type: "video", q: artist, order: "viewCount", maxResults: 50,
-      videoEmbeddable: "true", videoCategoryId: "10", ...(pageToken ? { pageToken } : {}) });
+      videoEmbeddable: "true", videoCategoryId: "10", ...hdParam(), ...(pageToken ? { pageToken } : {}) });
     (res.items || []).forEach((it) => { const id = it.id && it.id.videoId; if (id && !found.has(id)) found.set(id, it.snippet); });
     pageToken = res.nextPageToken; if (!pageToken) break;
   }
@@ -521,7 +591,7 @@ async function popularSongs(artist, count) {
     const det = await ytGet("videos", { part: "statistics,contentDetails,snippet", id: ids.slice(i, i + 50).join(",") });
     (det.items || []).forEach((v) => {
       const sec = isoSec(v.contentDetails && v.contentDetails.duration);
-      if (sec < 60 || sec > 20 * 60) return;                       // geen shorts of urenlange jukeboxen
+      if (afgekeurd(v.snippet.title, sec) || sec < 60) return;     // kwaliteitsfilter: geen live, vlogs, shorts…
       out.push({ video: v.id, titel: decodeHtml(v.snippet.title), artiest: artist, views: +((v.statistics || {}).viewCount) || 0 });
     });
   }
@@ -917,12 +987,12 @@ function renderTop5() {
 }
 // Populairste nummers per kanaal (UU… = uploads van kanaal UC…).
 async function channelHits(channelId, count, fallbackArtist) {
-  const res = await ytGet("search", { part: "snippet", type: "video", channelId, order: "viewCount", maxResults: 50, videoEmbeddable: "true" });
+  const res = await ytGet("search", { part: "snippet", type: "video", channelId, order: "viewCount", maxResults: 50, videoEmbeddable: "true", ...hdParam() });
   const ids = (res.items || []).map((it) => it.id && it.id.videoId).filter(Boolean);
   if (!ids.length) return [];
   const det = await ytGet("videos", { part: "statistics,contentDetails,snippet", id: ids.join(",") });
   return (det.items || [])
-    .filter((v) => { const sec = isoSec(v.contentDetails && v.contentDetails.duration); return sec >= 60 && sec <= 20 * 60; })
+    .filter((v) => { const sec = isoSec(v.contentDetails && v.contentDetails.duration); return sec >= 60 && !afgekeurd(v.snippet.title, sec); })
     .map((v) => ({ video: v.id, titel: decodeHtml(v.snippet.title), artiest: decodeHtml(v.snippet.channelTitle || fallbackArtist || ""), views: +((v.statistics || {}).viewCount) || 0 }))
     .sort((a, b) => b.views - a.views).slice(0, count);
 }
@@ -961,12 +1031,12 @@ async function fillTrending() {
   try {
     const after = new Date(Date.now() - days * 86400000).toISOString();
     const res = await ytGet("search", { part: "snippet", type: "video", q: term, order: "viewCount", maxResults: 50,
-      videoEmbeddable: "true", publishedAfter: after });
+      videoEmbeddable: "true", publishedAfter: after, ...hdParam() });
     const ids = (res.items || []).map((it) => it.id && it.id.videoId).filter(Boolean);
     if (!ids.length) { say("Niets gevonden. Probeer een andere zoekterm of een langere periode.", "bad"); return; }
     const det = await ytGet("videos", { part: "statistics,contentDetails,snippet", id: ids.join(",") });
     const top = (det.items || []).map((v) => ({ v, sec: isoSec(v.contentDetails && v.contentDetails.duration) }))
-      .filter((x) => x.sec >= 60 && x.sec <= 20 * 60)
+      .filter((x) => x.sec >= 60 && !afgekeurd(x.v.snippet.title, x.sec))
       .map(({ v }) => ({ video: v.id, titel: decodeHtml(v.snippet.title), artiest: decodeHtml(v.snippet.channelTitle || ""), views: +((v.statistics || {}).viewCount) || 0 }))
       .sort((a, b) => b.views - a.views).slice(0, 5);
     data.site.top5 = top; data.site.top5_bron = { term, dagen: days, datum: new Date().toISOString().slice(0, 10) };
