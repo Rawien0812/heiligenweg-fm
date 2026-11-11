@@ -17,3 +17,7 @@ Een nostalgische muzieksite van **Rawien Paltoe**: je zit voorin een Surinaamse 
 Zenders, muziek en teksten pas je aan op **/beheer/** (bijvoorbeeld `https://rawien0812.github.io/heiligenweg-fm/beheer/`).
 Alles staat in `zenders.json`; de beheerpagina slaat wijzigingen via de GitHub-API op in deze repo, waarna de site vanzelf opnieuw online gaat.
 Inloggen gaat met een fine-grained GitHub-token met alleen toegang tot deze repo (Contents: Read and write).
+
+## Tv-modus
+Open de site met `#tv` erachter (bijvoorbeeld `https://rawien0812.github.io/heiligenweg-fm/#tv`) voor een tv-weergave: video schermvullend, nu-speelt-info, Top 5 met QR-code. Bediening met de afstandsbediening: OK = afspelen/pauze, ← → = vorige/volgende, ↑ ↓ = volume.
+De QR-code wordt gemaakt met `js/qrcode.js` (qrcode-generator van Kazuhiko Arase, MIT-licentie).

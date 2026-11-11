@@ -437,6 +437,67 @@ footer { padding-block: 22px 40px; color: var(--muted); font-size: .85rem; }
 footer p { margin: 0 0 6px; max-width: 70ch; }
 footer .sig { font: 400 1.1rem/1.2 var(--display); color: var(--gold); display: flex; gap: 8px; align-items: center; }
 
+/* ================= Tv-modus (#tv) ================= */
+.tvbar, .tvstart, .tvhint { display: none; }
+body.tv { overflow: hidden; background: #000; cursor: none; }
+body.tv.mouse { cursor: default; }
+body.tv header.strip, body.tv .fringe, body.tv .windshield, body.tv .stops, body.tv .programma,
+body.tv .flagbar, body.tv footer, body.tv .presets, body.tv .deckctl, body.tv .note, body.tv .lcd .row .eq { display: none !important; }
+body.tv main.wrap { max-width: none; padding: 0; }
+body.tv .dash { display: block; padding: 0; border: 0; background: none; box-shadow: none; }
+body.tv .radio { background: none; border: 0; box-shadow: none; padding: 0; display: block; }
+/* video over het hele scherm */
+body.tv .screen { position: fixed; inset: 0; z-index: 1; border: 0; border-radius: 0; box-shadow: none; aspect-ratio: auto; max-width: none; background: #000; }
+body.tv::after { content: ""; position: fixed; inset: auto 0 0 0; height: 55vh; z-index: 2; pointer-events: none;
+  background: linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,.55) 45%, rgba(0,0,0,.88)); }
+body.tv::before { content: ""; position: fixed; inset: 0 0 auto 0; height: 18vh; z-index: 2; pointer-events: none;
+  background: linear-gradient(0deg, rgba(0,0,0,0), rgba(0,0,0,.7)); }
+/* balk bovenaan */
+body.tv .tvbar { display: flex; position: fixed; z-index: 3; top: 3vh; left: 3vw; right: 3vw; align-items: center; gap: 2vw; }
+.tvlogo { font: 400 2.6vw/1 var(--display); color: transparent;
+  background: linear-gradient(180deg, #fff6c8 0%, var(--gold) 40%, var(--gold-deep) 65%, #ffe27a 100%); -webkit-background-clip: text; background-clip: text;
+  -webkit-text-stroke: 1px #5a3a00; filter: drop-shadow(2px 2px 0 #0b2413); }
+.tvclock { font: 400 2.4vw/1 var(--lcd); color: #fff; margin-left: auto; font-variant-numeric: tabular-nums; text-shadow: 0 2px 8px rgba(0,0,0,.8); }
+body.tv .tvlive { font-size: 1.6vw; padding: .5vw 1.1vw; gap: .6vw; }
+body.tv .tvlive .dot { width: .7vw; height: .7vw; }
+/* wat er speelt */
+body.tv .lcd { position: fixed; z-index: 3; left: 3vw; bottom: 5vh; width: min(58vw, 1300px);
+  background: rgba(10, 22, 12, .72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  border: 2px solid rgba(246,198,74,.55); border-radius: 1.2vw; padding: 1.6vw 2vw; box-shadow: 0 1vw 3vw rgba(0,0,0,.5); }
+body.tv .lcd .row { font-size: 1.5vw; }
+body.tv .lcd .title { font-size: 3.4vw; margin: .6vw 0 .3vw; }
+body.tv .lcd .artist { font-size: 2vw; }
+body.tv .lcd .credit { font-size: 1.5vw; margin-top: .8vw; }
+body.tv .lcd .credit.small { font-size: 1.15vw; margin-top: .2vw; }
+/* top 5 + QR rechts */
+body.tv .tv { display: block; }
+body.tv .top5 { position: fixed; z-index: 3; right: 3vw; bottom: 5vh; width: 27vw; margin: 0;
+  background: rgba(10,10,10,.78); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border-radius: 1.2vw; padding: 1.2vw; gap: .7vw; }
+body.tv .top5 h3 { font-size: 1.45vw; }
+body.tv .t5 { gap: .5vw; }
+body.tv .t5 button { grid-template-columns: 2.2vw 5.6vw minmax(0,1fr); gap: .8vw; padding: .45vw .6vw .45vw .45vw; border-radius: .6vw; cursor: none; }
+body.tv .t5 .rank { font-size: 1.8vw; }
+body.tv .t5 img { width: 5.6vw; height: 3.15vw; border-radius: .35vw; }
+body.tv .t5 .tt strong { font-size: 1.05vw; }
+body.tv .t5 .tt span { font-size: .85vw; }
+body.tv .t5 .ask { display: none; }
+body.tv .tvqr { display: flex; gap: 1vw; align-items: center; margin-top: .3vw; color: #fff; font-size: 1vw; line-height: 1.3; }
+body.tv .tvqr[hidden] { display: none; }
+.qrbox { background: #fff; padding: .5vw; border-radius: .4vw; line-height: 0; flex: none; }
+.qrbox svg, .qrbox img { width: 7vw; height: 7vw; display: block; }
+/* start-knop en hulpregel */
+body.tv .tvstart { display: block; position: fixed; z-index: 4; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  font: 400 2.6vw/1 var(--display); color: #2a1a00; border: 0; border-radius: 999px; padding: 1.6vw 3vw; cursor: pointer;
+  background: radial-gradient(circle at 35% 30%, #fff1b0, var(--gold) 45%, #c98f12); box-shadow: 0 0 0 .5vw rgba(246,198,74,.3), 0 1vw 3vw rgba(0,0,0,.6); }
+body.tv.playing .tvstart, body.tv .tvstart[hidden] { display: none; }
+body.tv .tvhint { display: block; position: fixed; z-index: 3; left: 0; right: 0; bottom: 1.4vh; text-align: center; font-size: 1vw; color: rgba(255,255,255,.65); transition: opacity 1s; }
+body.tv .tvhint.gone { opacity: 0; }
+/* staand scherm / kleine schermen: top 5 onder elkaar */
+@media (max-aspect-ratio: 1/1) {
+  body.tv .lcd { width: auto; right: 3vw; bottom: auto; top: 12vh; }
+  body.tv .top5 { width: auto; left: 3vw; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; }
 }
@@ -529,6 +590,7 @@ footer .sig { font: 400 1.1rem/1.2 var(--display); color: var(--gold); display: 
       <section class="top5" id="top5" aria-labelledby="top5Kop" hidden>
         <h3 id="top5Kop">Top 5 · tik om aan te vragen</h3>
         <ol class="t5" id="top5List"></ol>
+        <div class="tvqr" id="tvQr" hidden><div class="qrbox" id="qrBox"></div><span>Scan met je telefoon en vraag zelf een nummer aan</span></div>
       </section>
     </div>
   </div>
@@ -548,6 +610,15 @@ footer .sig { font: 400 1.1rem/1.2 var(--display); color: var(--gold); display: 
 </main>
 
 <div class="flagbar" aria-hidden="true"></div>
+<!-- Tv-modus (#tv): balk bovenaan en startknop -->
+<div class="tvbar" id="tvbar" aria-hidden="true">
+  <span class="tvlogo" id="tvLogo">Heiligenweg FM</span>
+  <span class="tvclock" id="tvClock"></span>
+  <span class="time live tvlive"><span class="dot"></span>LIVE</span>
+</div>
+<button class="tvstart" id="tvStart" type="button">▶&nbsp; Druk op OK om te starten</button>
+<div class="tvhint" id="tvHint" aria-hidden="true">OK = afspelen/pauze · ← → = vorige/volgende · ↑ ↓ = volume</div>
+
 <footer class="wrap">
   <p class="sig"><span class="star" aria-hidden="true"></span><span id="siteOnderaan">Gemaakt door Rawien Paltoe.</span></p>
   <p id="siteRechten">Alle muziek wordt afgespeeld via YouTube. De rechten liggen bij de artiesten en uploaders.</p>
@@ -808,6 +879,7 @@ async function loadZenders() {
   TOP5 = (data.site && Array.isArray(data.site.top5) ? data.site.top5 : []).filter((n) => n.video).slice(0, 5);
   if (data.site && data.site.top5_kop) $("top5Kop").textContent = data.site.top5_kop;
   renderTop5();
+  if (typeof applyTvMode === "function" && location.hash === "#tv") $("tvLogo").textContent = document.title;
   if (data.site && data.site.tijdzone) TZ = data.site.tijdzone;
   LIVE = Object.assign({ aan: true, knop: "Live", onder: "Alles door elkaar", volgorde: "mix", bpm_van: "", bpm_tot: "" }, (data.site && data.site.live) || {});
   if (data.site && data.site.overgang != null && data.site.overgang !== "") FADE = Math.max(0, Math.min(12, +data.site.overgang || 0));
@@ -1383,7 +1455,69 @@ document.addEventListener("keydown", (e) => {
   else if (e.key === "m" || e.key === "M") $("mute").click();
   else if (e.key === "ArrowRight") $("next").click();
   else if (e.key === "ArrowLeft") $("prev").click();
+  else if (isTv() && (e.key === "Enter" || e.key === "MediaPlayPause" || e.key === "MediaPlay" || e.key === "MediaPause")) { e.preventDefault(); tvStartOrToggle(); }
+  else if (isTv() && e.key === "MediaTrackNext") $("next").click();
+  else if (isTv() && e.key === "MediaTrackPrevious") $("prev").click();
+  else if (isTv() && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+    e.preventDefault();
+    const v = Math.max(0, Math.min(100, +$("vol").value + (e.key === "ArrowUp" ? 10 : -10)));
+    $("vol").value = v; if (v > 0) prefs.muted = false; applyVolume(); savePrefs();
+    tvToast(`Volume ${v}%`);
+  }
 });
+
+// ---------- Tv-modus: …/#tv ----------
+const isTv = () => document.body.classList.contains("tv");
+let wakeLock = null, qrMade = false, clockTimer = null, hintTimer = null, mouseTimer = null;
+function tvToast(t) { const h = $("tvHint"); h.textContent = t; h.classList.remove("gone"); clearTimeout(hintTimer); hintTimer = setTimeout(() => h.classList.add("gone"), 2500); }
+function tvClock() {
+  try { $("tvClock").textContent = new Intl.DateTimeFormat("nl-NL", { timeZone: TZ, hour: "2-digit", minute: "2-digit" }).format(new Date()); } catch (e) {}
+}
+async function keepAwake() {
+  try { if ("wakeLock" in navigator && !wakeLock) { wakeLock = await navigator.wakeLock.request("screen"); wakeLock.addEventListener("release", () => { wakeLock = null; }); } } catch (e) {}
+}
+function makeQr() {
+  if (qrMade) return; qrMade = true;
+  const url = location.href.split("#")[0];
+  const draw = () => {
+    try {
+      const qr = qrcode(0, "M"); qr.addData(url); qr.make();
+      $("qrBox").innerHTML = qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true, alt: "QR-code naar " + url });
+      $("tvQr").hidden = false;
+    } catch (e) {}
+  };
+  if (window.qrcode) return draw();
+  const sc = document.createElement("script");
+  sc.src = "js/qrcode.js";                     // QR-bibliotheek staat in de eigen repo (MIT, Kazuhiko Arase)
+  sc.onload = draw;
+  document.head.appendChild(sc);
+}
+function tvStartOrToggle() {
+  if (!playing) {
+    $("play").click();
+    keepAwake();
+    if (document.documentElement.requestFullscreen && !document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+  } else $("play").click();
+}
+function applyTvMode() {
+  const on = location.hash === "#tv";
+  document.body.classList.toggle("tv", on);
+  if (!on) { clearInterval(clockTimer); return; }
+  $("tvLogo").textContent = (STATIONS.length && document.title) || "Heiligenweg FM";
+  tvClock(); clearInterval(clockTimer); clockTimer = setInterval(tvClock, 10000);
+  makeQr();
+  tvToast("OK = afspelen/pauze · ← → = vorige/volgende · ↑ ↓ = volume");
+  $("tvStart").focus({ preventScroll: true });
+}
+$("tvStart").addEventListener("click", tvStartOrToggle);
+window.addEventListener("hashchange", applyTvMode);
+document.addEventListener("visibilitychange", () => { if (isTv() && document.visibilityState === "visible" && playing) keepAwake(); });
+document.addEventListener("mousemove", () => {
+  if (!isTv()) return;
+  document.body.classList.add("mouse"); clearTimeout(mouseTimer);
+  mouseTimer = setTimeout(() => document.body.classList.remove("mouse"), 3000);
+});
+applyTvMode();
 
 // Stop-bel: twee keer "ding", radio pauzeert even zoals bij een echte halte.
 $("bell").addEventListener("click", () => {
