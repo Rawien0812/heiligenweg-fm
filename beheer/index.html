@@ -93,6 +93,16 @@ code { font-family: var(--mono); font-size: 1.1em; background: #000; padding: 0 
 .card-body { display: grid; gap: 12px; }
 .icon.fold { font-size: 1.1rem; transition: transform .15s; }
 .icon.fold[aria-expanded="false"] { transform: rotate(-90deg); }
+.toolbar { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; color: var(--muted); font-size: .88rem; }
+.tb-btns { display: flex; gap: 8px; }
+.tb-btns button { padding: 7px 12px; font-size: .88rem; }
+section.panel.fold { padding: 0; }
+.panel-head { margin: 0; display: flex; gap: 10px; align-items: center; padding: 14px 16px; cursor: pointer; user-select: none; }
+.panel-head .ptitle { display: grid; gap: 2px; min-width: 0; }
+.panel-head small { font: 400 .82rem/1.3 var(--body); color: var(--muted); letter-spacing: 0; }
+.panel-body { padding: 0 18px 18px; display: grid; gap: 12px; }
+.panel-body > .hint { margin: 0; }
+section.panel.fold:has(.panel-body:not([hidden])) .panel-head { border-bottom: 1px solid rgba(246,198,74,.2); margin-bottom: 14px; }
 .foldall { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 10px; }
 .foldall button { padding: 6px 10px; font-size: .85rem; }
 .zender-head .tools { display: flex; gap: 6px; }
@@ -201,10 +211,14 @@ ul.alist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
   </section>
 
   <div id="editor" hidden>
-    <div style="display:grid; gap:18px">
-      <!-- Teksten -->
-      <section class="panel">
-        <h2>Teksten en instellingen</h2>
+    <div style="display:grid; gap:14px">
+      <div class="toolbar">
+        <span>Klik op een kop om dat onderdeel open of dicht te klappen.</span>
+        <span class="tb-btns"><button class="btn ghost" type="button" id="openAll">Alles uitklappen</button><button class="btn ghost" type="button" id="closeAll">Alles inklappen</button></span>
+      </div>
+      <section class="panel fold" data-key="p-teksten">
+        <h2 class="panel-head"><button type="button" class="icon fold" aria-expanded="false" aria-controls="p-teksten-body" aria-label="Uitklappen">▾</button><span class="ptitle">Teksten en instellingen<small>Titel, busroute, welkomsttekst, tijdzone</small></span></h2>
+        <div class="panel-body" id="p-teksten-body" hidden>
         <p class="hint">Een <code>★</code> in de busroute wordt op de site een gele ster.</p>
         <div class="grid2">
           <label class="f" for="s-titel">Titel bovenaan<input type="text" id="s-titel" data-site="titel"></label>
@@ -220,11 +234,11 @@ ul.alist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
             </select>
           </label>
         </div>
+        </div>
       </section>
-
-      <!-- LIVE en overgangen -->
-      <section class="panel">
-        <h2>LIVE en overgangen</h2>
+      <section class="panel fold" data-key="p-live">
+        <h2 class="panel-head"><button type="button" class="icon fold" aria-expanded="false" aria-controls="p-live-body" aria-label="Uitklappen">▾</button><span class="ptitle">LIVE-instellingen<small>Aan/uit, volgorde, BPM en overgangen</small></span></h2>
+        <div class="panel-body" id="p-live-body" hidden>
         <p class="hint">LIVE is de hoofdzender: hij draait de muziek van de zenders met een vinkje bij <b>Draait mee op LIVE</b> die op dat moment op het programma staan, door elkaar en eindeloos. Vul bij nummers de <b>BPM</b> in (opzoeken kan op <a href="https://songbpm.com" target="_blank" rel="noopener">songbpm.com</a>) om op tempo te mixen.</p>
         <div class="grid2">
           <label class="f" for="l-aan">LIVE-zender
@@ -246,9 +260,12 @@ ul.alist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
             </select>
           </label>
         </div>
-        <div class="zender" style="margin-top:16px; border-left-color: #4285f4">
-          <div class="zender-head"><span class="title">YouTube API-sleutel (voor artiesten zoeken)</span></div>
-          <p class="hint" style="margin:0">Nodig om per artiest de populairste nummers op te zoeken. De sleutel blijft <b>alleen in deze browser</b> en wordt niet op GitHub gezet.</p>
+        </div>
+      </section>
+      <section class="panel fold" data-key="p-ytkey">
+        <h2 class="panel-head"><button type="button" class="icon fold" aria-expanded="false" aria-controls="p-ytkey-body" aria-label="Uitklappen">▾</button><span class="ptitle">YouTube API-sleutel<small>Nodig om artiesten op te zoeken</small></span></h2>
+        <div class="panel-body" id="p-ytkey-body" hidden>
+        <p class="hint" style="margin:0">Nodig om per artiest de populairste nummers op te zoeken. De sleutel blijft <b>alleen in deze browser</b> en wordt niet op GitHub gezet.</p>
           <div class="add">
             <input type="password" id="ytKey" autocomplete="off" placeholder="AIza…" aria-label="YouTube API-sleutel">
             <button class="btn ghost" type="button" id="ytKeySave">Bewaren</button>
@@ -266,30 +283,33 @@ ul.alist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
             <p class="hint" style="margin:6px 0 0">Gratis dagtegoed: genoeg voor ongeveer 100 artiesten ophalen per dag.</p>
           </details>
         </div>
-
-        <h2 style="margin-top:18px">Tijdblokken op LIVE</h2>
+      </section>
+      <section class="panel fold" data-key="p-blokken">
+        <h2 class="panel-head"><button type="button" class="icon fold" aria-expanded="false" aria-controls="p-blokken-body" aria-label="Uitklappen">▾</button><span class="ptitle">LIVE-tijdblokken<small>Soul, Bhajan, Bollywood, Lokaal… met bronnen en artiesten</small></span></h2>
+        <div class="panel-body" id="p-blokken-body" hidden>
         <p class="hint">Verdeel de dag in blokken, elk met eigen YouTube-bronnen (elke dag hetzelfde). Een blok <b>zonder eigen bronnen</b> draait de <b>algemene bronnen</b> hieronder. ‘tot 00:00’ betekent tot middernacht.</p>
         <div class="foldall"><button class="btn ghost" type="button" data-fold="lb" data-open="1">Alles uitklappen</button><button class="btn ghost" type="button" data-fold="lb" data-open="0">Alles inklappen</button></div>
         <div id="liveBlokken" style="display:grid; gap:12px"></div>
         <div style="margin-top:10px"><button class="btn ghost" type="button" id="addBlok">+ Tijdblok voor LIVE</button></div>
-
-        <div class="zender" style="margin-top:16px; border-left-color: var(--gold)">
-          <div class="zender-head"><span class="title">Algemene bronnen voor LIVE</span></div>
+        </div>
+      </section>
+      <section class="panel fold" data-key="p-algemeen">
+        <h2 class="panel-head"><button type="button" class="icon fold" aria-expanded="false" aria-controls="p-algemeen-body" aria-label="Uitklappen">▾</button><span class="ptitle">Algemene bronnen voor LIVE<small>Draaien buiten de blokken en in lege blokken</small></span></h2>
+        <div class="panel-body" id="p-algemeen-body" hidden>
           <p class="hint" style="margin:0">Plak hier YouTube-<b>kanalen</b> (kanaal-ID <code>UC…</code>), <b>afspeellijsten</b> of losse <b>video’s</b>. Deze draaien buiten de tijdblokken en in blokken zonder eigen bronnen. Leeg = de zenders met een vinkje.</p>
           <p class="msg ok" id="liveMode"></p>
           <div id="liveBronnen" style="display:grid; gap:12px"></div>
         </div>
       </section>
-
-      <!-- Zenders -->
-      <section class="panel">
-        <h2>Zenders</h2>
+      <section class="panel fold" data-key="p-zenders">
+        <h2 class="panel-head"><button type="button" class="icon fold" aria-expanded="false" aria-controls="p-zenders-body" aria-label="Uitklappen">▾</button><span class="ptitle">Zenders<small>Alle zenders met hun muziek en tijden</small></span></h2>
+        <div class="panel-body" id="p-zenders-body" hidden>
         <p class="hint">Plak een YouTube-link bij een zender om muziek toe te voegen. Dat kan een <b>video</b>, een <b>afspeellijst</b> (<code>list=</code>) of een <b>kanaal</b> (<code>/channel/UC…</code> of alleen de kanaal-ID <code>UC…</code>) zijn. Een afspeellijst of kanaal speelt op de site <b>alle</b> nummers af.</p>
         <div class="foldall"><button class="btn ghost" type="button" data-fold="z" data-open="1">Alles uitklappen</button><button class="btn ghost" type="button" data-fold="z" data-open="0">Alles inklappen</button></div>
         <div class="zenders" id="zenders"></div>
         <div style="margin-top:14px"><button class="btn ghost" type="button" id="addZender">+ Zender toevoegen</button></div>
+        </div>
       </section>
-
       <section class="panel">
         <h2>Uitloggen</h2>
         <p class="hint">Gebruik je een computer die niet van jou is? Log dan uit als je klaar bent; de sleutel wordt dan uit deze browser verwijderd.</p>
@@ -778,6 +798,24 @@ function collapsible(card, head, key, parts) {
   head.prepend(tg);
   card.append(head, body);
 }
+// Grote onderdelen in- en uitklappen.
+function setPanel(sec, open) {
+  const body = sec.querySelector(".panel-body"), tg = sec.querySelector(".panel-head .fold"), key = sec.dataset.key;
+  body.hidden = !open;
+  tg.setAttribute("aria-expanded", String(open)); tg.setAttribute("aria-label", open ? "Inklappen" : "Uitklappen");
+  open ? openCards.add(key) : openCards.delete(key);
+}
+document.querySelectorAll("section.panel.fold").forEach((sec) => {
+  setPanel(sec, openCards.has(sec.dataset.key));
+  sec.querySelector(".panel-head").addEventListener("click", () => { setPanel(sec, sec.querySelector(".panel-body").hidden); saveOpen(); });
+});
+$("openAll").addEventListener("click", () => { document.querySelectorAll("section.panel.fold").forEach((x) => setPanel(x, true)); saveOpen(); });
+$("closeAll").addEventListener("click", () => {
+  document.querySelectorAll("section.panel.fold").forEach((x) => setPanel(x, false));
+  [...openCards].forEach((k) => { if (/^(z|lb)\d+$/.test(k)) openCards.delete(k); });
+  saveOpen(); renderZenders();
+});
+
 document.querySelectorAll("[data-fold]").forEach((btn) => btn.addEventListener("click", () => {
   const prefix = btn.dataset.fold, open = btn.dataset.open === "1";
   const n = prefix === "z" ? data.zenders.length : (data.site.live.blokken || []).length;
