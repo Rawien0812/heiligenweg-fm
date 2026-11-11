@@ -219,7 +219,21 @@ h1 {
 .deckctl { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; background: linear-gradient(180deg, #161616, #0d0d0d); border: 1px solid #2a2a2a; border-radius: 14px; padding: 12px 12px 10px; }
 .progress { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; }
 .time { font: 1.05rem/1 var(--lcd); color: var(--muted); font-variant-numeric: tabular-nums; min-width: 3ch; }
-.time.live { color: #ff5c74; letter-spacing: .08em; }
+.time.live {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px 4px 8px; border-radius: 999px;
+  background: #e0002e; color: #fff; letter-spacing: .1em; font-size: 1rem;
+  animation: onair 1.6s ease-in-out infinite;
+}
+.time.live .dot { width: 8px; height: 8px; border-radius: 50%; background: #fff; animation: ping 1.6s ease-out infinite; }
+@keyframes onair {
+  0%, 100% { background: #e0002e; box-shadow: 0 0 0 0 rgba(224,0,46,.7); }
+  50% { background: #ff2d55; box-shadow: 0 0 14px 3px rgba(255,45,85,.55); }
+}
+@keyframes ping {
+  0% { box-shadow: 0 0 0 0 rgba(255,255,255,.9); opacity: 1; }
+  60% { box-shadow: 0 0 0 7px rgba(255,255,255,0); opacity: .35; }
+  100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); opacity: 1; }
+}
 input[type=range] { -webkit-appearance: none; appearance: none; background: transparent; height: 22px; margin: 0; cursor: pointer; min-width: 0; }
 input[type=range]::-webkit-slider-runnable-track { height: 6px; border-radius: 999px;
   background: linear-gradient(90deg, var(--gold) 0 var(--p, 0%), #3a3a3a var(--p, 0%) 100%); }
@@ -1169,8 +1183,10 @@ setInterval(() => {
   if (ready) { try { d = player.getDuration() || 0; t = player.getCurrentTime() || 0; } catch (e) {} }
   const live = isLive();
   $("seek").disabled = live || !d;
-  $("tDur").classList.toggle("live", live);
-  $("tDur").textContent = live ? "● LIVE" : fmt(d);
+  const td = $("tDur");
+  td.classList.toggle("live", live);
+  if (live) { if (!td.dataset.live) { td.dataset.live = "1"; td.innerHTML = '<span class="dot" aria-hidden="true"></span>LIVE'; } }
+  else { delete td.dataset.live; td.textContent = fmt(d); }
   if (!seeking) {
     $("tCur").textContent = fmt(t);
     const pct = d ? Math.min(100, t / d * 100) : 0;
