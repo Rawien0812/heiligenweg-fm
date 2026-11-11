@@ -303,6 +303,24 @@ ul.alist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
           <div id="liveBronnen" style="display:grid; gap:12px"></div>
         </div>
       </section>
+      <section class="panel fold" data-key="p-top5">
+        <h2 class="panel-head"><button type="button" class="icon fold" aria-expanded="false" aria-controls="p-top5-body" aria-label="Uitklappen">▾</button><span class="ptitle">Top 5 (aanvragen)<small>Staat onder het tv-scherm; luisteraars tikken erop om het nummer aan te vragen</small></span></h2>
+        <div class="panel-body" id="p-top5-body" hidden>
+          <label class="f" for="s-top5_kop">Kop boven de lijst<input type="text" id="s-top5_kop" data-site="top5_kop" placeholder="Top 5 · tik om aan te vragen"></label>
+          <div class="zender" style="border-left-color: var(--gold)">
+            <div class="zender-head"><span class="title">Trending automatisch invullen</span></div>
+            <p class="hint" style="margin:0">Zoekt op YouTube de <b>meest bekeken nieuwe video’s</b> voor een zoekterm in de gekozen periode en zet de top 5 hieronder (vervangt de huidige lijst). Daarna kun je nog schuiven of weghalen. Gebruikt je YouTube API-sleutel.</p>
+            <div class="add">
+              <input type="text" id="trendTerm" placeholder="Zoekterm, bijv. baithak gana" aria-label="Zoekterm voor trending">
+              <select id="trendDays" aria-label="Periode"><option value="7">afgelopen 7 dagen</option><option value="30" selected>afgelopen 30 dagen</option><option value="90">afgelopen 90 dagen</option><option value="365">afgelopen jaar</option></select>
+              <button class="btn gold" type="button" id="trendGo">Vul met trending</button>
+            </div>
+            <p class="msg" id="trendMsg"></p>
+          </div>
+          <div id="top5Box" style="display:grid; gap:12px"></div>
+        </div>
+      </section>
+
       <section class="panel fold" data-key="p-zenders">
         <h2 class="panel-head"><button type="button" class="icon fold" aria-expanded="false" aria-controls="p-zenders-body" aria-label="Uitklappen">▾</button><span class="ptitle">Zenders<small>Alle zenders met hun muziek en tijden</small></span></h2>
         <div class="panel-body" id="p-zenders-body" hidden>
@@ -705,7 +723,7 @@ function scheduleEditor(z, zi) {
 }
 
 // Lijst met nummers + "link plakken" (gebruikt door zenders én door LIVE).
-function tracksBlock(z, key, emptyText) {
+function tracksBlock(z, key, emptyText, opts = {}) {
   const ol = document.createElement("ol"); ol.className = "tracks";
   if (!z.nummers.length) { const li = document.createElement("li"); li.className = "empty"; li.textContent = emptyText; ol.appendChild(li); }
   z.nummers.forEach((n, ni) => {
@@ -741,6 +759,8 @@ function tracksBlock(z, key, emptyText) {
     ev.preventDefault();
     const r = parseLink(inp.value);
     if (r.error) { msg.className = "msg bad"; msg.textContent = r.error; msg.style.flexBasis = "100%"; return; }
+    if (opts.alleenVideo && !r.video) { msg.className = "msg bad"; msg.textContent = "Hier kunnen alleen losse video's (een nummer), geen afspeellijst of kanaal."; msg.style.flexBasis = "100%"; return; }
+    if (opts.max && z.nummers.length >= opts.max) { msg.className = "msg bad"; msg.textContent = `Er staan er al ${opts.max}. Haal er eerst één weg met ✕.`; msg.style.flexBasis = "100%"; return; }
     const exists = z.nummers.some((n) => (r.video && n.video === r.video) || (r.lijst && n.lijst === r.lijst));
     if (exists) { msg.className = "msg bad"; msg.textContent = "Deze staat al bij deze zender."; msg.style.flexBasis = "100%"; return; }
     let item;
@@ -875,7 +895,39 @@ $("addBlok").addEventListener("click", () => {
   $(`lb${data.site.live.blokken.length - 1}-naam`).focus();
 });
 
+function renderTop5() {
+  data.site.top5 = Array.isArray(data.site.top5) ? data.site.top5 : [];
+  const box = $("top5Box"); box.innerHTML = "";
+  const [ol, add] = tracksBlock({ nummers: data.site.top5, knop: "", naam: "" }, "top5",
+    "Nog leeg. Plak hieronder de YouTube-links van je top 5 (nummer 1 bovenaan), of gebruik ‘Vul met trending’.", { alleenVideo: true, max: 5 });
+  box.append(ol, add);
+}
+async function fillTrending() {
+  const term = $("trendTerm").value.trim() || "baithak gana";
+  const days = +$("trendDays").value || 30;
+  const say = (t, c = "") => { $("trendMsg").className = "msg " + c; $("trendMsg").textContent = t; };
+  $("trendGo").disabled = true; say(`Zoeken naar trending “${term}”…`);
+  try {
+    const after = new Date(Date.now() - days * 86400000).toISOString();
+    const res = await ytGet("search", { part: "snippet", type: "video", q: term, order: "viewCount", maxResults: 50,
+      videoEmbeddable: "true", publishedAfter: after });
+    const ids = (res.items || []).map((it) => it.id && it.id.videoId).filter(Boolean);
+    if (!ids.length) { say("Niets gevonden. Probeer een andere zoekterm of een langere periode.", "bad"); return; }
+    const det = await ytGet("videos", { part: "statistics,contentDetails,snippet", id: ids.join(",") });
+    const top = (det.items || []).map((v) => ({ v, sec: isoSec(v.contentDetails && v.contentDetails.duration) }))
+      .filter((x) => x.sec >= 60 && x.sec <= 20 * 60)
+      .map(({ v }) => ({ video: v.id, titel: decodeHtml(v.snippet.title), artiest: decodeHtml(v.snippet.channelTitle || ""), views: +((v.statistics || {}).viewCount) || 0 }))
+      .sort((a, b) => b.views - a.views).slice(0, 5);
+    data.site.top5 = top; data.site.top5_bron = { term, dagen: days, datum: new Date().toISOString().slice(0, 10) };
+    setDirty(true); renderZenders();
+    say(`Top 5 ingevuld met de meest bekeken nummers voor “${term}” (${days} dagen). Klik op Opslaan en publiceren.`, "ok");
+  } catch (e) { say(e.message, "bad"); }
+  finally { $("trendGo").disabled = false; }
+}
+$("trendGo").addEventListener("click", fillTrending);
+
 function renderZenders() {
+  renderTop5();
   renderLiveBlokken();
   renderLiveBronnen();
   const box = $("zenders"); box.innerHTML = "";
