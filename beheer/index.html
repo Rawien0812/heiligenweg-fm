@@ -222,6 +222,12 @@ ol.tracks { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
             </select>
           </label>
         </div>
+        <div class="zender" style="margin-top:16px; border-left-color: var(--gold)">
+          <div class="zender-head"><span class="title">Bronnen voor LIVE</span></div>
+          <p class="hint" style="margin:0">Plak hier YouTube-<b>kanalen</b> (kanaal-ID <code>UC…</code>), <b>afspeellijsten</b> of losse <b>video’s</b>. Staat hier iets, dan draait LIVE <b>alleen</b> deze bronnen. Leeg = de zenders met een vinkje.</p>
+          <p class="msg ok" id="liveMode"></p>
+          <div id="liveBronnen" style="display:grid; gap:12px"></div>
+        </div>
       </section>
 
       <!-- Zenders -->
@@ -475,8 +481,81 @@ function scheduleEditor(z, zi) {
   return box;
 }
 
+// Lijst met nummers + "link plakken" (gebruikt door zenders én door LIVE).
+function tracksBlock(z, key, emptyText) {
+  const ol = document.createElement("ol"); ol.className = "tracks";
+  if (!z.nummers.length) { const li = document.createElement("li"); li.className = "empty"; li.textContent = emptyText; ol.appendChild(li); }
+  z.nummers.forEach((n, ni) => {
+    const li = document.createElement("li"); li.className = "track";
+    const kind = document.createElement("a"); kind.className = "kind" + (n.lijst ? " pl" : ""); kind.textContent = n.lijst ? (n.lijst.startsWith("UU") ? "KANAAL" : "LIJST") : "VIDEO";
+    kind.href = ytUrl(n); kind.target = "_blank"; kind.rel = "noopener"; kind.title = "Open op YouTube"; kind.style.textDecoration = "none";
+    const t = document.createElement("input"); t.type = "text"; t.value = n.titel || ""; t.placeholder = "Titel"; t.id = `${key}-n${ni}-titel`; t.setAttribute("aria-label", "Titel");
+    t.addEventListener("input", () => { n.titel = t.value; setDirty(true); });
+    const a = document.createElement("input"); a.type = "text"; a.value = n.artiest || ""; a.placeholder = "Artiest"; a.className = "artist"; a.id = `${key}-n${ni}-artiest`; a.setAttribute("aria-label", "Artiest");
+    a.addEventListener("input", () => { n.artiest = a.value; setDirty(true); });
+    const tl = document.createElement("span"); tl.className = "tools";
+    const u = iconBtn("Omhoog", "↑", () => { move(z.nummers, ni, -1); setDirty(true); renderZenders(); }); u.disabled = ni === 0;
+    const d = iconBtn("Omlaag", "↓", () => { move(z.nummers, ni, 1); setDirty(true); renderZenders(); }); d.disabled = ni === z.nummers.length - 1;
+    tl.append(u, d, iconBtn("Verwijderen", "✕", () => { z.nummers.splice(ni, 1); setDirty(true); renderZenders(); }, "del"));
+    const bpm = document.createElement("input"); bpm.type = "text"; bpm.inputMode = "numeric"; bpm.className = "bpm";
+    bpm.id = `${key}-n${ni}-bpm`; bpm.setAttribute("aria-label", "BPM");
+    if (n.lijst) { bpm.disabled = true; bpm.placeholder = "—"; bpm.title = "BPM kan alleen per losse video"; }
+    else { bpm.placeholder = "BPM"; bpm.value = n.bpm || ""; }
+    bpm.addEventListener("input", () => {
+      const v = bpm.value.replace(/[^0-9]/g, "").slice(0, 3); if (bpm.value !== v) bpm.value = v;
+      if (v) n.bpm = +v; else delete n.bpm; setDirty(true);
+    });
+    li.append(kind, t, a, bpm, tl);
+    ol.appendChild(li);
+  });
+
+  const add = document.createElement("form"); add.className = "add";
+  const inp = document.createElement("input"); inp.type = "text"; inp.inputMode = "url"; inp.autocomplete = "off"; inp.id = `${key}-add`; inp.placeholder = "Plak hier een YouTube-link (video, afspeellijst of kanaal)"; inp.setAttribute("aria-label", "YouTube-link toevoegen");
+  const ab = document.createElement("button"); ab.type = "submit"; ab.className = "btn gold"; ab.textContent = "Toevoegen";
+  const msg = document.createElement("p"); msg.className = "msg"; msg.style.flexBasis = "100%";
+  add.append(inp, ab, msg);
+  add.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const r = parseLink(inp.value);
+    if (r.error) { msg.className = "msg bad"; msg.textContent = r.error; msg.style.flexBasis = "100%"; return; }
+    const exists = z.nummers.some((n) => (r.video && n.video === r.video) || (r.lijst && n.lijst === r.lijst));
+    if (exists) { msg.className = "msg bad"; msg.textContent = "Deze staat al bij deze zender."; msg.style.flexBasis = "100%"; return; }
+    let item;
+    if (r.video) {
+      ab.disabled = true; msg.className = "msg"; msg.textContent = "Titel ophalen…"; msg.style.flexBasis = "100%";
+      const info = await fetchTitle(r.video);
+      ab.disabled = false;
+      item = { video: r.video, titel: info ? info.titel : "", artiest: info ? info.artiest : "" };
+    } else {
+      item = { lijst: r.lijst, titel: r.kind === "kanaal" ? "Hele kanaal (alle uploads)" : "Alle nummers (afspeellijst)", artiest: z.naam || z.knop || "" };
+    }
+    // Afspeellijsten en kanalen bovenaan, losse video's onderaan.
+    if (item.lijst) z.nummers.splice(z.nummers.filter((n) => n.lijst).length, 0, item); else z.nummers.push(item);
+    setDirty(true);
+    renderZenders();
+    const m2 = $(`${key}-add`).parentElement.querySelector(".msg");
+    m2.className = "msg ok"; m2.style.flexBasis = "100%";
+    m2.textContent = item.lijst ? `${r.kind === "kanaal" ? "Kanaal" : "Afspeellijst"} toegevoegd.` :
+      (item.titel ? `Toegevoegd: ${item.titel}` : "Toegevoegd. Ik kon de titel niet ophalen; vul hem zelf in.");
+    if (!item.lijst && !item.titel) $(`${key}-n${z.nummers.length - 1}-titel`).focus();
+  });
+  return [ol, add];
+}
+
 let confirmDelete = null; // zender-index die op bevestiging wacht
+function renderLiveBronnen() {
+  data.site.live.bronnen = Array.isArray(data.site.live.bronnen) ? data.site.live.bronnen : [];
+  const box = $("liveBronnen"); box.innerHTML = "";
+  const z = { nummers: data.site.live.bronnen, knop: "", naam: "" };
+  const [ol, add] = tracksBlock(z, "live", "Nog geen eigen bronnen: LIVE draait nu de zenders met een vinkje bij ‘Draait mee op LIVE’.");
+  box.append(ol, add);
+  $("liveMode").textContent = z.nummers.length
+    ? `LIVE draait nu alleen deze ${z.nummers.length} ${z.nummers.length === 1 ? "bron" : "bronnen"}.`
+    : "LIVE draait nu de zenders met een vinkje.";
+}
+
 function renderZenders() {
+  renderLiveBronnen();
   const box = $("zenders"); box.innerHTML = "";
   if (!data.zenders.length) { const p = document.createElement("p"); p.className = "empty"; p.textContent = "Nog geen zenders. Klik op ‘+ Zender toevoegen’."; box.appendChild(p); }
   data.zenders.forEach((z, zi) => {
@@ -508,62 +587,7 @@ function renderZenders() {
       field("Volledige naam (boven de lijst)", z.naam, (v) => { z.naam = v; }, `z${zi}-naam`),
     );
 
-    const ol = document.createElement("ol"); ol.className = "tracks";
-    if (!z.nummers.length) { const li = document.createElement("li"); li.className = "empty"; li.textContent = "Nog geen muziek. Een zender zonder muziek verschijnt niet op de site."; ol.appendChild(li); }
-    z.nummers.forEach((n, ni) => {
-      const li = document.createElement("li"); li.className = "track";
-      const kind = document.createElement("a"); kind.className = "kind" + (n.lijst ? " pl" : ""); kind.textContent = n.lijst ? (n.lijst.startsWith("UU") ? "KANAAL" : "LIJST") : "VIDEO";
-      kind.href = ytUrl(n); kind.target = "_blank"; kind.rel = "noopener"; kind.title = "Open op YouTube"; kind.style.textDecoration = "none";
-      const t = document.createElement("input"); t.type = "text"; t.value = n.titel || ""; t.placeholder = "Titel"; t.id = `z${zi}-n${ni}-titel`; t.setAttribute("aria-label", "Titel");
-      t.addEventListener("input", () => { n.titel = t.value; setDirty(true); });
-      const a = document.createElement("input"); a.type = "text"; a.value = n.artiest || ""; a.placeholder = "Artiest"; a.className = "artist"; a.id = `z${zi}-n${ni}-artiest`; a.setAttribute("aria-label", "Artiest");
-      a.addEventListener("input", () => { n.artiest = a.value; setDirty(true); });
-      const tl = document.createElement("span"); tl.className = "tools";
-      const u = iconBtn("Omhoog", "↑", () => { move(z.nummers, ni, -1); setDirty(true); renderZenders(); }); u.disabled = ni === 0;
-      const d = iconBtn("Omlaag", "↓", () => { move(z.nummers, ni, 1); setDirty(true); renderZenders(); }); d.disabled = ni === z.nummers.length - 1;
-      tl.append(u, d, iconBtn("Verwijderen", "✕", () => { z.nummers.splice(ni, 1); setDirty(true); renderZenders(); }, "del"));
-      const bpm = document.createElement("input"); bpm.type = "text"; bpm.inputMode = "numeric"; bpm.className = "bpm";
-      bpm.id = `z${zi}-n${ni}-bpm`; bpm.setAttribute("aria-label", "BPM");
-      if (n.lijst) { bpm.disabled = true; bpm.placeholder = "—"; bpm.title = "BPM kan alleen per losse video"; }
-      else { bpm.placeholder = "BPM"; bpm.value = n.bpm || ""; }
-      bpm.addEventListener("input", () => {
-        const v = bpm.value.replace(/[^0-9]/g, "").slice(0, 3); if (bpm.value !== v) bpm.value = v;
-        if (v) n.bpm = +v; else delete n.bpm; setDirty(true);
-      });
-      li.append(kind, t, a, bpm, tl);
-      ol.appendChild(li);
-    });
-
-    const add = document.createElement("form"); add.className = "add";
-    const inp = document.createElement("input"); inp.type = "text"; inp.inputMode = "url"; inp.autocomplete = "off"; inp.id = `z${zi}-add`; inp.placeholder = "Plak hier een YouTube-link (video, afspeellijst of kanaal)"; inp.setAttribute("aria-label", "YouTube-link toevoegen");
-    const ab = document.createElement("button"); ab.type = "submit"; ab.className = "btn gold"; ab.textContent = "Toevoegen";
-    const msg = document.createElement("p"); msg.className = "msg"; msg.style.flexBasis = "100%";
-    add.append(inp, ab, msg);
-    add.addEventListener("submit", async (ev) => {
-      ev.preventDefault();
-      const r = parseLink(inp.value);
-      if (r.error) { msg.className = "msg bad"; msg.textContent = r.error; msg.style.flexBasis = "100%"; return; }
-      const exists = z.nummers.some((n) => (r.video && n.video === r.video) || (r.lijst && n.lijst === r.lijst));
-      if (exists) { msg.className = "msg bad"; msg.textContent = "Deze staat al bij deze zender."; msg.style.flexBasis = "100%"; return; }
-      let item;
-      if (r.video) {
-        ab.disabled = true; msg.className = "msg"; msg.textContent = "Titel ophalen…"; msg.style.flexBasis = "100%";
-        const info = await fetchTitle(r.video);
-        ab.disabled = false;
-        item = { video: r.video, titel: info ? info.titel : "", artiest: info ? info.artiest : "" };
-      } else {
-        item = { lijst: r.lijst, titel: r.kind === "kanaal" ? "Hele kanaal (alle uploads)" : "Alle nummers (afspeellijst)", artiest: z.naam || z.knop || "" };
-      }
-      // Afspeellijsten en kanalen bovenaan, losse video's onderaan.
-      if (item.lijst) z.nummers.splice(z.nummers.filter((n) => n.lijst).length, 0, item); else z.nummers.push(item);
-      setDirty(true);
-      renderZenders();
-      const m2 = $(`z${zi}-add`).parentElement.querySelector(".msg");
-      m2.className = "msg ok"; m2.style.flexBasis = "100%";
-      m2.textContent = item.lijst ? `${r.kind === "kanaal" ? "Kanaal" : "Afspeellijst"} toegevoegd.` :
-        (item.titel ? `Toegevoegd: ${item.titel}` : "Toegevoegd. Ik kon de titel niet ophalen; vul hem zelf in.");
-      if (!item.lijst && !item.titel) $(`z${zi}-n${z.nummers.length - 1}-titel`).focus();
-    });
+    const [ol, add] = tracksBlock(z, `z${zi}`, "Nog geen muziek. Een zender zonder muziek verschijnt niet op de site.");
 
     const lv = document.createElement("label"); lv.className = "livebox"; lv.htmlFor = `z${zi}-live`;
     const cb = document.createElement("input"); cb.type = "checkbox"; cb.id = `z${zi}-live`; cb.checked = z.live !== false;

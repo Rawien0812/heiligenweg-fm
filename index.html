@@ -388,18 +388,29 @@ let randomizeOnPlay = false;   // afspeellijst in LIVE: willekeurig nummer kieze
 const plCache = {};            // afspeellijst-id -> video-id's (zodra YouTube ze één keer gaf)
 const isLive = () => !!(STATIONS[st] && STATIONS[st].live);
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function liveEigenBronnen() {
+  return (LIVE.bronnen || []).filter((n) => n.video || n.lijst).map((n) => n.lijst
+    ? { list: n.lijst, t: n.titel || "Afspeellijst", a: n.artiest || "" }
+    : { id: n.video, t: n.titel || "Nummer", a: n.artiest || "", bpm: +n.bpm || 0 });
+}
 function buildLiveQueue() {
   const seen = new Set(), items = [];
-  // Zenders die meedoen op LIVE en nu op het programma staan; staat er niets op, dan alle LIVE-zenders.
-  let bron = visible.filter((i) => !STATIONS[i].live && STATIONS[i].opLive);
-  if (!bron.length) bron = STATIONS.map((z, i) => (!z.live && z.opLive ? i : -1)).filter((i) => i >= 0);
-  bron.forEach((i) => STATIONS[i].tracks.forEach((t) => {
+  const add = (t, from) => {
     const key = t.id || t.list;
     if (seen.has(key)) return; seen.add(key);
-    const it = Object.assign({}, t, { from: STATIONS[i].label });
+    const it = Object.assign({}, t, { from });
     // Een afspeellijst of kanaal bevat veel nummers: laat hem vaker terugkomen.
     if (t.list) for (let k = 0; k < 4; k++) items.push(Object.assign({}, it)); else items.push(it);
-  }));
+  };
+  const eigen = liveEigenBronnen();
+  if (eigen.length) {
+    eigen.forEach((t) => add(t, ""));            // eigen LIVE-bronnen uit /beheer/: alleen die
+  } else {
+    // Zenders die meedoen op LIVE en nu op het programma staan; staat er niets op, dan alle LIVE-zenders.
+    let bron = visible.filter((i) => !STATIONS[i].live && STATIONS[i].opLive);
+    if (!bron.length) bron = STATIONS.map((z, i) => (!z.live && z.opLive ? i : -1)).filter((i) => i >= 0);
+    bron.forEach((i) => STATIONS[i].tracks.forEach((t) => add(t, STATIONS[i].label)));
+  }
   const lo = +LIVE.bpm_van || 0, hi = +LIVE.bpm_tot || 0;
   let pool = items;
   if (lo || hi) {
@@ -562,7 +573,7 @@ async function loadZenders() {
     tracks: z.nummers.map((n) => n.lijst ? { list: n.lijst, t: n.titel || "Afspeellijst", a: n.artiest || "" }
                                          : { id: n.video, t: n.titel || "Nummer", a: n.artiest || "", bpm: +n.bpm || 0 }),
   }));
-  if (LIVE.aan !== false && STATIONS.length) {
+  if (LIVE.aan !== false && (STATIONS.length || liveEigenBronnen().length)) {
     STATIONS.unshift({ live: true, knop: LIVE.knop || "Live", onder: LIVE.onder || "", label: LIVE.knop || "Live",
                        name: "LIVE", wanneer: [], tracks: [] });
   }
