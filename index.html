@@ -453,6 +453,19 @@ footer { padding-block: 22px 40px; color: var(--muted); font-size: .85rem; }
 footer p { margin: 0 0 6px; max-width: 70ch; }
 footer .sig { font: 400 1.1rem/1.2 var(--display); color: var(--gold); display: flex; gap: 8px; align-items: center; }
 
+/* ---- Geluid-aan knop bij automatisch (stil) starten ---- */
+.unmute {
+  position: fixed; z-index: 20; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+  display: inline-flex; align-items: center; gap: 10px; padding: 14px 22px; border: 0; border-radius: 999px; cursor: pointer;
+  font: 400 1.05rem/1 var(--display); color: #2a1a00;
+  background: radial-gradient(circle at 35% 30%, #fff1b0, var(--gold) 45%, #c98f12);
+  box-shadow: 0 8px 24px rgba(0,0,0,.5); animation: unmutePulse 1.6s ease-in-out infinite;
+}
+.unmute svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+@keyframes unmutePulse { 0%, 100% { box-shadow: 0 8px 24px rgba(0,0,0,.5), 0 0 0 0 rgba(246,198,74,.6); } 50% { box-shadow: 0 8px 24px rgba(0,0,0,.5), 0 0 0 12px rgba(246,198,74,0); } }
+body.tv .unmute { bottom: auto; top: 50%; transform: translate(-50%, -50%); font-size: 2.4vw; padding: 1.5vw 3vw; gap: 1vw; }
+body.tv .unmute svg { width: 2.8vw; height: 2.8vw; }
+
 /* ================= Tv-modus (#tv) ================= */
 .tvbar, .tvstart, .tvhint { display: none; }
 body.tv { overflow: hidden; background: #000; cursor: none; }
@@ -638,6 +651,7 @@ body.tv .tvhint.gone { opacity: 0; }
   <span class="tvteller" id="tvTeller" hidden><span class="dot"></span><b id="tvOnline">–</b> luisteren nu</span>
   <span class="time live tvlive"><span class="dot"></span>LIVE</span>
 </div>
+<button class="unmute" id="unmuteBtn" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4zM15.5 9a4.5 4.5 0 0 1 0 6M18.5 6a9 9 0 0 1 0 12"/></svg><span id="unmuteTxt">Tik voor geluid</span></button>
 <button class="tvstart" id="tvStart" type="button">▶&nbsp; Druk op OK om te starten</button>
 <div class="tvhint" id="tvHint" aria-hidden="true">OK = afspelen/pauze · ← → = vorige/volgende · ↑ ↓ = volume</div>
 
@@ -1487,7 +1501,7 @@ function onBackState(e) {
 function runFade() {
   const bp = backPlayer(), V = +$("vol").value;
   fade.stage = "run"; fade.t0 = Date.now();
-  bp.setVolume(0); if (!prefs.muted) bp.unMute(); bp.playVideo();
+  bp.setVolume(0); if (!prefs.muted && !autoMuted) bp.unMute(); bp.playVideo();
   // Laat de browser de tweede speler niet starten (sommige telefoons)? Dan zonder overlap verder.
   setTimeout(() => {
     if (fade && fade.stage === "run" && bp.getPlayerState() !== YT.PlayerState.PLAYING) { FADE = 0; cancelFade(); }
@@ -1541,9 +1555,10 @@ window.onYouTubeIframeAPIReady = function () {
         ready = true;
         applyVolume();
         $("idle").hidden = true;
-        const go = wantPlay;
+        const go = wantPlay || AUTOPLAY;
         load(go);                                   // eerste nummer altijd klaarzetten, anders heeft ▶ niets om te spelen
         if (!go) setText("lcdTitle", "Radio staat klaar: druk op ▶");
+        else autoStart();
       },
       onStateChange: (e) => {
         if (e.target !== player) return onBackState(e);
@@ -1616,6 +1631,7 @@ window.onYouTubeIframeAPIReady = function () {
 };
 
 $("play").addEventListener("click", () => {
+  if (slikKlik) { slikKlik = false; return; }           // deze klik zette alleen het geluid aan
   if (!ready) { wantPlay = true; setText("lcdTitle", "Radio wordt geladen…"); ensureApi(); return; }
   if (playing) { userWants = false; cancelFade(); player.pauseVideo(); return; }
   userWants = true;
@@ -1641,7 +1657,7 @@ function applyVolume() {
   m.classList.remove("lvl-0", "lvl-1", "lvl-2");
   m.classList.add(v === 0 ? "lvl-0" : v < 50 ? "lvl-1" : "lvl-2");
   if (!ready || fade) return;
-  try { if (prefs.muted || v === 0) player.mute(); else { player.unMute(); player.setVolume(v); } } catch (e) {}
+  try { if (prefs.muted || autoMuted || v === 0) player.mute(); else { player.unMute(); player.setVolume(v); } } catch (e) {}
 }
 function savePrefs() { try { localStorage.setItem("hfm-prefs", JSON.stringify(Object.assign({}, prefs, { vol: +$("vol").value }))); } catch (e) {} }
 function renderToggles() {
@@ -1654,6 +1670,7 @@ $("vol").addEventListener("input", () => {
   applyVolume(); savePrefs();
 });
 $("mute").addEventListener("click", () => {
+  if (slikKlik) { slikKlik = false; return; }
   if (+$("vol").value === 0) { $("vol").value = 60; prefs.muted = false; } else prefs.muted = !prefs.muted;
   applyVolume(); savePrefs();
 });
@@ -1738,6 +1755,7 @@ function makeQr() {
   document.head.appendChild(sc);
 }
 function tvStartOrToggle() {
+  if (slikKlik) { slikKlik = false; return; }
   if (!playing) {
     $("play").click();
     keepAwake();
@@ -1856,12 +1874,51 @@ async function startTeller(cfg) {
   }
 }
 
+// ---------- Automatisch afspelen ----------
+// Browsers staan geluid pas toe na een tik/klik. Lukt starten met geluid niet, dan start de radio stil
+// en zet de eerste tik, klik of toets ergens op de pagina het geluid aan.
+const AUTOPLAY = true;
+let autoMuted = false, slikKlik = false;
+function isAan() { try { const s2 = player.getPlayerState(); return s2 === YT.PlayerState.PLAYING || s2 === YT.PlayerState.BUFFERING; } catch (e) { return false; } }
+function autoStart() {
+  setTimeout(() => {
+    if (!ready || isAan() || !userWants) return;                // met geluid gelukt (of de luisteraar pauzeerde al)
+    autoMuted = true; applyVolume();
+    try { player.mute(); player.playVideo(); } catch (e) {}
+    setTimeout(() => {
+      if (isAan()) toonGeluidKnop();
+      else { autoMuted = false; applyVolume(); setText("lcdTitle", isTv() ? "Druk op OK om te starten" : "Tik op ▶ om te starten"); }
+    }, 1500);
+  }, 1800);
+}
+function toonGeluidKnop() {
+  $("unmuteTxt").textContent = isTv() ? "Druk op OK voor geluid" : "Tik voor geluid";
+  $("unmuteBtn").hidden = false;
+}
+function geluidAan() {
+  if (!autoMuted) return false;
+  autoMuted = false; $("unmuteBtn").hidden = true;
+  applyVolume();
+  try { if (!prefs.muted && +$("vol").value > 0) { player.unMute(); player.setVolume(+$("vol").value); } if (!isAan()) player.playVideo(); } catch (e) {}
+  if (isTv()) { keepAwake(); if (document.documentElement.requestFullscreen && !document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {}); }
+  return true;
+}
+// De eerste aanraking waar dan ook zet het geluid aan (en pauzeert dus niet per ongeluk).
+["pointerdown", "keydown", "touchstart"].forEach((ev) => document.addEventListener(ev, (e) => {
+  if (!autoMuted) return;
+  if (e.target && e.target.closest && e.target.closest("#play, #tvStart, #mute")) slikKlik = true;
+  if (ev === "keydown") { e.preventDefault(); e.stopImmediatePropagation(); }   // eerste toets = alleen geluid aan
+  geluidAan();
+}, { capture: true }));
+$("unmuteBtn").addEventListener("click", () => geluidAan());
+
 // Opstarten: eerst de zenders inlezen, dan YouTube meteen laden (zodat een tik op ▶ direct geluid geeft).
 setText("lcdTitle", "Radio wordt geladen…");
 loadZenders().then(() => {
   if (!STATIONS.length) { setText("lcdTitle", "Nog geen zenders: voeg ze toe via /beheer/"); return; }
   renderLcd(); renderList();
   setText("lcdTitle", "Radio wordt geladen…");
+  if (AUTOPLAY) { wantPlay = true; userWants = true; }
   ensureApi();
 }).catch(() => {
   setText("lcdTitle", "Zenders konden niet laden. Ververs de pagina.");
