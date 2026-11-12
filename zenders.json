@@ -26,13 +26,18 @@
           "artiest": ""
         },
         {
+          "lijst": "UUQ6woCnh8iZ5TJ_Vz_hzwQA",
+          "titel": "Dewindersingh Sewnath",
+          "artiest": ""
+        },
+        {
           "lijst": "UUmq-G0H3SXCnu27tJB2G_sg",
           "titel": "No Merxi SU Extended (NMX)",
           "artiest": ""
         },
         {
-          "lijst": "UUQ6woCnh8iZ5TJ_Vz_hzwQA",
-          "titel": "Dewindersingh Sewnath",
+          "lijst": "UUnHDHuuwVT9X9Q0Q3XaFlCw",
+          "titel": "Bhaitak Gana",
           "artiest": ""
         },
         {
@@ -48,11 +53,6 @@
         {
           "lijst": "UUKPbujeM75t59_CNqwhd07w",
           "titel": "SELECTABEATS",
-          "artiest": ""
-        },
-        {
-          "lijst": "UUnHDHuuwVT9X9Q0Q3XaFlCw",
-          "titel": "Bhaitak Gana",
           "artiest": ""
         },
         {
@@ -451,7 +451,7 @@
         }
       ]
     },
-    "overgang": "5",
+    "overgang": "10",
     "lcd_powered": "Powered by Rawgfx & Cafe de Kroon - Den Haag",
     "lcd_rechten": "Alle muziek wordt afgespeeld via YouTube. De rechten liggen bij de artiesten en uploaders.",
     "top5": [
@@ -480,7 +480,45 @@
         "titel": "Tu Meri Melody ",
         "artiest": "Vic Persaud"
       }
-    ]
+    ],
+    "kwaliteit": {
+      "aan": true,
+      "woorden": [
+        "live",
+        "vlog",
+        "vlogs",
+        "reel",
+        "reels",
+        "short",
+        "shorts",
+        "#shorts",
+        "tiktok",
+        "status",
+        "behind the scenes",
+        "bts",
+        "rehearsal",
+        "repetitie",
+        "oefenen",
+        "practice",
+        "riyaz",
+        "soundcheck",
+        "interview",
+        "podcast",
+        "aftermovie",
+        "teaser",
+        "trailer",
+        "promo",
+        "unboxing",
+        "q&a",
+        "full show",
+        "full concert",
+        "volledige show",
+        "jam session"
+      ],
+      "min": 100,
+      "max": 720,
+      "hd": true
+    }
   },
   "zenders": []
 }
