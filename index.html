@@ -677,6 +677,7 @@ const prefs = (() => {
   try { return Object.assign(def, JSON.parse(localStorage.getItem("hfm-prefs") || "{}")); } catch (e) { return def; }
 })();
 let TZ = "Europe/Amsterdam";
+let EIGEN_TIJD = false;      // true = programma volgt de klok van de luisteraar
 let visible = [];          // indexen van zenders die nu op het programma staan
 let pendingSwitch = false; // huidige zender is van de lucht: na dit nummer overschakelen
 
@@ -914,6 +915,7 @@ function scheduleTick() {
   renderProgramma();
 }
 function renderProgramma() {
+  $("progSub").textContent = `Welke zender wanneer te horen is (${EIGEN_TIJD ? "jouw eigen tijd" : TZ === "America/Paramaribo" ? "Surinaamse tijd" : "Nederlandse tijd"}).`;
   const sec = $("programma");
   const planned = STATIONS.filter(hasSchedule);
   const blokken = (LIVE.blokken || []).filter((b) => b && b.van != null).slice().sort((a, b) => toMin(a.van) - toMin(b.van));
@@ -961,7 +963,6 @@ function renderProgramma() {
   let p = sec.querySelector(".always");
   if (!p) { p = document.createElement("p"); p.className = "always"; sec.appendChild(p); }
   p.textContent = vast.length ? `Altijd te horen: ${vast.join(", ")}.` : "";
-  $("progSub").textContent = `Welke zender wanneer te horen is (${TZ === "America/Paramaribo" ? "Surinaamse" : "Nederlandse"} tijd).`;
 }
 
 const credits = { p: "Powered by Rawgfx & Cafe de Kroon - Den Haag", r: "Alle muziek wordt afgespeeld via YouTube. De rechten liggen bij de artiesten en uploaders." };
@@ -1024,7 +1025,12 @@ async function loadZenders() {
   if (data.site && data.site.top5_kop) $("top5Kop").textContent = data.site.top5_kop;
   renderTop5();
   if (typeof applyTvMode === "function" && location.hash === "#tv") $("tvLogo").textContent = document.title;
-  if (data.site && data.site.tijdzone) TZ = data.site.tijdzone;
+  if (data.site && data.site.tijdzone === "luisteraar") {
+    // Eigen tijd van de luisteraar: de blokken volgen de klok van dit apparaat.
+    let eigen = "";
+    try { eigen = Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) {}
+    TZ = eigen || "Europe/Amsterdam"; EIGEN_TIJD = true;
+  } else if (data.site && data.site.tijdzone) TZ = data.site.tijdzone;
   if (data.site && data.site.kwaliteit) {
     const k = data.site.kwaliteit;
     KW = { aan: k.aan !== false, woorden: Array.isArray(k.woorden) ? k.woorden : KW_STANDAARD, min: +k.min || 0, max: +k.max || 0 };
