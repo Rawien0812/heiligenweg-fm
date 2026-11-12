@@ -3966,6 +3966,18 @@
       "min": 100,
       "max": 720,
       "hd": true
+    },
+    "uitgelicht": {
+      "elke": 5,
+      "dagen": 14,
+      "nummers": [
+        {
+          "video": "yn5Oc59O51c",
+          "titel": "Dewindersingh Sewnath - Dhaniya [Official Music Video] (2027)",
+          "artiest": "Dewindersingh Sewnath",
+          "toegevoegd": "2026-11-12"
+        }
+      ]
     }
   },
   "zenders": []
