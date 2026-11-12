@@ -550,6 +550,76 @@ footer .sig { font: 400 1.1rem/1.2 var(--display); color: var(--gold); display: 
 body.tv .unmute { bottom: auto; top: 50%; transform: translate(-50%, -50%); font-size: 2.4vw; padding: 1.5vw 3vw; gap: 1vw; }
 body.tv .unmute svg { width: 2.8vw; height: 2.8vw; }
 
+/* ================= Knoppen en bediening in hifi-stijl (VFD) — © Rawien Paltoe ================= */
+.radio { --vc: #3ff2ff; --vc-dim: rgba(63,242,255,.14); --vblue: #1e7bff; --vo: #ffad2e; }
+/* zenderknoppen */
+.radio .presets .preset {
+  background: radial-gradient(120% 160% at 50% 0%, #0a1418 0%, #030507 70%); color: rgba(63,242,255,.45);
+  border: 2px solid rgba(30,123,255,.3); border-radius: 10px; box-shadow: inset 0 0 14px rgba(0,0,0,.85);
+  font: 800 .95rem/1.1 ui-monospace, Menlo, Consolas, monospace; letter-spacing: .14em; text-transform: uppercase; text-shadow: none;
+}
+.radio .presets .preset small { color: rgba(63,242,255,.3); font: 700 .66rem/1 ui-monospace, Menlo, Consolas, monospace; letter-spacing: .14em; }
+.radio .presets .preset:hover { border-color: rgba(30,123,255,.6); color: rgba(63,242,255,.75); }
+.radio .presets .preset[aria-pressed="true"] {
+  transform: none; color: var(--vc); border-color: var(--vblue);
+  text-shadow: 0 0 6px rgba(63,242,255,.9), 0 0 16px rgba(63,242,255,.35);
+  box-shadow: 0 0 14px rgba(30,123,255,.7), inset 0 0 14px rgba(30,123,255,.35);
+}
+.radio .presets .preset[aria-pressed="true"] small { color: var(--vc); text-shadow: 0 0 5px rgba(63,242,255,.8); }
+.radio .presets .preset[aria-pressed="true"]::after { display: none; }
+.radio .presets .preset.is-live { font-size: 1.25rem; letter-spacing: .22em; }
+.radio .presets .preset.is-live[aria-pressed="true"] { color: var(--vo); text-shadow: 0 0 6px rgba(255,173,46,.9), 0 0 18px rgba(255,173,46,.4); }
+.radio .presets .preset.is-live .livedot { position: static; margin: 0 10px 0 0; background: var(--vo); box-shadow: 0 0 8px rgba(255,173,46,.9); vertical-align: .1em; }
+.radio .presets .preset.is-live { display: block; text-align: center; }
+.radio .presets .preset.is-live small { display: block; margin-top: 4px; }
+
+/* bedieningspaneel */
+.radio .deckctl {
+  background: radial-gradient(120% 140% at 50% 0%, #0a1418 0%, #020304 60%); border: 1px solid #111; border-radius: 12px;
+  box-shadow: inset 0 0 26px rgba(0,0,0,.9), 0 0 0 1px rgba(30,123,255,.25); padding: 14px 14px 12px; position: relative; overflow: hidden;
+}
+.radio .deckctl::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(255,255,255,.018) 0 1px, transparent 1px 3px), linear-gradient(160deg, rgba(255,255,255,.05), transparent 35%); }
+.radio .time { color: var(--vc); text-shadow: 0 0 6px rgba(63,242,255,.85), 0 0 14px rgba(63,242,255,.3); font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 700; font-size: .95rem; letter-spacing: .06em; }
+.radio .time.live { background: transparent; border: 2px solid var(--vo); color: var(--vo); padding: 3px 9px 3px 8px;
+  text-shadow: 0 0 6px rgba(255,173,46,.9); animation: vOnair 1.6s ease-in-out infinite; }
+.radio .time.live .dot { background: var(--vo); animation: vPing 1.6s ease-out infinite; }
+@keyframes vOnair { 0%, 100% { box-shadow: 0 0 4px rgba(255,173,46,.4), inset 0 0 4px rgba(255,173,46,.2); } 50% { box-shadow: 0 0 16px rgba(255,173,46,.9), inset 0 0 8px rgba(255,173,46,.5); } }
+@keyframes vPing { 0% { box-shadow: 0 0 0 0 rgba(255,173,46,.9); } 70% { box-shadow: 0 0 0 7px rgba(255,173,46,0); } 100% { box-shadow: 0 0 0 0 rgba(255,173,46,0); } }
+/* voortgang en volume als oplichtende streepjes (VU-meter) */
+.radio input[type=range]::-webkit-slider-runnable-track { height: 8px; border-radius: 2px;
+  background: repeating-linear-gradient(90deg, transparent 0 4px, #020304 4px 6px), linear-gradient(90deg, var(--vc) 0 var(--p, 0%), var(--vc-dim) var(--p, 0%) 100%);
+  box-shadow: 0 0 8px rgba(63,242,255,.35); }
+.radio input[type=range]::-moz-range-track { height: 8px; border-radius: 2px; background: repeating-linear-gradient(90deg, rgba(63,242,255,.14) 0 4px, #020304 4px 6px); }
+.radio input[type=range]::-moz-range-progress { height: 8px; border-radius: 2px; background: repeating-linear-gradient(90deg, var(--vc) 0 4px, #020304 4px 6px); box-shadow: 0 0 8px rgba(63,242,255,.5); }
+.radio input[type=range]::-webkit-slider-thumb { width: 6px; height: 18px; margin-top: -5px; border-radius: 2px; background: #eaffff; box-shadow: 0 0 10px rgba(63,242,255,.95); }
+.radio input[type=range]::-moz-range-thumb { width: 6px; height: 18px; border-radius: 2px; border: 0; background: #eaffff; box-shadow: 0 0 10px rgba(63,242,255,.95); }
+/* knoppen: cyaan oplichtende symbolen */
+.radio .ic { color: var(--vc); filter: drop-shadow(0 0 4px rgba(63,242,255,.8)); }
+.radio .ic:hover { background: rgba(63,242,255,.07); }
+.radio .ic.toggle { color: rgba(63,242,255,.22); filter: none; }
+.radio .ic.toggle[aria-pressed="true"] { color: var(--vc); filter: drop-shadow(0 0 5px rgba(63,242,255,.9)); }
+.radio .ic.toggle[aria-pressed="true"]::after { background: var(--vc); box-shadow: 0 0 6px rgba(63,242,255,.9); }
+.radio .ic.play {
+  color: var(--vc); background: radial-gradient(circle at 50% 40%, #0d1d24, #030507 70%); border: 3px solid var(--vblue); filter: none;
+  box-shadow: 0 0 14px rgba(30,123,255,.75), inset 0 0 14px rgba(30,123,255,.45);
+}
+.radio .ic.play svg { filter: drop-shadow(0 0 6px rgba(63,242,255,.95)); }
+.radio .ic.play:hover { background: radial-gradient(circle at 50% 40%, #12303a, #05090c 70%); }
+.playing .radio .ic.play { animation: vPlayPulse 2.4s ease-out infinite; }
+@keyframes vPlayPulse { 0% { box-shadow: 0 0 14px rgba(30,123,255,.75), inset 0 0 14px rgba(30,123,255,.45), 0 0 0 0 rgba(63,242,255,.45); }
+  100% { box-shadow: 0 0 14px rgba(30,123,255,.75), inset 0 0 14px rgba(30,123,255,.45), 0 0 0 14px rgba(63,242,255,0); } }
+.radio #mute[aria-pressed="true"] { color: var(--vo); filter: drop-shadow(0 0 5px rgba(255,173,46,.9)); }
+.radio .bellbtn { background: transparent; border: 2px solid var(--vo); color: var(--vo); text-shadow: 0 0 6px rgba(255,173,46,.9);
+  box-shadow: 0 0 10px rgba(255,173,46,.45), inset 0 0 8px rgba(255,173,46,.2); font: 800 .85rem/1 ui-monospace, Menlo, Consolas, monospace; letter-spacing: .16em; height: 36px; text-transform: uppercase; }
+.radio .bellbtn svg { filter: drop-shadow(0 0 4px rgba(255,173,46,.9)); }
+.radio .bellbtn:hover { background: rgba(255,173,46,.08); }
+/* alles in het midden */
+.radio .controls { flex-direction: column; align-items: center; gap: 12px; }
+.radio .ctl-main { justify-content: center; gap: 10px; width: auto; }
+.radio .ctl-side { flex: none; justify-content: center; width: 100%; max-width: 360px; }
+.radio #vol { flex: 1 1 auto; width: auto; min-width: 90px; }
+
 /* ================= Tv-modus (#tv) ================= */
 .tvbar, .tvstart, .tvhint { display: none; }
 body.tv { overflow: hidden; background: #000; cursor: none; }
