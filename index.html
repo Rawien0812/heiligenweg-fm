@@ -461,6 +461,7 @@ ol.t5 { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 }
 .t5 li.asked button { box-shadow: inset 3px 0 0 var(--sr-red); }
 .list .when.req { color: #fff; background: var(--sr-red); }
+.list .when.nieuw { color: #2a1a00; background: var(--gold); }
 .note a { color: var(--gold); }
 
 /* ---------- Haltes (playlist) ---------- */
@@ -1030,8 +1031,33 @@ function rangschik(list) {
 function herschikLive() {                             // na een keuze: de rest van de rij opnieuw ordenen
   if (!isLive() || LIVE.volgorde !== "populair") return;
   const q = STATIONS[st].tracks;
-  STATIONS[st].tracks = q.slice(0, idx + 1).concat(scheidDubbel(rangschik(q.slice(idx + 1))));
+  const rest = q.slice(idx + 1).filter((t) => !t.feat);
+  STATIONS[st].tracks = q.slice(0, idx + 1).concat(voegNieuwToe(scheidDubbel(rangschik(rest)), true));
   renderList();
+}
+// ---------- Nieuwe nummers: vaker draaien, een tijdje (instelbaar in /beheer/) ----------
+let NIEUW = { elke: 8, items: [] };
+function actieveNieuwe(u) {
+  if (!u || !Array.isArray(u.nummers)) return { elke: 8, items: [] };
+  const dagen = +u.dagen || 14, vandaag = Date.now();
+  const items = u.nummers.filter((n) => n.video).filter((n) => {
+    const start = n.toegevoegd ? Date.parse(n.toegevoegd) : vandaag;
+    return isNaN(start) || vandaag - start <= (dagen + 1) * 86400000;     // na de gekozen periode stopt het vanzelf
+  }).map((n) => ({ id: n.video, t: n.titel || "Nieuw nummer", a: n.artiest || "", feat: true, views: +n.views || 0 }));
+  return { elke: Math.max(3, +u.elke || 8), items };
+}
+// Zet de nieuwe nummers op vaste afstand in de rij: snel na het openen al één, daarna elke `elke` nummers.
+function voegNieuwToe(pool, alVerder) {
+  if (!NIEUW.items.length) return pool;
+  const zonder = pool.filter((t) => !t.feat);
+  const rij = shuffle(NIEUW.items.slice());
+  const out = []; let n = 0, volgende = alVerder ? 1 + Math.floor(Math.random() * NIEUW.elke) : 1 + Math.floor(Math.random() * 2);
+  zonder.forEach((t, k) => {
+    if (k === volgende) { out.push(Object.assign({}, rij[n % rij.length])); n++; volgende += NIEUW.elke; }
+    out.push(t);
+  });
+  if (!n) out.splice(Math.min(1, out.length), 0, Object.assign({}, rij[0]));
+  return out;
 }
 function scheidDubbel(pool) {                         // niet hetzelfde nummer, en liefst niet dezelfde artiest, kort na elkaar
   const key = (t) => t.id || t.list;
@@ -1104,7 +1130,7 @@ function buildLiveQueue() {
     unknown.forEach((t) => out.splice(Math.floor(Math.random() * (out.length + 1)), 0, t));
     pool = out;
   }
-  return scheidDubbel(pool);
+  return voegNieuwToe(scheidDubbel(pool.filter((t) => !t.feat)));
 }
 
 // ---------- Programmering ----------
@@ -1262,6 +1288,7 @@ async function loadZenders() {
   const data = await r.json();
   applySite(data.site);
   startTeller(data.site && data.site.teller);
+  NIEUW = actieveNieuwe(data.site && data.site.uitgelicht);
   TOP5 = (data.site && Array.isArray(data.site.top5) ? data.site.top5 : []).filter((n) => n.video).slice(0, 5);
   if (data.site && data.site.top5_kop) $("top5Kop").textContent = data.site.top5_kop;
   renderTop5();
@@ -1446,10 +1473,11 @@ function renderLiveList() {
     const li = document.createElement("li");
     li.className = (i === idx ? "current " : "") + (i < idx ? "past" : "");
     const b = document.createElement("button");
-    const when = tr.req && i >= idx ? "AANVRAAG" : i < idx ? "ZOJUIST" : i === idx ? (playing ? "NU" : "KLAAR") : "STRAKS";
+    const when = tr.req && i >= idx ? "AANVRAAG" : tr.feat && i >= idx ? "NIEUW" : i < idx ? "ZOJUIST" : i === idx ? (playing ? "NU" : "KLAAR") : "STRAKS";
     b.innerHTML = `<span class="num when"></span><span class="t"><strong></strong><span></span></span><span class="yt">${i === idx && playing ? "nu" : "▶"}</span>`;
     b.querySelector(".when").textContent = when;
     if (tr.req && i >= idx) b.querySelector(".when").classList.add("req");
+    if (tr.feat && !tr.req && i >= idx) b.querySelector(".when").classList.add("nieuw");
     let title = tr.t;
     if (tr.list) {
       const vid = i === idx && plIds[plIndex];
@@ -1518,7 +1546,7 @@ function renderLcd() {
     const d = player && player.getVideoData ? player.getVideoData() : null;
     const title = (vid && titles[vid] && titles[vid].t) || (tr.list ? (d && d.title) || "Even zoeken…" : tr.t);
     setText("lcdTitle", title);
-    setText("lcdArtist", [...new Set([tr.req ? "Aanvraag" : "", tr.a, tr.req ? "" : tr.from, tr.bpm ? tr.bpm + " BPM" : ""].filter(Boolean))].join(" · "));
+    setText("lcdArtist", [...new Set([tr.req ? "Aanvraag" : tr.feat ? "Nieuw" : "", tr.a, tr.req ? "" : tr.from, tr.bpm ? tr.bpm + " BPM" : ""].filter(Boolean))].join(" · "));
     if (vid) wantTitle(vid);
   } else if (tr.list && plIds.length && plIndex >= 0) showPlaylistLcd();
   else { setText("lcdTitle", tr.t); setText("lcdArtist", tr.a); }
@@ -1766,7 +1794,7 @@ window.onYouTubeIframeAPIReady = function () {
           {                                                      // kwaliteitsfilter
             const vd = player.getVideoData ? player.getVideoData() : {};
             const why = slechtNummer(vd && vd.title, player.getDuration());
-            if (why && guardSkips < 15) {
+            if (why && guardSkips < 15 && !(track() && track().feat)) {
               guardSkips++;
               setNote(`Overgeslagen door het kwaliteitsfilter (${why}): “${(vd && vd.title) || "nummer"}”.`);
               const l = pl && player.getPlaylist();
@@ -2165,7 +2193,7 @@ function vfdStatus() {                       // 4× per seconde: lampjes, klok, 
     vLastBlokHtml = html; $("vDiscRow").innerHTML = html;
     [...$("vDiscRow").children].forEach((d, i) => { d.querySelector("small").textContent = (blokken[i].naam || "").toUpperCase().slice(0, 7); });
   }
-  $("vBadge").textContent = tr && tr.bpm ? `${tr.bpm} BPM` : tr && tr.views ? `${fmtViews(tr.views).toUpperCase()} VIEWS` : (live ? "LIVE" : "");
+  $("vBadge").textContent = tr && tr.feat ? "NIEUW" : tr && tr.req ? "AANVRAAG" : tr && tr.bpm ? `${tr.bpm} BPM` : tr && tr.views ? `${fmtViews(tr.views).toUpperCase()} VIEWS` : (live ? "LIVE" : "");
   // A/B-spelers en transport
   $("vA").classList.toggle("on", act === 0); $("vB").classList.toggle("on", act === 1);
   $("vA").classList.toggle("next", !!fade && act === 1); $("vB").classList.toggle("next", !!fade && act === 0);

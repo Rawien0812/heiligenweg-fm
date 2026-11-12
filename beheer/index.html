@@ -324,6 +324,23 @@ ul.alist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
           <div id="liveBronnen" style="display:grid; gap:12px"></div>
         </div>
       </section>
+      <section class="panel fold" data-key="p-nieuw">
+        <h2 class="panel-head"><button type="button" class="icon fold" aria-expanded="false" aria-controls="p-nieuw-body" aria-label="Uitklappen">▾</button><span class="ptitle">Nieuwe nummers (vaker draaien)<small>Een nieuw nummer een tijdje extra vaak op LIVE, in elk blok</small></span></h2>
+        <div class="panel-body" id="p-nieuw-body" hidden>
+          <p class="hint">Plak de YouTube-link van een nieuw nummer. LIVE draait het dan gegarandeerd vaak en snel na het openen van de site, en zet er <b>NIEUW</b> bij. Na de gekozen periode stopt het vanzelf. Meerdere nieuwe nummers wisselen elkaar af.</p>
+          <div class="grid2">
+            <label class="f" for="nw-elke">Hoe vaak
+              <select id="nw-elke"><option value="5">Heel vaak: elke 5 nummers</option><option value="8">Vaak: elke 8 nummers</option><option value="12">Regelmatig: elke 12 nummers</option></select>
+            </label>
+            <label class="f" for="nw-dagen">Hoe lang
+              <select id="nw-dagen"><option value="7">7 dagen</option><option value="14">14 dagen</option><option value="30">30 dagen</option><option value="60">60 dagen</option></select>
+            </label>
+          </div>
+          <div id="nieuwBox" style="display:grid; gap:12px"></div>
+          <ul class="hint" id="nieuwStatus" style="margin:0; padding-left:18px"></ul>
+        </div>
+      </section>
+
       <section class="panel fold" data-key="p-teller">
         <h2 class="panel-head"><button type="button" class="icon fold" aria-expanded="false" aria-controls="p-teller-body" aria-label="Uitklappen">▾</button><span class="ptitle">Bezoekersteller<small>Hoeveel mensen nu luisteren en hoe vaak de site is bezocht</small></span></h2>
         <div class="panel-body" id="p-teller-body" hidden>
@@ -1136,7 +1153,34 @@ async function fillTrending() {
 }
 $("trendGo").addEventListener("click", fillTrending);
 
+function nieuw() {
+  data.site.uitgelicht = Object.assign({ elke: 8, dagen: 14, nummers: [] }, data.site.uitgelicht || {});
+  if (!Array.isArray(data.site.uitgelicht.nummers)) data.site.uitgelicht.nummers = [];
+  return data.site.uitgelicht;
+}
+function renderNieuw() {
+  const u = nieuw();
+  const vandaag = new Date().toISOString().slice(0, 10);
+  u.nummers.forEach((n) => { if (!n.toegevoegd) n.toegevoegd = vandaag; });   // startdatum = dag van toevoegen
+  $("nw-elke").value = String(u.elke); $("nw-dagen").value = String(u.dagen);
+  const box = $("nieuwBox"); box.innerHTML = "";
+  const [ol, add] = tracksBlock({ nummers: u.nummers, knop: "", naam: "" }, "nieuw",
+    "Nog geen nieuwe nummers. Plak hieronder de YouTube-link van een nieuw nummer.", { alleenVideo: true, max: 10 });
+  box.append(ol, add);
+  // per nummer: hoe lang nog
+  const st = $("nieuwStatus"); st.innerHTML = "";
+  u.nummers.forEach((n) => {
+    const dagenOver = Math.ceil((Date.parse(n.toegevoegd) + u.dagen * 86400000 - Date.now()) / 86400000);
+    const li = document.createElement("li");
+    li.textContent = `${n.titel || n.video}: ` + (dagenOver >= 0 ? `nog ${dagenOver} ${dagenOver === 1 ? "dag" : "dagen"} extra vaak (sinds ${n.toegevoegd.split("-").reverse().join("-")})` : "periode voorbij, speelt weer gewoon mee (mag weg)");
+    st.appendChild(li);
+  });
+}
+$("nw-elke").addEventListener("change", () => { nieuw().elke = +$("nw-elke").value; setDirty(true); });
+$("nw-dagen").addEventListener("change", () => { nieuw().dagen = +$("nw-dagen").value; setDirty(true); renderNieuw(); });
+
 function renderZenders() {
+  renderNieuw();
   renderTop5();
   renderLiveBlokken();
   renderLiveBronnen();
