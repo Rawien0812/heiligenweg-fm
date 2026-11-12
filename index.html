@@ -182,6 +182,83 @@ body.tv .tvteller .dot { width: .7vw; height: .7vw; }
   border: 3px solid var(--gold); display: grid; gap: 12px; min-width: 0;
   box-shadow: 0 0 0 2px #5a3a00, inset 0 0 0 1px #333;
 }
+/* ================= Hifi-display (VFD) — © Rawien Paltoe ================= */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+body:not(.tv) .radio > .lcd { display: none; }      /* hoofdpagina: hifi-display; tv-modus: grote weergave */
+body.tv .vfd { display: none !important; }
+.vfd {
+  --vc: #3ff2ff; --vc-dim: rgba(63,242,255,.09); --vblue: #1e7bff; --vo: #ffad2e; --vred: #ff3b3b;
+  container-type: inline-size; position: relative; overflow: hidden; border-radius: 10px; padding: 14px 16px 12px;
+  background: radial-gradient(120% 140% at 50% 0%, #0a1418 0%, #020304 60%);
+  box-shadow: inset 0 0 30px rgba(0,0,0,.9), inset 0 0 0 1px #111;
+  font-family: ui-monospace, "DejaVu Sans Mono", Menlo, Consolas, monospace; color: var(--vc);
+  display: grid; gap: 12px; min-width: 0;
+}
+.vfd::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(255,255,255,.018) 0 1px, transparent 1px 3px), linear-gradient(160deg, rgba(255,255,255,.06), transparent 35%); }
+.vfd .o { color: var(--vo); text-shadow: 0 0 6px rgba(255,173,46,.85), 0 0 14px rgba(255,173,46,.3); }
+.v-lbl { font: 700 11px/1 ui-monospace, Menlo, Consolas, monospace; letter-spacing: .12em; color: rgba(63,242,255,.13); white-space: nowrap; text-shadow: none; }
+.v-lbl.on { color: var(--vc); text-shadow: 0 0 6px rgba(63,242,255,.85), 0 0 14px rgba(63,242,255,.3); }
+.vfd .v-lbl.o { color: rgba(255,173,46,.15); text-shadow: none; }
+.vfd .v-lbl.o.on { color: var(--vo); text-shadow: 0 0 6px rgba(255,173,46,.85), 0 0 14px rgba(255,173,46,.3); }
+.v-top { display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: end; }
+.v-ind { display: grid; gap: 7px; }
+.v-pair { display: flex; gap: 10px; flex-wrap: wrap; }
+.v-big .v-lbl { font-size: 13px; }
+.v-seg { display: flex; align-items: flex-end; gap: 6px; min-width: 0; }
+.v-seg .seg { flex: 1 1 auto; min-width: 0; }
+.v-seg svg { display: block; width: 100%; height: auto; max-height: 64px; filter: drop-shadow(0 0 3px rgba(63,242,255,.9)) drop-shadow(0 0 10px rgba(63,242,255,.3)); }
+.v-unit { font: 700 11px/1 ui-monospace, Menlo, Consolas, monospace; letter-spacing: .1em; padding-bottom: 3px; }
+.v-mid { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: center; }
+.v-discs { display: grid; gap: 8px; justify-items: stretch; }
+.v-discs[hidden] { display: none; }
+.v-discrow { display: flex; gap: 8px; justify-content: center; }
+.v-disc { position: relative; width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center;
+  border: 2px solid rgba(30,123,255,.25); color: rgba(63,242,255,.15); font: 700 15px/1 ui-monospace, monospace; margin-bottom: 14px; }
+.v-disc.on { border-color: var(--vblue); color: var(--vc); box-shadow: 0 0 10px rgba(30,123,255,.8), inset 0 0 8px rgba(30,123,255,.5); text-shadow: 0 0 6px rgba(63,242,255,.9); }
+.v-disc small { position: absolute; top: calc(100% + 4px); left: 50%; transform: translateX(-50%); font: 700 8px/1 ui-monospace, monospace; letter-spacing: .08em; color: rgba(63,242,255,.18); white-space: nowrap; }
+.v-disc.on small { color: var(--vc); text-shadow: 0 0 5px rgba(63,242,255,.8); }
+.v-bracket { position: relative; height: 14px; border: 2px solid var(--vblue); border-top: 0; border-radius: 0 0 10px 10px; box-shadow: 0 5px 8px -5px rgba(30,123,255,.7); }
+.v-bracket span { position: absolute; left: 50%; top: -1px; transform: translateX(-50%); padding: 2px 8px; border-radius: 3px; white-space: nowrap;
+  background: var(--vc); color: #032; font: 800 10px/1.1 ui-monospace, monospace; letter-spacing: .1em; box-shadow: 0 0 10px rgba(63,242,255,.8); }
+.v-bracket span:empty { display: none; }
+.v-spec { height: 104px; display: flex; align-items: flex-end; gap: 4px; padding: 0 8px; border-left: 2px solid var(--vblue); border-right: 2px solid var(--vblue);
+  border-radius: 8px; box-shadow: inset 0 -6px 10px -8px rgba(30,123,255,.6); min-width: 0; }
+.v-band { flex: 1; display: flex; flex-direction: column-reverse; gap: 2px; min-width: 0; }
+.v-cell { height: 4px; border-radius: 1px; background: var(--vc-dim); }
+.v-cell.on { background: var(--vc); box-shadow: 0 0 5px rgba(63,242,255,.8); }
+.v-cell.on.low { background: var(--vo); box-shadow: 0 0 5px rgba(255,173,46,.8); }
+.v-cell.peak { background: var(--vred); box-shadow: 0 0 6px rgba(255,59,59,.9); }
+.v-right { display: grid; gap: 10px; justify-items: center; }
+.v-ab { display: flex; gap: 12px; }
+.v-ab b { display: grid; place-items: center; width: 30px; height: 24px; border-radius: 4px; font: 800 14px/1 ui-monospace, monospace;
+  border: 2px solid rgba(63,242,255,.15); color: rgba(63,242,255,.18); }
+.v-ab b.on { background: var(--vc); border-color: var(--vc); color: #032; box-shadow: 0 0 10px rgba(63,242,255,.8); }
+.v-ab b.next { border-color: var(--vo); color: var(--vo); box-shadow: 0 0 10px rgba(255,173,46,.6); }
+.v-tr { display: flex; gap: 12px; font-size: 17px; }
+.v-tr span { color: rgba(63,242,255,.15); }
+.v-tr span.on { color: var(--vc); text-shadow: 0 0 6px rgba(63,242,255,.85); }
+.v-tr #vDot.on { color: var(--vo); text-shadow: 0 0 6px rgba(255,173,46,.85); }
+.v-title { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: center; }
+.v-title canvas { width: 100%; height: 44px; display: block; }
+.v-credit { display: grid; gap: 4px; font: 700 10px/1.3 ui-monospace, Menlo, Consolas, monospace; letter-spacing: .1em; text-transform: uppercase; min-width: 0; }
+.v-credit span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.v-credit #vRechten { color: rgba(63,242,255,.55); font-weight: 400; letter-spacing: .04em; text-transform: none; }
+/* smal (telefoon): klok en tijd naast elkaar onder de lampjes; schijfjes en A/B boven het spectrum */
+@container (max-width: 470px) {
+  .v-top { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .v-ind { grid-column: 1 / -1; grid-template-columns: auto auto; justify-content: space-between; }
+  .v-ind .v-big { grid-row: 1 / span 2; grid-column: 2; flex-direction: column; align-items: flex-end; gap: 6px; }
+  .v-mid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .v-spec { height: 84px; }
+  .v-right { grid-auto-flow: column; justify-content: space-between; align-items: center; justify-items: start; }
+  .v-discrow { gap: 16px; }
+  .v-disc { width: 32px; height: 32px; font-size: 13px; }
+  .v-disc small { font-size: 7px; }
+  .v-title canvas { height: 30px; }
+}
+@container (max-width: 330px) { #vXf { display: none; } .v-right { gap: 8px; } }
+
 .lcd {
   background: var(--lcd-bg); color: var(--lcd-fg);
   font-family: var(--lcd); border-radius: 6px; padding: 10px 12px;
@@ -564,6 +641,34 @@ body.tv .tvhint.gone { opacity: 0; }
 
   <div class="dash">
     <div class="radio">
+      <!-- Hifi-display (VFD-stijl) — © Rawien Paltoe -->
+      <div class="vfd" id="vfd">
+        <span class="sr-only" id="vfdSr" aria-live="polite"></span>
+        <div class="v-top">
+          <div class="v-ind" aria-hidden="true">
+            <div class="v-pair"><span class="v-lbl" id="iAuto">AUTO</span><span class="v-lbl" id="iHd">HD</span><span class="v-lbl" id="iBpm">BPM</span></div>
+            <div class="v-pair"><span class="v-lbl" id="iShuffle">SHUFFLE</span><span class="v-lbl" id="iRepeat">REPEAT</span></div>
+            <div class="v-pair v-big"><span class="v-lbl o" id="iLive">● LIVE</span><span class="v-lbl o" id="iBlok"></span></div>
+          </div>
+          <div class="v-seg"><div class="seg" id="segClock" aria-hidden="true"></div><span class="v-unit o">TIJD</span></div>
+          <div class="v-seg"><div class="seg" id="segTrack" aria-hidden="true"></div><span class="v-unit o">MIN</span></div>
+        </div>
+        <div class="v-mid">
+          <div class="v-discs" id="vDiscs" aria-hidden="true">
+            <div class="v-discrow" id="vDiscRow"></div>
+            <div class="v-bracket"><span id="vBadge"></span></div>
+          </div>
+          <div class="v-spec" id="vSpec" aria-hidden="true"></div>
+          <div class="v-right" aria-hidden="true">
+            <div class="v-ab"><b id="vA">A</b><b id="vB">B</b></div>
+            <div class="v-tr"><span id="vPlay">▶</span><span id="vFade">⇄</span><span id="vDot">●</span></div>
+            <span class="v-lbl" id="vXf">CROSSFADE</span>
+          </div>
+        </div>
+        <div class="v-title"><span class="v-lbl o on">NU</span><canvas id="vDots" aria-hidden="true"></canvas></div>
+        <div class="v-credit"><span class="o" id="vPowered"></span><span id="vRechten"></span></div>
+      </div>
+
       <div class="lcd" aria-live="polite">
         <div class="row"><span id="lcdStation">ZENDER 1 · BAITHAK</span><span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span></div>
         <div class="title" id="lcdTitle">Druk op ▶ en rij mee</div>
@@ -1131,7 +1236,9 @@ const $ = (id) => document.getElementById(id);
 const track = () => STATIONS[st].tracks[idx];
 
 // Tekst op het radioschermpje; te lang = laten scrollen.
+const lcdRaw = {};          // laatste tekst per schermregel (voor het hifi-display)
 function setText(id, text) {
+  lcdRaw[id] = text;
   const el = $(id);
   el.classList.remove("scroll");
   el.textContent = text;
@@ -1881,6 +1988,163 @@ async function startTeller(cfg) {
     tellerGestart = false;   // teller is extra: de radio werkt gewoon door
   }
 }
+
+// ---------- Hifi-display (VFD) — © 2026 Rawien Paltoe ----------
+const VSEG = { "0":"abcdef","1":"bc","2":"abged","3":"abgcd","4":"fgbc","5":"afgcd","6":"afgecd","7":"abc","8":"abcdefg","9":"abcdfg","-":"g"," ":"" };
+function vSegSvg(txt, on) {
+  const h = 100, w = h * 0.52, t = h * 0.11, g = t * 0.25, sk = h * 0.12;
+  let x = 0, out = "";
+  const P = (x0, pts) => pts.map(([px, py]) => `${(x0 + px + sk * (1 - py / h)).toFixed(1)},${py.toFixed(1)}`).join(" ");
+  for (const ch of txt) {
+    if (ch === ":") {
+      const r = h * 0.06;
+      out += `<circle cx="${x + h * 0.14}" cy="${h * 0.33}" r="${r}" fill="${on}"/><circle cx="${x + h * 0.08}" cy="${h * 0.72}" r="${r}" fill="${on}"/>`;
+      x += h * 0.26; continue;
+    }
+    const hz = (y) => P(x, [[t/2+g,y],[t+g,y-t/2],[w-t-g,y-t/2],[w-t/2-g,y],[w-t-g,y+t/2],[t+g,y+t/2]]);
+    const vt = (xx, y1, y2) => P(x, [[xx,y1+g],[xx+t/2,y1+t/2+g],[xx+t/2,y2-t/2-g],[xx,y2-g],[xx-t/2,y2-t/2-g],[xx-t/2,y1+t/2+g]]);
+    const segs = { a: hz(t/2), g: hz(h/2), d: hz(h - t/2), f: vt(t/2, t/2, h/2), b: vt(w - t/2, t/2, h/2), e: vt(t/2, h/2, h - t/2), c: vt(w - t/2, h/2, h - t/2) };
+    const lit = VSEG[ch] || "";
+    out += Object.entries(segs).map(([k, pts]) => `<polygon points="${pts}" fill="${lit.includes(k) ? on : "rgba(63,242,255,.07)"}"/>`).join("");
+    x += h * 0.72;
+  }
+  const W = x + h * 0.15;
+  return `<svg viewBox="0 0 ${W.toFixed(0)} ${h}" preserveAspectRatio="xMinYMax meet">${out}</svg>`;
+}
+const vSegCache = {};
+function vSeg(id, txt) { if (vSegCache[id] === txt) return; vSegCache[id] = txt; $(id).innerHTML = vSegSvg(txt, "#3ff2ff"); }
+
+// 5x7-stippenlettertype (eigen ontwerp)
+const VF = {
+  "A":["01110","10001","10001","11111","10001","10001","10001"], "B":["11110","10001","10001","11110","10001","10001","11110"],
+  "C":["01110","10001","10000","10000","10000","10001","01110"], "D":["11110","10001","10001","10001","10001","10001","11110"],
+  "E":["11111","10000","10000","11110","10000","10000","11111"], "F":["11111","10000","10000","11110","10000","10000","10000"],
+  "G":["01110","10001","10000","10111","10001","10001","01111"], "H":["10001","10001","10001","11111","10001","10001","10001"],
+  "I":["01110","00100","00100","00100","00100","00100","01110"], "J":["00111","00010","00010","00010","00010","10010","01100"],
+  "K":["10001","10010","10100","11000","10100","10010","10001"], "L":["10000","10000","10000","10000","10000","10000","11111"],
+  "M":["10001","11011","10101","10101","10001","10001","10001"], "N":["10001","10001","11001","10101","10011","10001","10001"],
+  "O":["01110","10001","10001","10001","10001","10001","01110"], "P":["11110","10001","10001","11110","10000","10000","10000"],
+  "Q":["01110","10001","10001","10001","10101","10010","01101"], "R":["11110","10001","10001","11110","10100","10010","10001"],
+  "S":["01111","10000","10000","01110","00001","00001","11110"], "T":["11111","00100","00100","00100","00100","00100","00100"],
+  "U":["10001","10001","10001","10001","10001","10001","01110"], "V":["10001","10001","10001","10001","10001","01010","00100"],
+  "W":["10001","10001","10001","10101","10101","10101","01010"], "X":["10001","10001","01010","00100","01010","10001","10001"],
+  "Y":["10001","10001","01010","00100","00100","00100","00100"], "Z":["11111","00001","00010","00100","01000","10000","11111"],
+  "0":["01110","10001","10011","10101","11001","10001","01110"], "1":["00100","01100","00100","00100","00100","00100","01110"],
+  "2":["01110","10001","00001","00010","00100","01000","11111"], "3":["11110","00001","00001","01110","00001","00001","11110"],
+  "4":["00010","00110","01010","10010","11111","00010","00010"], "5":["11111","10000","11110","00001","00001","10001","01110"],
+  "6":["00110","01000","10000","11110","10001","10001","01110"], "7":["11111","00001","00010","00100","01000","01000","01000"],
+  "8":["01110","10001","10001","01110","10001","10001","01110"], "9":["01110","10001","10001","01111","00001","00010","01100"],
+  "-":["00000","00000","00000","11111","00000","00000","00000"], ".":["00000","00000","00000","00000","00000","01100","01100"],
+  ",":["00000","00000","00000","00000","01100","00100","01000"], "'":["01100","00100","01000","00000","00000","00000","00000"],
+  "&":["01100","10010","10100","01000","10101","10010","01101"], "!":["00100","00100","00100","00100","00100","00000","00100"],
+  "?":["01110","10001","00001","00010","00100","00000","00100"], "(":["00010","00100","01000","01000","01000","00100","00010"],
+  ")":["01000","00100","00010","00010","00010","00100","01000"], "/":["00000","00001","00010","00100","01000","10000","00000"],
+  ":":["00000","01100","01100","00000","01100","01100","00000"], "|":["00100","00100","00100","00100","00100","00100","00100"],
+  "#":["01010","01010","11111","01010","11111","01010","01010"], "+":["00000","00100","00100","11111","00100","00100","00000"],
+  " ":["000","000","000","000","000","000","000"],
+};
+function vKolommen(txt) {
+  const t = String(txt).normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase();
+  const cols = [];
+  for (const ch of t) {
+    const g = VF[ch] || (/\s/.test(ch) ? VF[" "] : null);
+    if (!g) continue;                                     // emoji en onbekende tekens weglaten
+    for (let x = 0; x < g[0].length; x++) cols.push(g.map((row) => row[x] === "1"));
+    cols.push([false, false, false, false, false, false, false]);
+  }
+  return cols;
+}
+const vfd = { bands: [], peaks: [], lvl: [], cols: [], txt: null, shift: 0, lastSpec: 0, canvas: $("vDots"), ctx: $("vDots").getContext("2d") };
+(function bouwSpectrum() {
+  const BANDS = 12, CELLS = 16;
+  for (let i = 0; i < BANDS; i++) {
+    const b = document.createElement("div"); b.className = "v-band";
+    for (let k = 0; k < CELLS; k++) { const c = document.createElement("div"); c.className = "v-cell"; b.appendChild(c); }
+    $("vSpec").appendChild(b); vfd.bands.push(b); vfd.peaks.push(0); vfd.lvl.push(0);
+  }
+})();
+function vfdMaatCanvas() {
+  const c = vfd.canvas, dpr = Math.min(2, window.devicePixelRatio || 1);
+  const w = Math.max(50, c.clientWidth), h = c.clientHeight || 44;
+  if (c.width !== Math.round(w * dpr) || c.height !== Math.round(h * dpr)) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); }
+  return { w, h, dpr };
+}
+const vAan = (id, v) => $(id).classList.toggle("on", !!v);
+let vLastBlokHtml = "";
+function vfdStatus() {                       // 4× per seconde: lampjes, klok, tijd, blokken
+  if (isTv() || document.hidden) return;
+  const tr = STATIONS[st] && STATIONS[st].tracks[idx];
+  const live = isLive();
+  vAan("iAuto", FADE > 0 && !IOS); vAan("iHd", KW.aan); vAan("iBpm", tr && tr.bpm);
+  vAan("iShuffle", prefs.shuffle && !live); vAan("iRepeat", prefs.repeat && !live); vAan("iLive", live);
+  const blk = live ? activeLiveBlock() : null;
+  $("iBlok").textContent = live ? ((blk && blk.naam) || "").toUpperCase() : (STATIONS[st] ? STATIONS[st].name : "");
+  vAan("iBlok", true);
+  // klok en speeltijd
+  let klok = "--:--";
+  try { klok = new Intl.DateTimeFormat("nl-NL", { timeZone: TZ, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date()); } catch (e) {}
+  vSeg("segClock", klok);
+  let t = 0; try { if (ready) t = player.getCurrentTime() || 0; } catch (e) {}
+  const mm = Math.min(99, Math.floor(t / 60)), ss = Math.floor(t % 60);
+  vSeg("segTrack", ready && t > 0 ? `${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")}` : "--:--");
+  // LIVE-blokken als schijfjes
+  const blokken = (LIVE.blokken || []).filter((b) => b && b.van != null).slice().sort((a, b) => toMin(a.van) - toMin(b.van)).slice(0, 5);
+  $("vDiscs").hidden = !(live && blokken.length);
+  const html = blokken.map((b, i) => `<div class="v-disc${b === blk ? " on" : ""}">${i + 1}<small></small></div>`).join("");
+  if (html !== vLastBlokHtml) {
+    vLastBlokHtml = html; $("vDiscRow").innerHTML = html;
+    [...$("vDiscRow").children].forEach((d, i) => { d.querySelector("small").textContent = (blokken[i].naam || "").toUpperCase().slice(0, 7); });
+  }
+  $("vBadge").textContent = tr && tr.bpm ? `${tr.bpm} BPM` : tr && tr.views ? `${fmtViews(tr.views).toUpperCase()} VIEWS` : (live ? "LIVE" : "");
+  // A/B-spelers en transport
+  $("vA").classList.toggle("on", act === 0); $("vB").classList.toggle("on", act === 1);
+  $("vA").classList.toggle("next", !!fade && act === 1); $("vB").classList.toggle("next", !!fade && act === 0);
+  vAan("vPlay", playing); vAan("vFade", !!fade && fade.stage === "run"); vAan("vDot", live);
+  $("vXf").textContent = FADE > 0 && !IOS ? `CROSSFADE ${FADE}S` : "DIRECT";
+  vAan("vXf", FADE > 0 && !IOS);
+  // tekst: titel + artiest; credits
+  const titel = [lcdRaw.lcdTitle, lcdRaw.lcdArtist].filter(Boolean).join("  -  ");
+  if (titel !== vfd.txt) { vfd.txt = titel; vfd.cols = vKolommen(titel + "        "); vfd.shift = 0; $("vfdSr").textContent = titel; }
+  $("vPowered").textContent = lcdRaw.lcdPowered || credits.p || "";
+  $("vRechten").textContent = lcdRaw.lcdRechten || credits.r || "";
+}
+function vfdFrame(ts) {                      // animatie: spectrum + schuivende stippentitel
+  requestAnimationFrame(vfdFrame);
+  if (isTv() || document.hidden) return;
+  if (ts - vfd.lastSpec > 50) {              // spectrum ±20× per seconde, beweegt alleen als er muziek speelt
+    vfd.lastSpec = ts;
+    const CELLS = 16;
+    vfd.bands.forEach((b, i) => {
+      const doel = playing ? Math.min(1, Math.max(0.05, (0.35 + 0.33 * Math.sin(ts / 380 + i * 0.9) + 0.22 * Math.sin(ts / 165 + i * 2.1) + 0.1 * Math.random()) * (1 - Math.abs(i - 7) / 12) + 0.12)) : 0;
+      vfd.lvl[i] += (doel * CELLS - vfd.lvl[i]) * (playing ? 0.6 : 0.15);
+      const lvl = Math.round(vfd.lvl[i]);
+      vfd.peaks[i] = Math.max(lvl, vfd.peaks[i] - 0.3);
+      const pk = Math.round(vfd.peaks[i]);
+      [...b.children].forEach((c, k) => {
+        const cls = "v-cell" + (k < lvl ? " on" + (k < 2 ? " low" : "") : "") + (pk > 0 && k === pk ? " peak" : "");
+        if (c.className !== cls) c.className = cls;
+      });
+    });
+  }
+  const { w, h, dpr } = vfdMaatCanvas(), cx = vfd.ctx;
+  const ROWS = 7, DOT = Math.max(3.6, Math.min(6.4, h / ROWS)), R = DOT * 0.37, OY = (h - ROWS * DOT) / 2;
+  const VIS = Math.floor(w / DOT), cols = vfd.cols;
+  cx.setTransform(dpr, 0, 0, dpr, 0, 0); cx.clearRect(0, 0, w, h);
+  const scroll = cols.length > VIS;
+  for (let c = 0; c < VIS; c++) {
+    const col = cols.length ? (scroll ? cols[(c + Math.floor(vfd.shift)) % cols.length] : cols[c]) : null;
+    for (let r = 0; r < ROWS; r++) {
+      const on = !!(col && col[r]);
+      cx.beginPath(); cx.arc(c * DOT + DOT / 2, OY + r * DOT + DOT / 2, R, 0, Math.PI * 2);
+      cx.fillStyle = on ? "#3ff2ff" : "rgba(63,242,255,.07)";
+      cx.shadowColor = on ? "rgba(63,242,255,.85)" : "transparent"; cx.shadowBlur = on ? 5 : 0;
+      cx.fill();
+    }
+  }
+  if (scroll) vfd.shift = (vfd.shift + 0.12) % cols.length;
+}
+setInterval(vfdStatus, 250);
+requestAnimationFrame(vfdFrame);
 
 // ---------- Automatisch afspelen ----------
 // Browsers staan geluid pas toe na een tik/klik. Lukt starten met geluid niet, dan start de radio stil
