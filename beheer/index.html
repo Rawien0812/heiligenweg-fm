@@ -338,6 +338,8 @@ ul.alist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
           </div>
           <div id="nieuwBox" style="display:grid; gap:12px"></div>
           <ul class="hint" id="nieuwStatus" style="margin:0; padding-left:18px"></ul>
+          <div class="add"><button class="btn ghost" type="button" id="nieuwCheck">Controleer of deze nummers op je site mogen afspelen</button></div>
+          <p class="msg" id="nieuwCheckMsg"></p>
         </div>
       </section>
 
@@ -947,6 +949,17 @@ function tracksBlock(z, key, emptyText, opts = {}) {
     if (r.error) { msg.className = "msg bad"; msg.textContent = r.error; msg.style.flexBasis = "100%"; return; }
     if (opts.alleenVideo && !r.video) { msg.className = "msg bad"; msg.textContent = "Hier kunnen alleen losse video's (een nummer), geen afspeellijst of kanaal."; msg.style.flexBasis = "100%"; return; }
     if (opts.max && z.nummers.length >= opts.max) { msg.className = "msg bad"; msg.textContent = `Er staan er al ${opts.max}. Haal er eerst één weg met ✕.`; msg.style.flexBasis = "100%"; return; }
+    // Mag deze video buiten YouTube afspelen? (alleen te controleren met de YouTube API-sleutel)
+    if (opts.checkEmbed && r.video && ytKey.get()) {
+      msg.className = "msg"; msg.textContent = "Controleren of YouTube deze video op je site laat afspelen…"; msg.style.flexBasis = "100%";
+      try {
+        const res = await ytGet("videos", { part: "status", id: r.video });
+        const v = (res.items || [])[0];
+        if (!v) { msg.className = "msg bad"; msg.textContent = "Deze video bestaat niet (meer) of is privé. Kies een andere upload."; return; }
+        if (v.status && v.status.embeddable === false) { msg.className = "msg bad"; msg.textContent = "De eigenaar van deze video staat afspelen buiten YouTube niet toe; op je radio wordt hij overgeslagen. Zoek een andere upload van hetzelfde nummer (bijv. van het officiële kanaal of een ‘Topic’-kanaal)."; return; }
+        if (v.status && v.status.privacyStatus === "private") { msg.className = "msg bad"; msg.textContent = "Deze video is privé en kan niet worden afgespeeld."; return; }
+      } catch (e) { /* controle niet gelukt (bijv. dagtegoed op): toch toevoegen */ }
+    }
     const exists = z.nummers.some((n) => (r.video && n.video === r.video) || (r.lijst && n.lijst === r.lijst));
     if (exists) { msg.className = "msg bad"; msg.textContent = "Deze staat al bij deze zender."; msg.style.flexBasis = "100%"; return; }
     let item;
@@ -1088,7 +1101,7 @@ function renderTop5() {
   data.site.top5 = Array.isArray(data.site.top5) ? data.site.top5 : [];
   const box = $("top5Box"); box.innerHTML = "";
   const [ol, add] = tracksBlock({ nummers: data.site.top5, knop: "", naam: "" }, "top5",
-    "Nog leeg. Plak hieronder de YouTube-links van je top 5 (nummer 1 bovenaan), of gebruik ‘Vul met trending’.", { alleenVideo: true, max: 5 });
+    "Nog leeg. Plak hieronder de YouTube-links van je top 5 (nummer 1 bovenaan), of gebruik ‘Vul met trending’.", { alleenVideo: true, max: 5, checkEmbed: true });
   box.append(ol, add);
 }
 // Populairste nummers per kanaal (UU… = uploads van kanaal UC…).
@@ -1165,7 +1178,7 @@ function renderNieuw() {
   $("nw-elke").value = String(u.elke); $("nw-dagen").value = String(u.dagen);
   const box = $("nieuwBox"); box.innerHTML = "";
   const [ol, add] = tracksBlock({ nummers: u.nummers, knop: "", naam: "" }, "nieuw",
-    "Nog geen nieuwe nummers. Plak hieronder de YouTube-link van een nieuw nummer.", { alleenVideo: true, max: 10 });
+    "Nog geen nieuwe nummers. Plak hieronder de YouTube-link van een nieuw nummer.", { alleenVideo: true, max: 10, checkEmbed: true });
   box.append(ol, add);
   // per nummer: hoe lang nog
   const st = $("nieuwStatus"); st.innerHTML = "";
@@ -1176,6 +1189,19 @@ function renderNieuw() {
     st.appendChild(li);
   });
 }
+$("nieuwCheck").addEventListener("click", async () => {
+  const say = (t, c = "") => { $("nieuwCheckMsg").className = "msg " + c; $("nieuwCheckMsg").textContent = t; };
+  const ns = nieuw().nummers.filter((n) => n.video);
+  if (!ns.length) { say("Er staan nog geen nieuwe nummers."); return; }
+  say("Controleren…");
+  try {
+    const res = await ytGet("videos", { part: "status", id: ns.map((n) => n.video).join(",") });
+    const ok = new Map((res.items || []).map((v) => [v.id, v.status || {}]));
+    const fout = ns.filter((n) => !ok.has(n.video) || ok.get(n.video).embeddable === false || ok.get(n.video).privacyStatus === "private");
+    if (!fout.length) say(`Alle ${ns.length} nummers mogen op je site afspelen.`, "ok");
+    else say(`Deze kunnen niet op je site afspelen en worden overgeslagen: ${fout.map((n) => n.titel || n.video).join(" · ")}. Zoek een andere upload van hetzelfde nummer.`, "bad");
+  } catch (e) { say(e.message, "bad"); }
+});
 $("nw-elke").addEventListener("change", () => { nieuw().elke = +$("nw-elke").value; setDirty(true); });
 $("nw-dagen").addEventListener("change", () => { nieuw().dagen = +$("nw-dagen").value; setDirty(true); renderNieuw(); });
 

@@ -813,7 +813,7 @@ body.tv .tvhint.gone { opacity: 0; }
 
   <section class="stops" aria-label="Haltes">
     <h2><span class="star" aria-hidden="true"></span><span id="stopsTitle">Haltes op deze zender</span></h2>
-    <p class="sub">Elk nummer is een halte. Tik erop om er meteen naartoe te rijden.</p>
+    <p class="sub" id="stopsSub">Elk nummer is een halte. Tik erop om er meteen naartoe te rijden.</p>
     <ol class="list" id="list"></ol>
   </section>
 
@@ -1050,7 +1050,13 @@ function actieveNieuwe(u) {
 function voegNieuwToe(pool, alVerder) {
   if (!NIEUW.items.length) return pool;
   const zonder = pool.filter((t) => !t.feat);
-  const rij = shuffle(NIEUW.items.slice());
+  let rij = shuffle(NIEUW.items.slice());
+  if (!alVerder && rij.length > 1) {
+    let laatst = ""; try { laatst = localStorage.getItem("hfm-nieuw-eerst") || ""; } catch (e) {}
+    const i = rij.findIndex((t) => t.id === laatst);
+    if (i >= 0) rij = rij.slice(i + 1).concat(rij.slice(0, i + 1));      // de vorige keer eerst gekozen = nu achteraan
+    try { localStorage.setItem("hfm-nieuw-eerst", rij[0].id); } catch (e) {}
+  }
   const out = []; let n = 0, volgende = alVerder ? 1 + Math.floor(Math.random() * NIEUW.elke) : 1 + Math.floor(Math.random() * 2);
   zonder.forEach((t, k) => {
     if (k === volgende) { out.push(Object.assign({}, rij[n % rij.length])); n++; volgende += NIEUW.elke; }
@@ -1494,9 +1500,13 @@ function renderLiveList() {
     li.appendChild(b); list.appendChild(li);
   }
   $("stopsTitle").textContent = `${STATIONS[st].knop}: nu en straks`;
+  $("stopsSub").textContent = NIEUW.items.length
+    ? `Nieuw op ${STATIONS[st].knop} (komt extra vaak voorbij): ${NIEUW.items.map((x) => x.t).join(" · ")}`
+    : "Elk nummer is een halte. Tik erop om er meteen naartoe te rijden.";
 }
 
 function renderList() {
+  if (!isLive()) $("stopsSub").textContent = "Elk nummer is een halte. Tik erop om er meteen naartoe te rijden.";
   if (isLive()) return renderLiveList();
   const list = $("list");
   list.innerHTML = "";
@@ -1700,7 +1710,7 @@ function onBackState(e) {
   }
   {                                                          // kwaliteitsfilter, nog onhoorbaar
     const vd = bp.getVideoData ? bp.getVideoData() : {};
-    if (slechtNummer(vd && vd.title, bp.getDuration())) {
+    if (!(fade.target.st === st && STATIONS[st].tracks[fade.target.idx] && STATIONS[st].tracks[fade.target.idx].feat) && slechtNummer(vd && vd.title, bp.getDuration())) {
       fade.tries = (fade.tries || 0) + 1;
       const l = fade.target.list && bp.getPlaylist();
       if (l && l.length > 1 && fade.tries < 6) { bp.playVideoAt(kiesUitLijst(l)); return; }
