@@ -1,7 +1,13 @@
 <!doctype html>
+<!--
+  Heiligenweg FM
+  © 2026 Rawien Paltoe. Alle rechten voorbehouden.
+  Kopiëren, wijzigen of hergebruiken zonder schriftelijke toestemming is niet toegestaan. Zie LICENSE.
+-->
 <html lang="nl">
 <head>
 <meta charset="utf-8">
+<meta name="copyright" content="© 2026 Rawien Paltoe. Alle rechten voorbehouden.">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Heiligenweg FM</title>
 <meta name="author" content="Rawien Paltoe">
@@ -451,6 +457,7 @@ section.programma { padding-block: 30px 0; }
 .flagbar { height: 14px; background: linear-gradient(to bottom, var(--sr-green) 0 20%, #fff 20% 30%, var(--sr-red) 30% 70%, #fff 70% 80%, var(--sr-green) 80%); margin-top: 30px; }
 footer { padding-block: 22px 40px; color: var(--muted); font-size: .85rem; }
 footer p { margin: 0 0 6px; max-width: 70ch; }
+footer .copyright { margin-top: 10px; font-size: .78rem; opacity: .75; }
 footer .sig { font: 400 1.1rem/1.2 var(--display); color: var(--gold); display: flex; gap: 8px; align-items: center; }
 
 /* ---- Geluid-aan knop bij automatisch (stil) starten ---- */
@@ -658,6 +665,7 @@ body.tv .tvhint.gone { opacity: 0; }
 <footer class="wrap">
   <p class="sig"><span class="star" aria-hidden="true"></span><span id="siteOnderaan">Gemaakt door Rawien Paltoe.</span></p>
   <p id="siteRechten">Alle muziek wordt afgespeeld via YouTube. De rechten liggen bij de artiesten en uploaders.</p>
+  <p class="copyright">© <span id="cJaar">2026</span> Rawien Paltoe · Alle rechten voorbehouden. Kopiëren of hergebruiken van deze site zonder toestemming is niet toegestaan.</p>
 </footer>
 
 <script>
@@ -1911,6 +1919,8 @@ function geluidAan() {
   geluidAan();
 }, { capture: true }));
 $("unmuteBtn").addEventListener("click", () => geluidAan());
+
+$("cJaar").textContent = Math.max(2026, new Date().getFullYear());   // © 2026 Rawien Paltoe
 
 // Opstarten: eerst de zenders inlezen, dan YouTube meteen laden (zodat een tik op ▶ direct geluid geeft).
 setText("lcdTitle", "Radio wordt geladen…");

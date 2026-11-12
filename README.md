@@ -21,3 +21,6 @@ Inloggen gaat met een fine-grained GitHub-token met alleen toegang tot deze repo
 ## Tv-modus
 Open `https://rawien0812.github.io/heiligenweg-fm/tv` (of de site met `#tv` erachter) voor een tv-weergave: video schermvullend, nu-speelt-info, Top 5 met QR-code. Bediening met de afstandsbediening: OK = afspelen/pauze, ← → = vorige/volgende, ↑ ↓ = volume.
 De QR-code wordt gemaakt met `js/qrcode.js` (qrcode-generator van Kazuhiko Arase, MIT-licentie).
+
+## Rechten
+© 2026 Rawien Paltoe. Alle rechten voorbehouden. Deze code, vormgeving en inhoud mogen niet zonder schriftelijke toestemming van Rawien Paltoe worden gekopieerd, gewijzigd of hergebruikt. Zie [LICENSE](LICENSE).
