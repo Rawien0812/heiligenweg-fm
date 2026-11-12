@@ -440,6 +440,11 @@ section.programma { padding-block: 30px 0; }
 .lblocks .slot b { font: 1.05rem/1 var(--lcd); color: var(--sr-yellow); font-weight: 400; }
 .lblocks .slot.now { background: var(--gold); color: #2a1a00; }
 .lblocks .slot.now b { color: var(--sr-red); }
+.blokaftel { margin: -2px 0 12px; padding: 12px 16px; border-radius: 10px; background: #0b0b0b; border: 1px solid rgba(246,198,74,.45);
+  color: var(--ink); font-size: 1rem; line-height: 1.5; }
+.blokaftel .klok { font: 400 1.6rem/1 var(--lcd); color: var(--sr-yellow); font-variant-numeric: tabular-nums; letter-spacing: .04em;
+  background: #12210f; padding: 3px 8px; border-radius: 6px; margin: 0 2px; display: inline-block; }
+.blokaftel strong { color: var(--gold); }
 .always { margin: 10px 0 0; color: var(--muted); font-size: .9rem; }
 .onair { display: inline-block; margin-left: 6px; font: 400 .8rem/1 var(--lcd); color: #2a1a00; background: var(--sr-yellow); padding: 2px 6px; border-radius: 3px; vertical-align: 2px; }
 
@@ -620,6 +625,7 @@ body.tv .tvhint.gone { opacity: 0; }
     <h2><span class="star" aria-hidden="true"></span><span id="progTitle">Programma</span></h2>
     <p class="sub" id="progSub">Welke zender wanneer te horen is.</p>
     <div class="liveprog" id="liveprog" hidden></div>
+    <p class="blokaftel" id="blokAftel" aria-live="off" hidden></p>
     <div class="week" id="week"></div>
   </section>
 </main>
@@ -683,6 +689,45 @@ const isLive = () => !!(STATIONS[st] && STATIONS[st].live);
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 // LIVE-tijdblokken (bijv. 04:00–09:00 Bhajan): het blok dat nu loopt, elke dag.
 const ALLE_DAGEN = [0, 1, 2, 3, 4, 5, 6];
+// Seconden sinds middernacht in de ingestelde tijdzone.
+function nuSeconden() {
+  const f = new Intl.DateTimeFormat("en-GB", { timeZone: TZ, hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" });
+  const o = {}; f.formatToParts(new Date()).forEach((x) => { o[x.type] = x.value; });
+  return (+o.hour % 24) * 3600 + +o.minute * 60 + +o.second;
+}
+const blokOmschrijving = (b) => (b && (b.omschrijving || b.naam)) || "de volgende muziek";
+// Aftellen: hoe lang het huidige LIVE-blok nog duurt en wat daarna komt.
+function tikBlokAftel() {
+  const el = $("blokAftel");
+  const blokken = (LIVE.blokken || []).filter((b) => b && b.van != null);
+  if (!blokken.length || LIVE.aan === false) { el.hidden = true; return; }
+  const nu = nuSeconden(), dag = 86400;
+  const fmt = (sec) => { sec = Math.max(0, Math.round(sec)); const h = Math.floor(sec / 3600), m = Math.floor(sec / 60) % 60, s2 = sec % 60;
+    return [h, m, s2].map((x) => String(x).padStart(2, "0")).join(":"); };
+  const huidigBlok = activeLiveBlock();
+  let tekst = "";
+  if (huidigBlok) {
+    const eind = ((huidigBlok.tot && huidigBlok.tot !== "00:00") ? toMin(huidigBlok.tot) : 1440) * 60;
+    let rest = (eind - nu + dag) % dag; if (rest === 0) rest = dag;
+    const eindMin = (eind / 60) % 1440;
+    const volgend = blokken.find((b) => b !== huidigBlok && blockOn({ dagen: ALLE_DAGEN, van: b.van, tot: b.tot }, 0, eindMin))
+      || blokken.find((b) => b !== huidigBlok && toMin(b.van) === eindMin);
+    tekst = `<strong></strong> stopt over <span class="klok">${fmt(rest)}</span>. `
+      + (volgend ? `Daarna gaan we verder met <strong></strong>. ` : "") + "Veel luisterplezier!";
+    el.innerHTML = tekst;
+    const st2 = el.querySelectorAll("strong");
+    st2[0].textContent = huidigBlok.naam || "Dit blok";
+    if (volgend) st2[1].textContent = blokOmschrijving(volgend);
+  } else {
+    // Tussen twee blokken in: tel af naar het eerstvolgende blok.
+    const starts = blokken.map((b) => ({ b, over: (toMin(b.van) * 60 - nu + dag) % dag })).sort((x, y) => x.over - y.over);
+    el.innerHTML = `Over <span class="klok">${fmt(starts[0].over)}</span> gaan we verder met <strong></strong>. Veel luisterplezier!`;
+    el.querySelector("strong").textContent = blokOmschrijving(starts[0].b);
+  }
+  el.hidden = false;
+}
+setInterval(() => { if (!document.hidden) tikBlokAftel(); }, 1000);
+
 function activeLiveBlock() {
   const blokken = (LIVE.blokken || []).filter((b) => b && b.van != null);
   if (!blokken.length) return null;
@@ -875,6 +920,7 @@ function renderProgramma() {
   sec.hidden = !planned.length && !blokken.length;
   const lp = $("liveprog");
   lp.hidden = !blokken.length;
+  tikBlokAftel();
   if (blokken.length) {
     const nu = activeLiveBlock();
     lp.innerHTML = "";

@@ -3211,7 +3211,8 @@
               "opgehaald": "2026-11-11"
             }
           ],
-          "aantal": 50
+          "aantal": 50,
+          "omschrijving": "rustige soul-nummers"
         },
         {
           "naam": "Bhajan",
@@ -3430,7 +3431,8 @@
             }
           ],
           "artiesten": [],
-          "aantal": 50
+          "aantal": 50,
+          "omschrijving": "bhajans"
         },
         {
           "naam": "Bollywood",
@@ -3883,7 +3885,8 @@
             }
           ],
           "artiesten": [],
-          "aantal": 50
+          "aantal": 50,
+          "omschrijving": "Bollywood-songs"
         },
         {
           "naam": "Lokaal",
@@ -3891,7 +3894,8 @@
           "tot": "00:00",
           "bronnen": [],
           "artiesten": [],
-          "aantal": 50
+          "aantal": 50,
+          "omschrijving": "lokale songs, muziekformaties en baithak gana"
         }
       ]
     },

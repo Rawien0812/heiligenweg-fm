@@ -1041,7 +1041,10 @@ function renderLiveBlokken() {
     const tot = document.createElement("input"); tot.type = "time"; tot.id = `lb${bi}-tot`; tot.value = b.tot || "00:00"; tot.setAttribute("aria-label", "Tot");
     [van, tot].forEach((inp) => inp.addEventListener("change", () => { b.van = van.value || "00:00"; b.tot = tot.value || "00:00"; setDirty(true); setTitle(); }));
     times.append("van", van, "tot", tot);
-    row.append(nm, times);
+    const om = document.createElement("input"); om.type = "text"; om.id = `lb${bi}-omschrijving`; om.value = b.omschrijving || "";
+    om.placeholder = "Omschrijving voor het aftellen, bijv. rustige soul-nummers"; om.setAttribute("aria-label", "Omschrijving voor het aftellen"); om.style.flex = "1 1 100%";
+    om.addEventListener("input", () => { if (om.value.trim()) b.omschrijving = om.value; else delete b.omschrijving; setDirty(true); });
+    row.append(nm, times, om);
 
     const [ol, add] = tracksBlock({ nummers: b.bronnen, knop: "", naam: b.naam || "" }, `lb${bi}`, "Nog geen eigen kanalen of afspeellijsten. Zonder artiesten én zonder bronnen draait dit blok de algemene bronnen.");
     collapsible(card, head, "lb" + bi, [row, artistsEditor(b, bi), ol, add]);
