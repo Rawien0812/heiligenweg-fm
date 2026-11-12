@@ -109,6 +109,17 @@ h1 {
   padding: 8px 16px; border-radius: 999px; box-shadow: 0 3px 0 #7a5200;
 }
 .countdown b { font-weight: 400; font-size: 1.35em; color: var(--sr-red); font-variant-numeric: tabular-nums; }
+.teller { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.tchip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px;
+  background: rgba(11,36,19,.85); border: 1px solid rgba(246,198,74,.5); color: #fff; font-size: .9rem; }
+.tchip b { font: 400 1.25rem/1 var(--lcd); color: var(--sr-yellow); font-variant-numeric: tabular-nums; }
+.tchip svg { width: 16px; height: 16px; fill: var(--gold); }
+.tchip.live .dot, .tvteller .dot { width: 9px; height: 9px; border-radius: 50%; background: #ff2d55; box-shadow: 0 0 0 0 rgba(255,45,85,.6); animation: tping 1.6s ease-out infinite; }
+@keyframes tping { 0% { box-shadow: 0 0 0 0 rgba(255,45,85,.7); } 70% { box-shadow: 0 0 0 7px rgba(255,45,85,0); } 100% { box-shadow: 0 0 0 0 rgba(255,45,85,0); } }
+.tvteller { display: none; }
+body.tv .tvteller:not([hidden]) { display: inline-flex; align-items: center; gap: .6vw; font: 400 1.6vw/1 var(--lcd); color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,.8); }
+body.tv .tvteller b { color: var(--sr-yellow); font-weight: 400; }
+body.tv .tvteller .dot { width: .7vw; height: .7vw; }
 .fringe {
   position: relative; height: 16px; pointer-events: none;
   background: repeating-linear-gradient(90deg,
@@ -511,6 +522,10 @@ body.tv .tvhint.gone { opacity: 0; }
     <h1 id="siteTitle">Heiligenweg FM</h1>
     <p class="tag"><em id="siteWelkomGroot">Kon na ini!</em> <span id="siteWelkom">Schuif door naar achter. De chauffeur zet baithak gana, kaseko en Trafassi op. Hard.</span></p>
     <div class="countdown" id="countdown">25 november · Srefidensi</div>
+    <div class="teller" id="teller" hidden>
+      <span class="tchip live"><span class="dot" aria-hidden="true"></span><b id="tOnline">–</b>&nbsp;<span id="tOnlineTxt">luisteren nu</span></span>
+      <span class="tchip"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5C6.5 5 2.7 9.1 1.5 12c1.2 2.9 5 7 10.5 7s9.3-4.1 10.5-7C21.3 9.1 17.5 5 12 5zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm0-2.2a1.8 1.8 0 1 0 0-3.6 1.8 1.8 0 0 0 0 3.6z"/></svg><b id="tVisits">–</b>&nbsp;bezoeken</span>
+    </div>
   </div>
 </header>
 <div class="fringe" aria-hidden="true"></div>
@@ -614,6 +629,7 @@ body.tv .tvhint.gone { opacity: 0; }
 <div class="tvbar" id="tvbar" aria-hidden="true">
   <span class="tvlogo" id="tvLogo">Heiligenweg FM</span>
   <span class="tvclock" id="tvClock"></span>
+  <span class="tvteller" id="tvTeller" hidden><span class="dot"></span><b id="tvOnline">–</b> luisteren nu</span>
   <span class="time live tvlive"><span class="dot"></span>LIVE</span>
 </div>
 <button class="tvstart" id="tvStart" type="button">▶&nbsp; Druk op OK om te starten</button>
@@ -957,6 +973,7 @@ async function loadZenders() {
   if (!r.ok) throw new Error("zenders.json " + r.status);
   const data = await r.json();
   applySite(data.site);
+  startTeller(data.site && data.site.teller);
   TOP5 = (data.site && Array.isArray(data.site.top5) ? data.site.top5 : []).filter((n) => n.video).slice(0, 5);
   if (data.site && data.site.top5_kop) $("top5Kop").textContent = data.site.top5_kop;
   renderTop5();
@@ -1701,6 +1718,47 @@ window.addEventListener("focus", () => setTimeout(resumeIfWanted, 300));
   const days = Math.round((target - today) / 86400000);
   el.innerHTML = `Nog <b>${days}</b> ${days === 1 ? "dag" : "dagen"} tot ${target.getFullYear() - 1975} jaar Srefidensi`;
 })();
+
+// ---------- Bezoekersteller (Firebase Realtime Database, instelbaar in /beheer/) ----------
+// Telt anoniem: wie de site open heeft (luisteren nu) en hoe vaak de site is bezocht (één keer per bezoek).
+const FB_VER = "10.12.5";
+let tellerGestart = false;
+function laadScript(src) {
+  return new Promise((ok, fout) => { const sc = document.createElement("script"); sc.src = src; sc.onload = ok; sc.onerror = fout; document.head.appendChild(sc); });
+}
+async function startTeller(cfg) {
+  const fb = cfg && cfg.firebase;
+  if (tellerGestart || !fb || !fb.databaseURL || !fb.apiKey) return;
+  tellerGestart = true;
+  try {
+    if (!window.firebase) {
+      await laadScript(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-app-compat.js`);
+      await laadScript(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-database-compat.js`);
+    }
+    const app = firebase.apps.length ? firebase.app() : firebase.initializeApp(fb);
+    const db = app.database();
+    const fmt = (n) => Number(n || 0).toLocaleString("nl-NL");
+    // Aanwezig zijn: één regel per open pagina, verdwijnt vanzelf bij sluiten.
+    const me = db.ref("online").push();
+    db.ref(".info/connected").on("value", (snap) => {
+      if (snap.val() !== true) return;
+      me.onDisconnect().remove().then(() => me.set({ t: firebase.database.ServerValue.TIMESTAMP, tv: location.hash === "#tv" }));
+    });
+    db.ref("online").on("value", (snap) => {
+      const n = snap.numChildren();
+      $("tOnline").textContent = fmt(n); $("tvOnline").textContent = fmt(n);
+      $("tOnlineTxt").textContent = n === 1 ? "luistert nu" : "luisteren nu";
+      $("teller").hidden = false; $("tvTeller").hidden = false;
+    });
+    // Bezoeken: één keer per bezoek (tabblad), niet bij herladen.
+    let nieuw = true;
+    try { nieuw = !sessionStorage.getItem("hfm-bezocht"); sessionStorage.setItem("hfm-bezocht", "1"); } catch (e) {}
+    if (nieuw) db.ref("stats/bezoeken").transaction((n) => (n || 0) + 1);
+    db.ref("stats/bezoeken").on("value", (snap) => { $("tVisits").textContent = fmt(snap.val()); $("teller").hidden = false; });
+  } catch (e) {
+    tellerGestart = false;   // teller is extra: de radio werkt gewoon door
+  }
+}
 
 // Opstarten: eerst de zenders inlezen, dan YouTube meteen laden (zodat een tik op ▶ direct geluid geeft).
 setText("lcdTitle", "Radio wordt geladen…");

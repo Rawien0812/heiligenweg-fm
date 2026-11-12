@@ -316,6 +316,49 @@ ul.alist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
           <div id="liveBronnen" style="display:grid; gap:12px"></div>
         </div>
       </section>
+      <section class="panel fold" data-key="p-teller">
+        <h2 class="panel-head"><button type="button" class="icon fold" aria-expanded="false" aria-controls="p-teller-body" aria-label="Uitklappen">▾</button><span class="ptitle">Bezoekersteller<small>Hoeveel mensen nu luisteren en hoe vaak de site is bezocht</small></span></h2>
+        <div class="panel-body" id="p-teller-body" hidden>
+          <p class="hint">De teller gebruikt een gratis <b>Firebase</b>-database van Google. Er worden alleen anonieme tellingen opgeslagen, geen persoonlijke gegevens.</p>
+          <p class="msg" id="fbStatus"></p>
+          <details class="help" open>
+            <summary>Stappenplan (eenmalig, ±5 minuten)</summary>
+            <ol>
+              <li>Ga naar <a href="https://console.firebase.google.com" target="_blank" rel="noopener">console.firebase.google.com</a> en klik op <b>Project maken</b> (of kies je bestaande Google Cloud-project). Google Analytics mag uit.</li>
+              <li>Kies links <b>Build → Realtime Database</b> → <b>Create Database</b>. Locatie: <b>europe-west1 (België)</b>. Kies <b>Start in locked mode</b>.</li>
+              <li>Open het tabblad <b>Rules</b>, vervang alles door de regels hieronder (knop <b>Regels kopiëren</b>) en klik op <b>Publish</b>.</li>
+              <li>Klik links op het tandwiel → <b>Project settings</b> → onder <b>Your apps</b> op het icoon <code>&lt;/&gt;</code> (Web). Geef een naam, bijv. <code>Heiligenweg FM</code>, en klik op <b>Register app</b>.</li>
+              <li>Kopieer het blok <code>const firebaseConfig = { … }</code> en plak het hieronder. Klik op <b>Opslaan en publiceren</b>.</li>
+            </ol>
+          </details>
+          <label class="f" for="fbConfig">Firebase-gegevens (firebaseConfig) <span class="sub">deze gegevens zijn bedoeld om openbaar in een website te staan; de regels beveiligen de database</span>
+            <textarea id="fbConfig" rows="7" spellcheck="false" placeholder="const firebaseConfig = {&#10;  apiKey: &quot;AIza…&quot;,&#10;  databaseURL: &quot;https://…firebasedatabase.app&quot;,&#10;  …&#10;};" style="font: .9rem/1.4 ui-monospace, monospace; color: var(--ink); background: var(--field); border: 1px solid #2c5a3b; border-radius: 8px; padding: 9px 11px; resize: vertical;"></textarea>
+          </label>
+          <div class="add"><button class="btn ghost" type="button" id="fbClear">Teller uitzetten</button></div>
+          <label class="f" for="fbRules">Regels voor de database (stap 3)
+            <textarea id="fbRules" rows="10" readonly spellcheck="false" style="font: .85rem/1.4 ui-monospace, monospace; color: var(--ink); background: #000; border: 1px solid #2c5a3b; border-radius: 8px; padding: 9px 11px; resize: vertical;">{
+  "rules": {
+    "online": {
+      ".read": true,
+      "$id": {
+        ".write": true,
+        ".validate": "!newData.exists() || newData.hasChildren(['t'])"
+      }
+    },
+    "stats": {
+      ".read": true,
+      "bezoeken": {
+        ".write": true,
+        ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() : 0) + 1"
+      }
+    }
+  }
+}</textarea>
+          </label>
+          <div class="add"><button class="btn gold" type="button" id="fbCopy">Regels kopiëren</button></div>
+        </div>
+      </section>
+
       <section class="panel fold" data-key="p-kwaliteit">
         <h2 class="panel-head"><button type="button" class="icon fold" aria-expanded="false" aria-controls="p-kwaliteit-body" aria-label="Uitklappen">▾</button><span class="ptitle">Kwaliteitsfilter<small>Geen live-opnames, vlogs, reels of shorts; alleen HD</small></span></h2>
         <div class="panel-body" id="p-kwaliteit-body" hidden>
@@ -455,6 +498,40 @@ async function login(t) {
 }
 
 // ---------- Teksten ----------
+// ---------- Bezoekersteller (Firebase) ----------
+function parseFirebaseConfig(txt) {
+  const out = {};
+  ["apiKey", "authDomain", "databaseURL", "projectId", "storageBucket", "messagingSenderId", "appId"].forEach((k) => {
+    const m = String(txt).match(new RegExp(k + "\\s*[:=]\\s*[\"']([^\"']+)[\"']"));
+    if (m) out[k] = m[1].trim();
+  });
+  return out;
+}
+function fbStatus() {
+  const fb = data.site.teller && data.site.teller.firebase;
+  const el = $("fbStatus");
+  if (!fb) { el.className = "msg"; el.textContent = "De teller staat uit. Volg het stappenplan om hem aan te zetten."; return; }
+  if (!fb.databaseURL) { el.className = "msg bad"; el.textContent = "Er ontbreekt een databaseURL. Heb je in stap 2 de Realtime Database aangemaakt? Kopieer daarna het config-blok opnieuw."; return; }
+  el.className = "msg ok"; el.textContent = `Teller staat aan (project ${fb.projectId || "?"}). Na opslaan zie je hem in de kop van de site.`;
+}
+function fillTeller() {
+  const fb = data.site.teller && data.site.teller.firebase;
+  $("fbConfig").value = fb ? "const firebaseConfig = " + JSON.stringify(fb, null, 2) + ";" : "";
+  fbStatus();
+}
+$("fbConfig").addEventListener("input", () => {
+  const cfg = parseFirebaseConfig($("fbConfig").value);
+  if (cfg.apiKey) { data.site.teller = { firebase: cfg }; setDirty(true); }
+  else if (!$("fbConfig").value.trim()) { delete data.site.teller; setDirty(true); }
+  fbStatus();
+});
+$("fbClear").addEventListener("click", () => { delete data.site.teller; $("fbConfig").value = ""; setDirty(true); fbStatus(); });
+$("fbCopy").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText($("fbRules").value); $("fbCopy").textContent = "Gekopieerd ✓"; }
+  catch (e) { $("fbRules").focus(); $("fbRules").select(); $("fbCopy").textContent = "Geselecteerd: druk op Ctrl+C"; }
+  setTimeout(() => { $("fbCopy").textContent = "Regels kopiëren"; }, 2500);
+});
+
 // ---------- Kwaliteitsfilter ----------
 const KW_STANDAARD = ["live", "vlog", "vlogs", "reel", "reels", "short", "shorts", "#shorts", "tiktok", "status", "behind the scenes", "bts",
   "rehearsal", "repetitie", "oefenen", "practice", "riyaz", "soundcheck", "interview", "podcast", "aftermovie", "teaser", "trailer",
@@ -509,6 +586,7 @@ function fillSite() {
   document.querySelectorAll("[data-site]").forEach((inp) => { inp.value = data.site[inp.dataset.site] ?? ""; });
   document.querySelectorAll("[data-live]").forEach((inp) => { inp.value = String(data.site.live[inp.dataset.live] ?? ""); });
   fillKw();
+  fillTeller();
 }
 document.querySelectorAll("[data-live]").forEach((inp) => ["input", "change"].forEach((ev) =>
   inp.addEventListener(ev, () => {
