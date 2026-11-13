@@ -2342,14 +2342,25 @@ function autoStart() {
   }, 1800);
 }
 function toonGeluidKnop() {
+  if (!autoMuted) return;                       // al getikt in de tussentijd: knop niet (meer) tonen
   $("unmuteTxt").textContent = isTv() ? "Druk op OK voor geluid" : "Tik voor geluid";
   $("unmuteBtn").hidden = false;
 }
 function geluidAan() {
+  $("unmuteBtn").hidden = true;                 // knop verdwijnt altijd bij een tik
   if (!autoMuted) return false;
-  autoMuted = false; $("unmuteBtn").hidden = true;
+  autoMuted = false;
   applyVolume();
   try { if (!prefs.muted && +$("vol").value > 0) { player.unMute(); player.setVolume(+$("vol").value); } if (!isAan()) player.playVideo(); } catch (e) {}
+  // iPhone/iPad laten YouTube soms alleen geluid geven na een tik óp de video zelf: dan uitleggen hoe.
+  setTimeout(() => {
+    try {
+      if (ready && !prefs.muted && player.isMuted && player.isMuted()) {
+        setNote("Geen geluid? Tik één keer op de video hieronder (of op het luidspreker-icoon van YouTube) om het geluid aan te zetten.");
+        const sc = document.querySelector(".screen"); if (sc && !isTv()) sc.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    } catch (e) {}
+  }, 900);
   if (isTv()) { keepAwake(); if (document.documentElement.requestFullscreen && !document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {}); }
   return true;
 }
