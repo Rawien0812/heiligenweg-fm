@@ -681,6 +681,11 @@ body.tv .tvhint.gone { opacity: 0; }
   body.tv .top5 { width: auto; left: 3vw; }
 }
 
+/* Kop buiten beeld: vlag-glans, franje en vlaggetjes staan stil */
+body.kop-uit .strip::after, body.kop-uit .fringe, body.kop-uit .pennant, body.kop-uit .strip .tchip .dot { animation-play-state: paused !important; }
+.list > li { contain: layout paint; }
+.list button, .t5 button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+
 /* Tablets en telefoons: zware gloed-pulsen uit, zodat scrollen soepel blijft (knipperen blijft) */
 @media (hover: none) and (pointer: coarse) {
   .playing .ic.play, .playing .radio .ic.play, .radio .time.live, .time.live, .unmute, .countdown { animation: none !important; }
@@ -1511,7 +1516,11 @@ function renderLiveList() {
     : "Elk nummer is een halte. Tik erop om er meteen naartoe te rijden.";
 }
 
+let lijstUitgesteld = null;
 function renderList() {
+  if (typeof vScrollt === "function" && vScrollt()) {    // tijdens scrollen: na het scrollen pas opnieuw opbouwen
+    clearTimeout(lijstUitgesteld); lijstUitgesteld = setTimeout(renderList, 260); return;
+  }
   if (!isLive()) $("stopsSub").textContent = "Elk nummer is een halte. Tik erop om er meteen naartoe te rijden.";
   if (isLive()) return renderLiveList();
   const list = $("list");
@@ -1912,6 +1921,7 @@ const fmt = (x) => { x = Math.max(0, Math.floor(x || 0)); const h = Math.floor(x
   return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(s2).padStart(2, "0"); };
 let seeking = false;
 setInterval(() => {
+  if (!deckZichtbaar || document.hidden) return;          // buiten beeld: niet bijwerken
   let d = 0, t = 0;
   if (ready) { try { d = player.getDuration() || 0; t = player.getCurrentTime() || 0; } catch (e) {} }
   const live = isLive();
@@ -2179,7 +2189,22 @@ let vScrollT = 0, vZichtbaar = true;
 window.addEventListener("scroll", () => { vScrollT = performance.now(); }, { passive: true });
 window.addEventListener("touchmove", () => { vScrollT = performance.now(); }, { passive: true });
 const vScrollt = () => performance.now() - vScrollT < 200;
-try { new IntersectionObserver((es) => { vZichtbaar = es[0].isIntersecting; }).observe($("vfd")); } catch (e) {}
+let vLoopt = false, deckZichtbaar = true;
+function vStart() { if (!vLoopt && vZichtbaar && !document.hidden && !isTv()) { vLoopt = true; requestAnimationFrame(vfdFrame); } }
+try {
+  new IntersectionObserver((es) => { vZichtbaar = es[es.length - 1].isIntersecting; vStart(); }).observe($("vfd"));
+  new IntersectionObserver((es) => { deckZichtbaar = es[es.length - 1].isIntersecting; }).observe($("seek"));
+  // Kop met vlag, franje en voorruit buiten beeld? Dan hun animaties pauzeren.
+  const kop = [document.querySelector("header.strip"), document.querySelector(".fringe"), document.querySelector(".windshield")].filter(Boolean);
+  const inBeeld = new Set();
+  const io = new IntersectionObserver((es) => {
+    es.forEach((e) => (e.isIntersecting ? inBeeld.add(e.target) : inBeeld.delete(e.target)));
+    document.body.classList.toggle("kop-uit", inBeeld.size === 0);
+  });
+  kop.forEach((el) => io.observe(el));
+} catch (e) {}
+document.addEventListener("visibilitychange", vStart);
+window.addEventListener("hashchange", () => setTimeout(vStart, 50));
 const vSprites = {};
 function vSprite(soort, wpx, hpx, dpr) {          // één keer tekenen, daarna alleen kopiëren
   const key = soort + wpx + "x" + hpx + "@" + dpr;
@@ -2202,16 +2227,17 @@ function vfdMaatCanvas() {
   if (c.width !== Math.round(w * dpr) || c.height !== Math.round(h * dpr)) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); }
   return { w, h, dpr };
 }
-const vAan = (id, v) => $(id).classList.toggle("on", !!v);
+const vAan = (id, v) => { const el = $(id); if (el.classList.contains("on") !== !!v) el.classList.toggle("on", !!v); };
+const vTxt = (id, t) => { const el = $(id); if (el.textContent !== t) el.textContent = t; };
 let vLastBlokHtml = "";
 function vfdStatus() {                       // 4× per seconde: lampjes, klok, tijd, blokken
-  if (isTv() || document.hidden) return;
+  if (isTv() || document.hidden || !vZichtbaar) return;   // buiten beeld: niets bijwerken
   const tr = STATIONS[st] && STATIONS[st].tracks[idx];
   const live = isLive();
   vAan("iAuto", FADE > 0 && !IOS); vAan("iHd", KW.aan); vAan("iBpm", tr && tr.bpm);
   vAan("iShuffle", prefs.shuffle && !live); vAan("iRepeat", prefs.repeat && !live); vAan("iLive", live);
   const blk = live ? activeLiveBlock() : null;
-  $("iBlok").textContent = live ? ((blk && blk.naam) || "").toUpperCase() : (STATIONS[st] ? STATIONS[st].name : "");
+  vTxt("iBlok", live ? ((blk && blk.naam) || "").toUpperCase() : (STATIONS[st] ? STATIONS[st].name : ""));
   vAan("iBlok", true);
   // klok en speeltijd
   let klok = "--:--";
@@ -2228,22 +2254,23 @@ function vfdStatus() {                       // 4× per seconde: lampjes, klok, 
     vLastBlokHtml = html; $("vDiscRow").innerHTML = html;
     [...$("vDiscRow").children].forEach((d, i) => { d.querySelector("small").textContent = (blokken[i].naam || "").toUpperCase().slice(0, 7); });
   }
-  $("vBadge").textContent = tr && tr.feat ? "NIEUW" : tr && tr.req ? "AANVRAAG" : tr && tr.bpm ? `${tr.bpm} BPM` : tr && tr.views ? `${fmtViews(tr.views).toUpperCase()} VIEWS` : (live ? "LIVE" : "");
+  vTxt("vBadge", tr && tr.feat ? "NIEUW" : tr && tr.req ? "AANVRAAG" : tr && tr.bpm ? `${tr.bpm} BPM` : tr && tr.views ? `${fmtViews(tr.views).toUpperCase()} VIEWS` : (live ? "LIVE" : ""));
   // A/B-spelers en transport
   $("vA").classList.toggle("on", act === 0); $("vB").classList.toggle("on", act === 1);
   $("vA").classList.toggle("next", !!fade && act === 1); $("vB").classList.toggle("next", !!fade && act === 0);
   vAan("vPlay", playing); vAan("vFade", !!fade && fade.stage === "run"); vAan("vDot", live);
-  $("vXf").textContent = FADE > 0 && !IOS ? `CROSSFADE ${FADE}S` : "DIRECT";
+  vTxt("vXf", FADE > 0 && !IOS ? `CROSSFADE ${FADE}S` : "DIRECT");
   vAan("vXf", FADE > 0 && !IOS);
   // tekst: titel + artiest; credits
   const titel = [lcdRaw.lcdTitle, lcdRaw.lcdArtist].filter(Boolean).join("  -  ");
-  if (titel !== vfd.txt) { vfd.txt = titel; vfd.cols = vKolommen(titel + "        "); vfd.shift = 0; $("vfdSr").textContent = titel; }
-  $("vPowered").textContent = lcdRaw.lcdPowered || credits.p || "";
-  $("vRechten").textContent = lcdRaw.lcdRechten || credits.r || "";
+  if (titel !== vfd.txt) { vfd.txt = titel; vfd.cols = vKolommen(titel + "        "); vfd.shift = 0; vTxt("vfdSr", titel); }
+  vTxt("vPowered", lcdRaw.lcdPowered || credits.p || "");
+  vTxt("vRechten", lcdRaw.lcdRechten || credits.r || "");
 }
 function vfdFrame(ts) {                      // animatie: spectrum + schuivende stippentitel
+  if (isTv() || document.hidden || !vZichtbaar) { vLoopt = false; return; }   // lus stopt helemaal; start weer als het display in beeld komt
   requestAnimationFrame(vfdFrame);
-  if (isTv() || document.hidden || !vZichtbaar || vScrollt()) return;   // niets doen tijdens scrollen of buiten beeld
+  if (vScrollt()) return;                     // tijdens scrollen even niets tekenen
   const dpr = Math.min(2, window.devicePixelRatio || 1);
   // ---- spectrum (±15× per seconde)
   if (ts - vfd.lastSpec > 66) {
@@ -2286,7 +2313,7 @@ function vfdFrame(ts) {                      // animatie: spectrum + schuivende 
   }
 }
 setInterval(vfdStatus, 250);
-requestAnimationFrame(vfdFrame);
+vStart();
 
 // ---------- Automatisch afspelen ----------
 // Browsers staan geluid pas toe na een tik/klik. Lukt starten met geluid niet, dan start de radio stil
