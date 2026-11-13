@@ -40,7 +40,7 @@
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
-html { overflow-x: hidden; overflow-x: clip; }   /* wapperende franje mag de pagina niet breder maken */
+html { overflow-x: clip; }   /* wapperende franje mag de pagina niet breder maken */
 [hidden] { display: none !important; }
 html, body { margin: 0; }
 body {
@@ -75,13 +75,12 @@ body {
   width: min(62vw, 330px); aspect-ratio: 1; transform: translate(-50%, -52%);
   background: var(--sr-yellow); clip-path: var(--star-shape); opacity: .9;
 }
-.strip::after {                /* wapperende glans over de vlag */
-  content: ""; position: absolute; inset: 0; pointer-events: none;
+.strip::after {                /* wapperende glans over de vlag (verschuift met transform: licht voor tablets) */
+  content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 200%; pointer-events: none;
   background: linear-gradient(100deg, transparent 20%, rgba(255,255,255,.18) 35%, transparent 50%, rgba(0,0,0,.12) 70%, transparent 85%);
-  background-size: 200% 100%;
-  animation: wave 7s ease-in-out infinite;
+  animation: wave 7s ease-in-out infinite; will-change: transform;
 }
-@keyframes wave { 0%,100% { background-position: 0% 0; } 50% { background-position: 100% 0; } }
+@keyframes wave { 0%,100% { transform: translateX(0); } 50% { transform: translateX(-50%); } }
 .strip .wrap { position: relative; z-index: 1; padding-block: 18px 26px; display: grid; gap: 12px; justify-items: center; text-align: center; }
 .route {
   display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center;
@@ -224,7 +223,7 @@ body.tv .vfd { display: none !important; }
 .v-bracket span:empty { display: none; }
 .v-spec { height: 104px; display: flex; align-items: flex-end; gap: 4px; padding: 0 8px; border-left: 2px solid var(--vblue); border-right: 2px solid var(--vblue);
   border-radius: 8px; box-shadow: inset 0 -6px 10px -8px rgba(30,123,255,.6); min-width: 0; }
-.v-band { flex: 1; display: flex; flex-direction: column-reverse; gap: 2px; min-width: 0; }
+.v-spec canvas { display: block; width: 100%; height: 100%; }
 .v-cell { height: 4px; border-radius: 1px; background: var(--vc-dim); }
 .v-cell.on { background: var(--vc); box-shadow: 0 0 5px rgba(63,242,255,.8); }
 .v-cell.on.low { background: var(--vo); box-shadow: 0 0 5px rgba(255,173,46,.8); }
@@ -680,6 +679,13 @@ body.tv .tvhint.gone { opacity: 0; }
 @media (max-aspect-ratio: 1/1) {
   body.tv .lcd { width: auto; right: 3vw; bottom: auto; top: 12vh; }
   body.tv .top5 { width: auto; left: 3vw; }
+}
+
+/* Tablets en telefoons: zware gloed-pulsen uit, zodat scrollen soepel blijft (knipperen blijft) */
+@media (hover: none) and (pointer: coarse) {
+  .playing .ic.play, .playing .radio .ic.play, .radio .time.live, .time.live, .unmute, .countdown { animation: none !important; }
+  .tchip.live .dot, .tvteller .dot, .radio .time.live .dot, .time.live .dot { animation: blink 1.2s ease-in-out infinite !important; box-shadow: none !important; }
+  .strip::after { animation-duration: 10s; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2164,13 +2170,32 @@ function vKolommen(txt) {
 }
 const vfd = { bands: [], peaks: [], lvl: [], cols: [], txt: null, shift: 0, lastSpec: 0, canvas: $("vDots"), ctx: $("vDots").getContext("2d") };
 (function bouwSpectrum() {
-  const BANDS = 12, CELLS = 16;
-  for (let i = 0; i < BANDS; i++) {
-    const b = document.createElement("div"); b.className = "v-band";
-    for (let k = 0; k < CELLS; k++) { const c = document.createElement("div"); c.className = "v-cell"; b.appendChild(c); }
-    $("vSpec").appendChild(b); vfd.bands.push(b); vfd.peaks.push(0); vfd.lvl.push(0);
-  }
+  const cv = document.createElement("canvas"); cv.setAttribute("aria-hidden", "true");
+  $("vSpec").appendChild(cv); vfd.specCanvas = cv; vfd.specCtx = cv.getContext("2d");
+  for (let i = 0; i < 12; i++) { vfd.peaks.push(0); vfd.lvl.push(0); }
 })();
+// ---- lichter tekenen: vooraf gemaakte oplichtende puntjes/blokjes, pauzeren tijdens scrollen of buiten beeld ----
+let vScrollT = 0, vZichtbaar = true;
+window.addEventListener("scroll", () => { vScrollT = performance.now(); }, { passive: true });
+window.addEventListener("touchmove", () => { vScrollT = performance.now(); }, { passive: true });
+const vScrollt = () => performance.now() - vScrollT < 200;
+try { new IntersectionObserver((es) => { vZichtbaar = es[0].isIntersecting; }).observe($("vfd")); } catch (e) {}
+const vSprites = {};
+function vSprite(soort, wpx, hpx, dpr) {          // één keer tekenen, daarna alleen kopiëren
+  const key = soort + wpx + "x" + hpx + "@" + dpr;
+  if (vSprites[key]) return vSprites[key];
+  const pad = 4, c = document.createElement("canvas");
+  c.width = Math.ceil((wpx + pad * 2) * dpr); c.height = Math.ceil((hpx + pad * 2) * dpr);
+  const x = c.getContext("2d"); x.scale(dpr, dpr);
+  const kleur = { on: "#3ff2ff", low: "#ffad2e", peak: "#ff3b3b", off: "rgba(63,242,255,.08)", dot: "#3ff2ff", dotoff: "rgba(63,242,255,.07)" }[soort];
+  const gloed = { on: "rgba(63,242,255,.8)", low: "rgba(255,173,46,.8)", peak: "rgba(255,59,59,.9)", dot: "rgba(63,242,255,.85)" }[soort];
+  if (gloed) { x.shadowColor = gloed; x.shadowBlur = 4; }
+  x.fillStyle = kleur;
+  if (soort.startsWith("dot")) { x.beginPath(); x.arc(pad + wpx / 2, pad + hpx / 2, wpx * 0.37, 0, Math.PI * 2); x.fill(); }
+  else x.fillRect(pad, pad, wpx, hpx);
+  return (vSprites[key] = { c, pad });
+}
+function vTeken(ctx, sp, x, y, dpr) { ctx.drawImage(sp.c, Math.round((x - sp.pad) * dpr), Math.round((y - sp.pad) * dpr)); }
 function vfdMaatCanvas() {
   const c = vfd.canvas, dpr = Math.min(2, window.devicePixelRatio || 1);
   const w = Math.max(50, c.clientWidth), h = c.clientHeight || 44;
@@ -2218,38 +2243,47 @@ function vfdStatus() {                       // 4× per seconde: lampjes, klok, 
 }
 function vfdFrame(ts) {                      // animatie: spectrum + schuivende stippentitel
   requestAnimationFrame(vfdFrame);
-  if (isTv() || document.hidden) return;
-  if (ts - vfd.lastSpec > 50) {              // spectrum ±20× per seconde, beweegt alleen als er muziek speelt
+  if (isTv() || document.hidden || !vZichtbaar || vScrollt()) return;   // niets doen tijdens scrollen of buiten beeld
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  // ---- spectrum (±15× per seconde)
+  if (ts - vfd.lastSpec > 66) {
     vfd.lastSpec = ts;
-    const CELLS = 16;
-    vfd.bands.forEach((b, i) => {
+    const cv = vfd.specCanvas, ctx = vfd.specCtx;
+    const W = Math.max(40, cv.clientWidth), H = Math.max(30, cv.clientHeight);
+    if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+    const BANDS = 12, CELLS = 16, gx = 4, gy = 2;
+    const bw = (W - gx * (BANDS - 1)) / BANDS, ch = (H - gy * (CELLS - 1)) / CELLS;
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
+    const sp = { off: vSprite("off", bw, ch, dpr), on: vSprite("on", bw, ch, dpr), low: vSprite("low", bw, ch, dpr), peak: vSprite("peak", bw, ch, dpr) };
+    for (let i = 0; i < BANDS; i++) {
       const doel = playing ? Math.min(1, Math.max(0.05, (0.35 + 0.33 * Math.sin(ts / 380 + i * 0.9) + 0.22 * Math.sin(ts / 165 + i * 2.1) + 0.1 * Math.random()) * (1 - Math.abs(i - 7) / 12) + 0.12)) : 0;
       vfd.lvl[i] += (doel * CELLS - vfd.lvl[i]) * (playing ? 0.6 : 0.15);
       const lvl = Math.round(vfd.lvl[i]);
-      vfd.peaks[i] = Math.max(lvl, vfd.peaks[i] - 0.3);
+      vfd.peaks[i] = Math.max(lvl, vfd.peaks[i] - 0.4);
       const pk = Math.round(vfd.peaks[i]);
-      [...b.children].forEach((c, k) => {
-        const cls = "v-cell" + (k < lvl ? " on" + (k < 2 ? " low" : "") : "") + (pk > 0 && k === pk ? " peak" : "");
-        if (c.className !== cls) c.className = cls;
-      });
-    });
-  }
-  const { w, h, dpr } = vfdMaatCanvas(), cx = vfd.ctx;
-  const ROWS = 7, DOT = Math.max(3.6, Math.min(6.4, h / ROWS)), R = DOT * 0.37, OY = (h - ROWS * DOT) / 2;
-  const VIS = Math.floor(w / DOT), cols = vfd.cols;
-  cx.setTransform(dpr, 0, 0, dpr, 0, 0); cx.clearRect(0, 0, w, h);
-  const scroll = cols.length > VIS;
-  for (let c = 0; c < VIS; c++) {
-    const col = cols.length ? (scroll ? cols[(c + Math.floor(vfd.shift)) % cols.length] : cols[c]) : null;
-    for (let r = 0; r < ROWS; r++) {
-      const on = !!(col && col[r]);
-      cx.beginPath(); cx.arc(c * DOT + DOT / 2, OY + r * DOT + DOT / 2, R, 0, Math.PI * 2);
-      cx.fillStyle = on ? "#3ff2ff" : "rgba(63,242,255,.07)";
-      cx.shadowColor = on ? "rgba(63,242,255,.85)" : "transparent"; cx.shadowBlur = on ? 5 : 0;
-      cx.fill();
+      const x = i * (bw + gx);
+      for (let k = 0; k < CELLS; k++) {
+        const y = H - (k + 1) * ch - k * gy;
+        const soort = pk > 0 && k === pk ? "peak" : k < lvl ? (k < 2 ? "low" : "on") : "off";
+        vTeken(ctx, sp[soort], x, y, dpr);
+      }
     }
   }
-  if (scroll) vfd.shift = (vfd.shift + 0.12) % cols.length;
+  // ---- stippentitel: alleen opnieuw tekenen als hij een stapje verschuift
+  if (vfd.cols.length) vfd.shift = (vfd.shift + 0.12) % vfd.cols.length;
+  const { w, h } = vfdMaatCanvas(), cx = vfd.ctx;
+  const ROWS = 7, DOT = Math.max(3.6, Math.min(6.4, h / ROWS)), OY = (h - ROWS * DOT) / 2;
+  const VIS = Math.floor(w / DOT), cols = vfd.cols;
+  const scroll = cols.length > VIS, stap = scroll ? Math.floor(vfd.shift) : 0;
+  const sleutel = stap + "|" + w + "|" + h + "|" + cols.length + "|" + vfd.txt;
+  if (sleutel === vfd.getekend) return;
+  vfd.getekend = sleutel;
+  cx.setTransform(1, 0, 0, 1, 0, 0); cx.clearRect(0, 0, vfd.canvas.width, vfd.canvas.height);
+  const on = vSprite("dot", DOT, DOT, dpr), off = vSprite("dotoff", DOT, DOT, dpr);
+  for (let c = 0; c < VIS; c++) {
+    const col = cols.length ? (scroll ? cols[(c + stap) % cols.length] : cols[c]) : null;
+    for (let r = 0; r < ROWS; r++) vTeken(cx, col && col[r] ? on : off, c * DOT, OY + r * DOT, dpr);
+  }
 }
 setInterval(vfdStatus, 250);
 requestAnimationFrame(vfdFrame);
