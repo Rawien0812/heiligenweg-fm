@@ -145,6 +145,11 @@ ul.alist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .songs .v { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .songs .hot { color: var(--gold); }
 .songs button { width: 26px; height: 26px; }
+.nwrow { display: grid; gap: 8px; background: var(--field); border-radius: 8px; padding: 10px; }
+.nwtitle { display: grid; gap: 2px; min-width: 0; }
+.nwtitle strong { overflow-wrap: anywhere; }
+.nwtitle span { font-size: .82rem; color: var(--muted); }
+.days.nwblok button { width: auto; padding: 0 10px; height: 32px; }
 .livebox { display: inline-flex; gap: 8px; align-items: center; font-weight: 600; cursor: pointer; justify-self: start; }
 .livebox input { width: 20px; height: 20px; accent-color: var(--sr-red); }
 .sched { background: rgba(0,0,0,.2); border-radius: 10px; padding: 12px; display: grid; gap: 10px; }
@@ -325,9 +330,9 @@ ul.alist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
         </div>
       </section>
       <section class="panel fold" data-key="p-nieuw">
-        <h2 class="panel-head"><button type="button" class="icon fold" aria-expanded="false" aria-controls="p-nieuw-body" aria-label="Uitklappen">▾</button><span class="ptitle">Nieuwe nummers (vaker draaien)<small>Een nieuw nummer een tijdje extra vaak op LIVE, in elk blok</small></span></h2>
+        <h2 class="panel-head"><button type="button" class="icon fold" aria-expanded="false" aria-controls="p-nieuw-body" aria-label="Uitklappen">▾</button><span class="ptitle">Nieuwe nummers (vaker draaien)<small>Een nieuw nummer een tijdje extra vaak op LIVE, in alle of gekozen tijdblokken</small></span></h2>
         <div class="panel-body" id="p-nieuw-body" hidden>
-          <p class="hint">Plak de YouTube-link van een nieuw nummer. LIVE draait het dan gegarandeerd vaak en snel na het openen van de site, en zet er <b>NIEUW</b> bij. Na de gekozen periode stopt het vanzelf. Meerdere nieuwe nummers wisselen elkaar af.</p>
+          <p class="hint">Plak de YouTube-link van een nieuw nummer. LIVE draait het dan gegarandeerd vaak en snel na het openen van de site, en zet er <b>NIEUW</b> bij. Per nummer kies je onderaan in welke <b>tijdblokken</b> het extra vaak komt (standaard: alle blokken). Na de gekozen periode stopt het vanzelf. Meerdere nieuwe nummers wisselen elkaar af.</p>
           <div class="grid2">
             <label class="f" for="nw-elke">Hoe vaak
               <select id="nw-elke"><option value="5">Heel vaak: elke 5 nummers</option><option value="8">Vaak: elke 8 nummers</option><option value="12">Regelmatig: elke 12 nummers</option></select>
@@ -337,7 +342,7 @@ ul.alist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
             </label>
           </div>
           <div id="nieuwBox" style="display:grid; gap:12px"></div>
-          <ul class="hint" id="nieuwStatus" style="margin:0; padding-left:18px"></ul>
+          <div id="nieuwStatus" style="display:grid; gap:8px"></div>
           <div class="add"><button class="btn ghost" type="button" id="nieuwCheck">Controleer of deze nummers op je site mogen afspelen</button></div>
           <p class="msg" id="nieuwCheckMsg"></p>
         </div>
@@ -1181,12 +1186,32 @@ function renderNieuw() {
     "Nog geen nieuwe nummers. Plak hieronder de YouTube-link van een nieuw nummer.", { alleenVideo: true, max: 10, checkEmbed: true });
   box.append(ol, add);
   // per nummer: hoe lang nog
+  // per nummer: hoe lang nog + in welke LIVE-tijdblokken
   const st = $("nieuwStatus"); st.innerHTML = "";
+  const blokNamen = ((data.site.live && data.site.live.blokken) || []).filter((b) => b && b.naam).map((b) => b.naam);
   u.nummers.forEach((n) => {
+    if (!Array.isArray(n.blokken)) n.blokken = [];
+    n.blokken = n.blokken.filter((x) => blokNamen.includes(x));        // blok hernoemd/verwijderd: weg uit de keuze
     const dagenOver = Math.ceil((Date.parse(n.toegevoegd) + u.dagen * 86400000 - Date.now()) / 86400000);
-    const li = document.createElement("li");
-    li.textContent = `${n.titel || n.video}: ` + (dagenOver >= 0 ? `nog ${dagenOver} ${dagenOver === 1 ? "dag" : "dagen"} extra vaak (sinds ${n.toegevoegd.split("-").reverse().join("-")})` : "periode voorbij, speelt weer gewoon mee (mag weg)");
-    st.appendChild(li);
+    const rij = document.createElement("div"); rij.className = "nwrow";
+    const t = document.createElement("div"); t.className = "nwtitle";
+    const b1 = document.createElement("strong"); b1.textContent = n.titel || n.video;
+    const b2 = document.createElement("span");
+    b2.textContent = dagenOver >= 0 ? `nog ${dagenOver} ${dagenOver === 1 ? "dag" : "dagen"} extra vaak (sinds ${n.toegevoegd.split("-").reverse().join("-")})` : "periode voorbij, speelt weer gewoon mee (mag weg)";
+    t.append(b1, b2);
+    rij.appendChild(t);
+    if (blokNamen.length) {
+      const g = document.createElement("div"); g.className = "days nwblok"; g.setAttribute("role", "group"); g.setAttribute("aria-label", "In welke tijdblokken");
+      const knop = (label, aan, fn) => { const b = document.createElement("button"); b.type = "button"; b.textContent = label; b.setAttribute("aria-pressed", String(aan)); b.addEventListener("click", fn); g.appendChild(b); };
+      knop("Alle blokken", !n.blokken.length, () => { n.blokken = []; setDirty(true); renderNieuw(); });
+      blokNamen.forEach((naam) => knop(naam, n.blokken.includes(naam), () => {
+        n.blokken = n.blokken.includes(naam) ? n.blokken.filter((x) => x !== naam) : n.blokken.concat(naam);
+        if (n.blokken.length === blokNamen.length) n.blokken = [];            // alles aangevinkt = alle blokken
+        setDirty(true); renderNieuw();
+      }));
+      rij.appendChild(g);
+    }
+    st.appendChild(rij);
   });
 }
 $("nieuwCheck").addEventListener("click", async () => {

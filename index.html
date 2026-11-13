@@ -1054,14 +1054,22 @@ function actieveNieuwe(u) {
   const items = u.nummers.filter((n) => n.video).filter((n) => {
     const start = n.toegevoegd ? Date.parse(n.toegevoegd) : vandaag;
     return isNaN(start) || vandaag - start <= (dagen + 1) * 86400000;     // na de gekozen periode stopt het vanzelf
-  }).map((n) => ({ id: n.video, t: n.titel || "Nieuw nummer", a: n.artiest || "", feat: true, views: +n.views || 0 }));
+  }).map((n) => ({ id: n.video, t: n.titel || "Nieuw nummer", a: n.artiest || "", feat: true, views: +n.views || 0,
+                   blokken: Array.isArray(n.blokken) ? n.blokken : [] }));
   return { elke: Math.max(3, +u.elke || 8), items };
+}
+// Welke nieuwe nummers gelden in het LIVE-blok van nu? (geen blokken aangevinkt = alle blokken)
+function nieuwVoorNu() {
+  const heeftBlokken = (LIVE.blokken || []).some((b) => b && b.van != null);
+  const blk = heeftBlokken ? activeLiveBlock() : null;
+  return NIEUW.items.filter((i) => !i.blokken.length || !heeftBlokken || (blk && i.blokken.includes(blk.naam)));
 }
 // Zet de nieuwe nummers op vaste afstand in de rij: snel na het openen al één, daarna elke `elke` nummers.
 function voegNieuwToe(pool, alVerder) {
-  if (!NIEUW.items.length) return pool;
+  const nu = nieuwVoorNu();
+  if (!nu.length) return pool.filter((t) => !t.feat);
   const zonder = pool.filter((t) => !t.feat);
-  let rij = shuffle(NIEUW.items.slice());
+  let rij = shuffle(nu.slice());
   if (!alVerder && rij.length > 1) {
     let laatst = ""; try { laatst = localStorage.getItem("hfm-nieuw-eerst") || ""; } catch (e) {}
     const i = rij.findIndex((t) => t.id === laatst);
@@ -1511,8 +1519,9 @@ function renderLiveList() {
     li.appendChild(b); list.appendChild(li);
   }
   $("stopsTitle").textContent = `${STATIONS[st].knop}: nu en straks`;
-  $("stopsSub").textContent = NIEUW.items.length
-    ? `Nieuw op ${STATIONS[st].knop} (komt extra vaak voorbij): ${NIEUW.items.map((x) => x.t).join(" · ")}`
+  const nwNu = nieuwVoorNu();
+  $("stopsSub").textContent = nwNu.length
+    ? `Nieuw op ${STATIONS[st].knop} (komt extra vaak voorbij): ${nwNu.map((x) => x.t).join(" · ")}`
     : "Elk nummer is een halte. Tik erop om er meteen naartoe te rijden.";
 }
 
