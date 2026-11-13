@@ -4015,6 +4015,17 @@
           ]
         }
       ]
+    },
+    "teller": {
+      "firebase": {
+        "apiKey": "AIzaSyDXqtSQ4rsJpKcBjjL2jcBQyHLvp1JsiF4",
+        "authDomain": "heiligenweg-fm.firebaseapp.com",
+        "databaseURL": "https://heiligenweg-fm-default-rtdb.firebaseio.com",
+        "projectId": "heiligenweg-fm",
+        "storageBucket": "heiligenweg-fm.firebasestorage.app",
+        "messagingSenderId": "268653639754",
+        "appId": "1:268653639754:web:37a8bf90d1aa810d148eb3"
+      }
     }
   },
   "zenders": []
