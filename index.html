@@ -1519,10 +1519,7 @@ function renderLiveList() {
     li.appendChild(b); list.appendChild(li);
   }
   $("stopsTitle").textContent = `${STATIONS[st].knop}: nu en straks`;
-  const nwNu = nieuwVoorNu();
-  $("stopsSub").textContent = nwNu.length
-    ? `Nieuw op ${STATIONS[st].knop} (komt extra vaak voorbij): ${nwNu.map((x) => x.t).join(" · ")}`
-    : "Elk nummer is een halte. Tik erop om er meteen naartoe te rijden.";
+  $("stopsSub").textContent = "Elk nummer is een halte. Tik erop om er meteen naartoe te rijden.";
 }
 
 let lijstUitgesteld = null;
