@@ -60,7 +60,7 @@ section.panel { background: var(--card); border-radius: 12px; padding: 18px; bor
 
 label.f { display: grid; gap: 4px; font-weight: 600; font-size: .9rem; min-width: 0; }
 label.f span.sub { font-weight: 400; color: var(--muted); font-size: .8rem; }
-input[type=text], input[type=password], input[type=url] {
+input[type=text], input[type=password], input[type=url], input[type=search] {
   width: 100%; min-width: 0; font: inherit; color: var(--ink); background: var(--field);
   border: 1px solid #2c5a3b; border-radius: 8px; padding: 9px 11px;
 }
@@ -150,6 +150,24 @@ ul.alist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .nwtitle strong { overflow-wrap: anywhere; }
 .nwtitle span { font-size: .82rem; color: var(--muted); }
 .days.nwblok button { width: auto; padding: 0 10px; height: 32px; }
+.addwrap { display: grid; gap: 10px; }
+.yts { display: grid; gap: 10px; }
+.yts-toggle { justify-self: start; }
+.yts-body { display: grid; gap: 10px; background: rgba(0,0,0,.2); border-radius: 10px; padding: 12px; }
+.yts-rij { display: flex; gap: 8px; flex-wrap: wrap; }
+.yts-rij input { flex: 1 1 220px; }
+.yts-preview { display: grid; gap: 8px; justify-items: start; }
+.yts-preview iframe { width: min(100%, 420px); aspect-ratio: 16 / 9; border: 0; border-radius: 8px; background: #000; }
+.yts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.yts-kaart { display: grid; grid-template-rows: auto 1fr auto; gap: 8px; background: var(--field); border-radius: 10px; padding: 8px; min-width: 0; }
+.yts-kaart img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 6px; background: #000; display: block; }
+.yts-tekst { display: grid; gap: 3px; min-width: 0; }
+.yts-tekst strong { font-size: .88rem; line-height: 1.25; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.yts-tekst span { font-size: .78rem; color: var(--muted); overflow-wrap: anywhere; }
+.yts-tekst .yts-warn { color: var(--bad); }
+.yts-knoppen { display: flex; gap: 6px; }
+.yts-knoppen .btn { flex: 1; padding: 7px 8px; font-size: .85rem; }
+.yts-knoppen .btn:disabled { opacity: .55; cursor: default; }
 .livebox { display: inline-flex; gap: 8px; align-items: center; font-weight: 600; cursor: pointer; justify-self: start; }
 .livebox input { width: 20px; height: 20px; accent-color: var(--sr-red); }
 .sched { background: rgba(0,0,0,.2); border-radius: 10px; padding: 12px; display: grid; gap: 10px; }
@@ -968,13 +986,14 @@ function tracksBlock(z, key, emptyText, opts = {}) {
     const exists = z.nummers.some((n) => (r.video && n.video === r.video) || (r.lijst && n.lijst === r.lijst));
     if (exists) { msg.className = "msg bad"; msg.textContent = "Deze staat al bij deze zender."; msg.style.flexBasis = "100%"; return; }
     let item;
+    const meta = add._meta || null; add._meta = null;          // titel/artiest uit de YouTube-zoeker
     if (r.video) {
-      ab.disabled = true; msg.className = "msg"; msg.textContent = "Titel ophalen…"; msg.style.flexBasis = "100%";
-      const info = await fetchTitle(r.video);
-      ab.disabled = false;
+      let info = meta;
+      if (!info) { ab.disabled = true; msg.className = "msg"; msg.textContent = "Titel ophalen…"; msg.style.flexBasis = "100%"; info = await fetchTitle(r.video); ab.disabled = false; }
       item = { video: r.video, titel: info ? info.titel : "", artiest: info ? info.artiest : "" };
+      if (meta && meta.views) item.views = meta.views;
     } else {
-      item = { lijst: r.lijst, titel: r.kind === "kanaal" ? "Hele kanaal (alle uploads)" : "Alle nummers (afspeellijst)", artiest: z.naam || z.knop || "" };
+      item = { lijst: r.lijst, titel: meta ? meta.titel : (r.kind === "kanaal" ? "Hele kanaal (alle uploads)" : "Alle nummers (afspeellijst)"), artiest: meta ? meta.artiest : (z.naam || z.knop || "") };
     }
     // Afspeellijsten en kanalen bovenaan, losse video's onderaan.
     if (item.lijst) z.nummers.splice(z.nummers.filter((n) => n.lijst).length, 0, item); else z.nummers.push(item);
@@ -986,7 +1005,119 @@ function tracksBlock(z, key, emptyText, opts = {}) {
       (item.titel ? `Toegevoegd: ${item.titel}` : "Toegevoegd. Ik kon de titel niet ophalen; vul hem zelf in.");
     if (!item.lijst && !item.titel) $(`${key}-n${z.nummers.length - 1}-titel`).focus();
   });
-  return [ol, add];
+  const wrap = document.createElement("div"); wrap.className = "addwrap";
+  wrap.append(add, zoekPaneel(z, key, opts, add, inp));
+  return [ol, wrap];
+}
+
+// ---------- Ingebouwde YouTube-zoeker (video's, afspeellijsten, kanalen) ----------
+const zoekState = {};            // per lijst: zoekterm, soort, resultaten — blijft staan na toevoegen
+function zoekPaneel(z, key, opts, addForm, inp) {
+  const st = zoekState[key] || (zoekState[key] = { open: false, q: "", soort: opts.alleenVideo ? "video" : "video", res: [] });
+  const box = document.createElement("div"); box.className = "yts";
+  const kop = document.createElement("button"); kop.type = "button"; kop.className = "btn ghost yts-toggle";
+  kop.setAttribute("aria-expanded", String(st.open)); kop.textContent = st.open ? "✕ Zoeker sluiten" : "🔎 Zoeken op YouTube";
+  const body = document.createElement("div"); body.className = "yts-body"; body.hidden = !st.open;
+  kop.addEventListener("click", () => { st.open = !st.open; body.hidden = !st.open; kop.setAttribute("aria-expanded", String(st.open)); kop.textContent = st.open ? "✕ Zoeker sluiten" : "🔎 Zoeken op YouTube"; if (st.open) q.focus(); });
+
+  const rij = document.createElement("div"); rij.className = "yts-rij";
+  const q = document.createElement("input"); q.type = "search"; q.id = `${key}-zoek`; q.placeholder = "Zoek bijv. Dewindersingh Sewnath of baithak gana"; q.value = st.q; q.setAttribute("aria-label", "Zoeken op YouTube");
+  const soort = document.createElement("select"); soort.id = `${key}-zoeksoort`; soort.setAttribute("aria-label", "Wat zoeken");
+  [["video", "Video's"], ["playlist", "Afspeellijsten"], ["channel", "Kanalen"]].filter(([v]) => !opts.alleenVideo || v === "video")
+    .forEach(([v, l]) => { const o = document.createElement("option"); o.value = v; o.textContent = l; soort.appendChild(o); });
+  soort.value = st.soort;
+  const zk = document.createElement("button"); zk.type = "button"; zk.className = "btn gold"; zk.textContent = "Zoeken";
+  rij.append(q, soort, zk);
+  const msg = document.createElement("p"); msg.className = "msg";
+  const voorbeeld = document.createElement("div"); voorbeeld.className = "yts-preview"; voorbeeld.hidden = true;
+  const grid = document.createElement("div"); grid.className = "yts-grid";
+  body.append(rij, msg, voorbeeld, grid);
+  box.append(kop, body);
+
+  const fmtDuur = (sec) => sec ? `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}` : "";
+  const bestaat = (r) => z.nummers.some((n) => (r.video && n.video === r.video) || (r.lijst && n.lijst === r.lijst));
+  function toonVoorbeeld(r) {
+    const src = r.video ? `https://www.youtube-nocookie.com/embed/${r.video}?autoplay=1&rel=0&playsinline=1`
+                        : `https://www.youtube-nocookie.com/embed/videoseries?list=${r.lijst}&autoplay=1&rel=0&playsinline=1`;
+    voorbeeld.innerHTML = "";
+    const f = document.createElement("iframe"); f.src = src; f.title = "Voorbeeld: " + r.titel;
+    f.allow = "autoplay; encrypted-media; picture-in-picture"; f.setAttribute("allowfullscreen", "");
+    const dicht = document.createElement("button"); dicht.type = "button"; dicht.className = "btn ghost"; dicht.textContent = "✕ Voorbeeld sluiten";
+    dicht.addEventListener("click", () => { voorbeeld.innerHTML = ""; voorbeeld.hidden = true; });
+    const t = document.createElement("p"); t.className = "hint"; t.style.margin = "0"; t.textContent = r.titel;
+    voorbeeld.append(f, t, dicht); voorbeeld.hidden = false;
+    voorbeeld.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+  function voegToe(r) {
+    addForm._meta = { titel: r.titel, artiest: r.artiest, views: r.views };
+    inp.value = r.video ? `https://youtu.be/${r.video}` : (r.soort === "channel" ? `https://www.youtube.com/channel/${r.kanaal}` : `https://www.youtube.com/playlist?list=${r.lijst}`);
+    addForm.requestSubmit();
+  }
+  function tekenResultaten() {
+    grid.innerHTML = "";
+    st.res.forEach((r) => {
+      const k = document.createElement("article"); k.className = "yts-kaart";
+      const img = document.createElement("img"); img.src = r.thumb; img.alt = ""; img.loading = "lazy";
+      const tt = document.createElement("div"); tt.className = "yts-tekst";
+      const h = document.createElement("strong"); h.textContent = r.titel;
+      const a = document.createElement("span"); a.textContent = [r.artiest, r.info].filter(Boolean).join(" · ");
+      tt.append(h, a);
+      if (r.waarschuwing) { const w = document.createElement("span"); w.className = "yts-warn"; w.textContent = r.waarschuwing; tt.appendChild(w); }
+      const kn = document.createElement("div"); kn.className = "yts-knoppen";
+      const b1 = document.createElement("button"); b1.type = "button"; b1.className = "btn ghost"; b1.textContent = "▶ Bekijk";
+      b1.addEventListener("click", () => toonVoorbeeld(r));
+      const b2 = document.createElement("button"); b2.type = "button"; b2.className = "btn gold";
+      const al = bestaat(r);
+      b2.textContent = al ? "✓ In de lijst" : "+ Toevoegen"; b2.disabled = al || r.blok;
+      if (r.blok) b2.title = r.waarschuwing;
+      b2.addEventListener("click", () => voegToe(r));
+      kn.append(b1, b2);
+      k.append(img, tt, kn); grid.appendChild(k);
+    });
+  }
+  async function zoek() {
+    st.q = q.value.trim(); st.soort = soort.value;
+    if (!st.q) { msg.className = "msg bad"; msg.textContent = "Typ eerst waar je naar zoekt."; return; }
+    if (!ytKey.get()) { msg.className = "msg bad"; msg.textContent = "Vul eerst je YouTube API-sleutel in (onderdeel ‘YouTube API-sleutel’)."; return; }
+    zk.disabled = true; msg.className = "msg"; msg.textContent = "Zoeken…";
+    try {
+      const res = await ytGet("search", { part: "snippet", q: st.q, type: st.soort, maxResults: 12, ...(st.soort === "video" ? { videoEmbeddable: "true" } : {}) });
+      const items = res.items || [];
+      let out = items.map((it) => ({
+        soort: st.soort, titel: decodeHtml(it.snippet.title), artiest: decodeHtml(it.snippet.channelTitle || ""),
+        thumb: ((it.snippet.thumbnails || {}).medium || (it.snippet.thumbnails || {}).default || {}).url || "",
+        video: it.id.videoId, lijst: it.id.playlistId || (it.id.channelId ? "UU" + it.id.channelId.slice(2) : undefined), kanaal: it.id.channelId,
+      }));
+      if (st.soort === "video" && out.length) {
+        const det = await ytGet("videos", { part: "contentDetails,statistics,status", id: out.map((r) => r.video).join(",") });
+        const m = new Map((det.items || []).map((v) => [v.id, v]));
+        out.forEach((r) => {
+          const v = m.get(r.video); if (!v) return;
+          const sec = isoSec(v.contentDetails && v.contentDetails.duration);
+          r.views = +((v.statistics || {}).viewCount) || 0;
+          r.info = [fmtDuur(sec), r.views ? fmtViews(r.views) + " views" : ""].filter(Boolean).join(" · ");
+          if (v.status && v.status.embeddable === false) { r.blok = true; r.waarschuwing = "Mag niet buiten YouTube afspelen"; }
+          else { const why = afgekeurd(r.titel, sec); if (why) r.waarschuwing = "Kwaliteitsfilter: " + why + " (wordt op LIVE overgeslagen)"; }
+        });
+      } else if (st.soort === "playlist" && out.length) {
+        const det = await ytGet("playlists", { part: "contentDetails", id: out.map((r) => r.lijst).join(",") });
+        const m = new Map((det.items || []).map((v) => [v.id, v]));
+        out.forEach((r) => { const v = m.get(r.lijst); if (v) r.info = `afspeellijst · ${v.contentDetails.itemCount} video's`; });
+      } else if (st.soort === "channel" && out.length) {
+        const det = await ytGet("channels", { part: "statistics", id: out.map((r) => r.kanaal).join(",") });
+        const m = new Map((det.items || []).map((v) => [v.id, v]));
+        out.forEach((r) => { const v = m.get(r.kanaal); if (v) r.info = `kanaal · ${v.statistics.videoCount} video's`; r.titel = r.titel; });
+      }
+      st.res = out;
+      msg.className = "msg ok"; msg.textContent = out.length ? `${out.length} resultaten. Klik op ▶ Bekijk om te luisteren, of op + Toevoegen.` : "Niets gevonden. Probeer een andere zoekterm.";
+      tekenResultaten();
+    } catch (e) { msg.className = "msg bad"; msg.textContent = e.message; }
+    finally { zk.disabled = false; }
+  }
+  zk.addEventListener("click", zoek);
+  q.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); zoek(); } });
+  if (st.res.length) tekenResultaten();
+  return box;
 }
 
 let confirmDelete = null; // zender-index die op bevestiging wacht
