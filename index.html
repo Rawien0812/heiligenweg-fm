@@ -648,6 +648,7 @@ body.tv main.wrap { max-width: none; padding: 0; }
 body.tv .dash { display: block; padding: 0; border: 0; background: none; box-shadow: none; }
 body.tv .radio { background: none; border: 0; box-shadow: none; padding: 0; display: block; }
 /* video over het hele scherm */
+body.tv .screen iframe { pointer-events: none; }   /* tv: video is alleen beeld, niet aanklikbaar */
 body.tv .screen { position: fixed; inset: 0; z-index: 1; border: 0; border-radius: 0; box-shadow: none; aspect-ratio: auto; max-width: none; background: #000; }
 body.tv::after { content: ""; position: fixed; inset: auto 0 0 0; height: 55vh; z-index: 2; pointer-events: none;
   background: linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,.55) 45%, rgba(0,0,0,.88)); }
@@ -1825,6 +1826,8 @@ setInterval(() => {
 
 window.onYouTubeIframeAPIReady = function () {
   const vars = { playsinline: 1, rel: 0, modestbranding: 1, ...(location.protocol.startsWith("http") ? { origin: location.origin } : {}) };
+  // Tv: geen YouTube-knoppen en -sneltoetsen, de afstandsbediening bedient alleen de radio
+  if (location.hash === "#tv") Object.assign(vars, { controls: 0, disablekb: 1, fs: 0, iv_load_policy: 3 });
   players[1] = new YT.Player("ytB", {
     playerVars: vars,
     events: {
@@ -2070,6 +2073,16 @@ function applyTvMode() {
 }
 $("tvStart").addEventListener("click", tvStartOrToggle);
 window.addEventListener("hashchange", applyTvMode);
+// Tv: de afstandsbediening mag niet in de YouTube-speler terechtkomen (die heeft eigen play/skip-knoppen)
+function tvVideoNietBedienbaar() { document.querySelectorAll(".screen iframe").forEach((f) => { f.tabIndex = -1; f.setAttribute("aria-hidden", "true"); }); }
+window.addEventListener("blur", () => {
+  if (!isTv()) return;
+  setTimeout(() => {
+    const a = document.activeElement;
+    if (a && a.tagName === "IFRAME") { a.blur(); window.focus(); }
+  }, 0);
+});
+setInterval(() => { if (isTv()) tvVideoNietBedienbaar(); }, 3000);
 window.addEventListener("hashchange", () => { if (!isTv() && lijstTv) { lijstTv = false; renderList(); } });
 document.addEventListener("visibilitychange", () => { if (isTv() && document.visibilityState === "visible" && playing) keepAwake(); });
 document.addEventListener("mousemove", () => {
