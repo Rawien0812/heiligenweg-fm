@@ -1,0 +1,34 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'fm.heiligenweg.tv'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'fm.heiligenweg.tv'
+        minSdk 22                       // Fire OS 5 en nieuwer, Android TV 5.1+
+        targetSdk 34
+        versionCode Integer.parseInt(System.getenv('APP_VERSION_CODE') ?: '1')
+        versionName System.getenv('APP_VERSION_NAME') ?: '1.0'
+    }
+
+    signingConfigs {
+        release {
+            // Vaste sleutel uit de GitHub-geheimen (als die er is), anders een tijdelijke sleutel uit de bouwomgeving.
+            storeFile file(System.getenv('TV_KEYSTORE_FILE') ?: 'release.keystore')
+            storePassword System.getenv('TV_KEYSTORE_PW') ?: 'android'
+            keyAlias System.getenv('TV_KEY_ALIAS') ?: 'heiligenwegfm'
+            keyPassword System.getenv('TV_KEYSTORE_PW') ?: 'android'
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

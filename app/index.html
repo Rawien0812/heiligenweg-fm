@@ -1,0 +1,73 @@
+<!doctype html>
+<!--
+  Heiligenweg FM
+  © 2026 Rawien Paltoe. Alle rechten voorbehouden.
+-->
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="copyright" content="© 2026 Rawien Paltoe. Alle rechten voorbehouden.">
+<title>Heiligenweg FM tv-app</title>
+<style>
+  :root { --forest: #0b2413; --card: #123a21; --gold: #f6c64a; --ink: #f4f7f2; --muted: #b7cbb9; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--forest); color: var(--ink); font: 18px/1.55 system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+    padding: max(20px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 40px max(16px, env(safe-area-inset-left)); }
+  .flag { height: 14px; margin: -20px -16px 24px; background: linear-gradient(#377e3f 0 20%, #fff 20% 30%, #b40a2d 30% 70%, #fff 70% 80%, #377e3f 80%); }
+  main { max-width: 760px; margin: 0 auto; display: grid; gap: 22px; }
+  h1 { margin: 0; color: var(--gold); font-size: clamp(1.8rem, 6vw, 2.6rem); line-height: 1.1; }
+  .intro { margin: 0; color: var(--muted); }
+  .dl { display: inline-flex; align-items: center; justify-content: center; gap: 10px; padding: 18px 28px; border-radius: 999px; text-decoration: none;
+    font-weight: 800; font-size: 1.25rem; color: #2a1a00; background: linear-gradient(180deg, #ffe58a, var(--gold) 55%, #d9a21f); box-shadow: 0 4px 0 #7a5200; justify-self: start; }
+  .dl:focus-visible { outline: 4px solid #fff; outline-offset: 4px; }
+  section { background: var(--card); border-radius: 14px; padding: 18px 20px; }
+  h2 { margin: 0 0 10px; font-size: 1.15rem; color: var(--gold); }
+  ol { margin: 0; padding-left: 22px; display: grid; gap: 8px; }
+  code { background: #000; color: #ecc81d; padding: 2px 8px; border-radius: 6px; font-size: 1.05em; }
+  .note { font-size: .9rem; color: var(--muted); margin: 0; }
+  .auto { font-weight: 700; color: var(--gold); }
+</style>
+</head>
+<body>
+<div class="flag" aria-hidden="true"></div>
+<main>
+  <h1>Heiligenweg FM voor je tv</h1>
+  <p class="intro">De app voor <b>Amazon Fire TV Stick</b> en <b>Android TV / Google TV</b>. Start direct de radio, schermvullend en met geluid, en is te bedienen met de afstandsbediening.</p>
+  <a class="dl" id="dl" href="https://github.com/Rawien0812/heiligenweg-fm/releases/latest/download/HeiligenwegFM.apk">⬇ Download de app (.apk)</a>
+  <p class="auto" id="auto" hidden>De download start vanzelf…</p>
+
+  <section>
+    <h2>Installeren op een Fire TV Stick (eenmalig)</h2>
+    <ol>
+      <li>Zoek op je Fire TV de gratis app <b>Downloader</b> (oranje icoon) en installeer die.</li>
+      <li>Ga naar <b>Instellingen → Mijn Fire TV → Opties voor ontwikkelaars</b> en zet <b>Apps van onbekende bronnen</b> aan voor <b>Downloader</b>.<br>
+        <span class="note">Zie je “Opties voor ontwikkelaars” niet? Ga naar <b>Instellingen → Mijn Fire TV → Info</b> en druk 7 keer op de naam van je Fire TV Stick.</span></li>
+      <li>Open <b>Downloader</b> en typ dit adres: <code>rawien0812.github.io/heiligenweg-fm/app</code></li>
+      <li>De download start vanzelf. Kies daarna <b>Installeren</b> en dan <b>Openen</b>.</li>
+      <li>Klaar! <b>Heiligenweg FM</b> staat nu bij je apps. Tip: zet hem vooraan via <b>Apps → … → Verplaatsen</b>.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Bediening</h2>
+    <ol>
+      <li><b>OK</b> of <b>⏯</b> = afspelen / pauze</li>
+      <li><b>← →</b> of <b>⏪ ⏩</b> = vorig / volgend nummer</li>
+      <li><b>↑ ↓</b> = volume</li>
+      <li><b>2× Terug</b> = app sluiten</li>
+    </ol>
+  </section>
+
+  <p class="note">© 2026 Rawien Paltoe · Alle rechten voorbehouden. Muziek wordt afgespeeld via YouTube; de rechten liggen bij de artiesten en uploaders.</p>
+</main>
+<script>
+  // Op een Fire TV (of in de Downloader-app) de download meteen starten.
+  if (/AFT|Silk|Downloader|Android TV|BRAVIA|SMART-TV/i.test(navigator.userAgent)) {
+    document.getElementById("auto").hidden = false;
+    setTimeout(function () { location.href = document.getElementById("dl").href; }, 1500);
+  }
+</script>
+</body>
+</html>

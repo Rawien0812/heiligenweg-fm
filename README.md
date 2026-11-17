@@ -24,3 +24,8 @@ De QR-code wordt gemaakt met `js/qrcode.js` (qrcode-generator van Kazuhiko Arase
 
 ## Rechten
 © 2026 Rawien Paltoe. Alle rechten voorbehouden. Deze code, vormgeving en inhoud mogen niet zonder schriftelijke toestemming van Rawien Paltoe worden gekopieerd, gewijzigd of hergebruikt. Zie [LICENSE](LICENSE).
+
+## Tv-app (Fire TV / Android TV)
+Het Android-project staat in `tv-app/`. GitHub bouwt de app automatisch (workflow *Tv-app bouwen*) en zet `HeiligenwegFM.apk` bij de release **tv-app**.
+Downloadpagina en installatie-uitleg: `https://rawien0812.github.io/heiligenweg-fm/app`.
+Voor een vaste ondertekeningssleutel (updates zonder eerst verwijderen) kun je de repo-geheimen `TV_KEYSTORE_B64` en `TV_KEYSTORE_PW` instellen.

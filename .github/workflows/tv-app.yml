@@ -1,0 +1,65 @@
+# Bouwt de Heiligenweg FM tv-app (.apk voor Fire TV / Android TV) en zet hem bij de release "tv-app".
+# © 2026 Rawien Paltoe. Alle rechten voorbehouden.
+name: Tv-app bouwen
+
+on:
+  push:
+    branches: [main]
+    paths: ['tv-app/**', '.github/workflows/tv-app.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+
+      - name: Ondertekeningssleutel
+        env:
+          KS: ${{ secrets.TV_KEYSTORE_B64 }}
+          PW: ${{ secrets.TV_KEYSTORE_PW }}
+        run: |
+          if [ -n "$KS" ] && [ -n "$PW" ]; then
+            echo "$KS" | base64 -d > tv-app/app/release.keystore
+            echo "TV_KEYSTORE_PW=$PW" >> "$GITHUB_ENV"
+            echo "Vaste sleutel uit de GitHub-geheimen gebruikt."
+          else
+            keytool -genkeypair -keystore tv-app/app/release.keystore -alias heiligenwegfm -keyalg RSA -keysize 2048 \
+              -validity 10000 -storepass android -keypass android -dname "CN=Rawien Paltoe, O=Heiligenweg FM, C=NL"
+            echo "::warning::Geen vaste sleutel ingesteld (TV_KEYSTORE_B64 / TV_KEYSTORE_PW). De app is getekend met een tijdelijke sleutel: verwijder bij een update eerst de oude app."
+          fi
+
+      - name: App bouwen
+        env:
+          APP_VERSION_CODE: ${{ github.run_number }}
+          APP_VERSION_NAME: 1.${{ github.run_number }}
+        run: gradle -p tv-app assembleRelease --no-daemon --stacktrace
+
+      - name: Bestand klaarzetten
+        run: cp tv-app/app/build/outputs/apk/release/app-release.apk HeiligenwegFM.apk
+
+      - name: Release bijwerken
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: tv-app
+          name: Heiligenweg FM tv-app
+          make_latest: true
+          files: HeiligenwegFM.apk
+          body: |
+            **Heiligenweg FM** voor Fire TV Stick en Android TV (versie 1.${{ github.run_number }}).
+            Installeren: open de app *Downloader* op je Fire TV en ga naar `rawien0812.github.io/heiligenweg-fm/app`.
+            © 2026 Rawien Paltoe. Alle rechten voorbehouden.

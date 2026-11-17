@@ -1,0 +1,10 @@
+// Heiligenweg FM tv-app — © 2026 Rawien Paltoe. Alle rechten voorbehouden.
+pluginManagement {
+    repositories { google(); mavenCentral(); gradlePluginPortal() }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories { google(); mavenCentral() }
+}
+rootProject.name = "HeiligenwegFM"
+include ':app'
