@@ -656,6 +656,9 @@ body.tv .lcd .credit.small { font-size: 1.15vw; margin-top: .2vw; }
 body.tv .tv { display: block; }
 body.tv .top5 { position: fixed; z-index: 3; right: 3vw; bottom: 5vh; width: 27vw; margin: 0;
   background: rgba(10,10,10,.78); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border-radius: 1.2vw; padding: 1.2vw; gap: .7vw; }
+body.tv .top5 { transition: opacity .7s ease, transform .7s ease; }
+body.tv.t5weg .top5 { opacity: 0; transform: translateX(115%); pointer-events: none; }   /* top 5 schuift weg; komt terug via afstandsbediening of LIVE */
+body.tv .tvlive { cursor: pointer; }
 body.tv .top5 h3 { font-size: 1.45vw; }
 body.tv .t5 { gap: .5vw; }
 body.tv .t5 button { grid-template-columns: 2.2vw 5.6vw minmax(0,1fr); gap: .8vw; padding: .45vw .6vw .45vw .45vw; border-radius: .6vw; cursor: none; }
@@ -1975,6 +1978,18 @@ document.addEventListener("keydown", (e) => {
 
 // ---------- Tv-modus: …/#tv ----------
 const isTv = () => document.body.classList.contains("tv");
+// Top 5 in tv-modus: na een paar seconden weg, terug zodra je de afstandsbediening gebruikt of naar LIVE gaat.
+const TOP5_TONEN = 8000;
+let top5Timer = null;
+function tvTop5Toon() {
+  if (!isTv()) return;
+  document.body.classList.remove("t5weg");
+  clearTimeout(top5Timer);
+  top5Timer = setTimeout(() => { if (isTv()) document.body.classList.add("t5weg"); }, TOP5_TONEN);
+}
+document.addEventListener("keydown", () => tvTop5Toon(), true);
+["pointerenter", "click", "focus"].forEach(ev => document.querySelector(".tvlive").addEventListener(ev, tvTop5Toon));
+document.addEventListener("touchstart", () => tvTop5Toon(), { passive: true });
 let wakeLock = null, qrMade = false, clockTimer = null, hintTimer = null, mouseTimer = null;
 function tvToast(t) { const h = $("tvHint"); h.textContent = t; h.classList.remove("gone"); clearTimeout(hintTimer); hintTimer = setTimeout(() => h.classList.add("gone"), 2500); }
 function tvClock() {
@@ -2010,7 +2025,8 @@ function tvStartOrToggle() {
 function applyTvMode() {
   const on = location.hash === "#tv";
   document.body.classList.toggle("tv", on);
-  if (!on) { clearInterval(clockTimer); return; }
+  if (!on) { clearInterval(clockTimer); clearTimeout(top5Timer); document.body.classList.remove("t5weg"); return; }
+  tvTop5Toon();
   $("tvLogo").textContent = (STATIONS.length && document.title) || "Heiligenweg FM";
   tvClock(); clearInterval(clockTimer); clockTimer = setInterval(tvClock, 10000);
   makeQr();
@@ -2022,7 +2038,7 @@ window.addEventListener("hashchange", applyTvMode);
 document.addEventListener("visibilitychange", () => { if (isTv() && document.visibilityState === "visible" && playing) keepAwake(); });
 document.addEventListener("mousemove", () => {
   if (!isTv()) return;
-  document.body.classList.add("mouse"); clearTimeout(mouseTimer);
+  document.body.classList.add("mouse"); clearTimeout(mouseTimer); tvTop5Toon();
   mouseTimer = setTimeout(() => document.body.classList.remove("mouse"), 3000);
 });
 applyTvMode();
