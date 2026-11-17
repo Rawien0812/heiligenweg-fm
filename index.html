@@ -709,7 +709,7 @@ body.tv .vfd::after { display: none; }   /* geen QR-code op de tv */
 body.tv .tvstart { display: block; position: fixed; z-index: 4; left: 50%; top: 50%; transform: translate(-50%, -50%);
   font: 400 2.6vw/1 var(--display); color: #2a1a00; border: 0; border-radius: 999px; padding: 1.6vw 3vw; cursor: pointer;
   background: radial-gradient(circle at 35% 30%, #fff1b0, var(--gold) 45%, #c98f12); box-shadow: 0 0 0 .5vw rgba(246,198,74,.3), 0 1vw 3vw rgba(0,0,0,.6); }
-body.tv.playing .tvstart, body.tv .tvstart[hidden] { display: none; }
+body.tv.playing .tvstart, body.tv .tvstart[hidden], body.tv.autostart .tvstart { display: none; }   /* tv: start vanzelf, knop alleen als dat echt niet lukt */
 body.tv .tvhint { display: block; position: fixed; z-index: 3; left: 0; right: 0; bottom: 1.4vh; text-align: center; font-size: 1vw; color: rgba(255,255,255,.65); transition: opacity 1s; }
 body.tv .tvhint.gone { opacity: 0; }
 /* staand scherm / kleine schermen: top 5 onder elkaar */
@@ -1674,7 +1674,7 @@ function checkStarted() {
     if (!ready) return;
     const s = player.getPlayerState();
     if (s !== YT.PlayerState.PLAYING && s !== YT.PlayerState.BUFFERING) {
-      setText("lcdTitle", "Tik op ▶ of op het tv-scherm");
+      setText("lcdTitle", document.body.classList.contains("autostart") ? "Radio start…" : "Tik op ▶ of op het tv-scherm");
     }
   }, 3000);
 }
@@ -2475,6 +2475,7 @@ const AUTOPLAY = true;
 let autoMuted = false, slikKlik = false;
 var lijstTv = false;
 function isAan() { try { const s2 = player.getPlayerState(); return s2 === YT.PlayerState.PLAYING || s2 === YT.PlayerState.BUFFERING; } catch (e) { return false; } }
+let autoPogingen = 0;
 function autoStart() {
   setTimeout(() => {
     if (!ready || isAan() || !userWants) return;                // met geluid gelukt (of de luisteraar pauzeerde al)
@@ -2482,7 +2483,8 @@ function autoStart() {
     try { player.mute(); player.playVideo(); } catch (e) {}
     setTimeout(() => {
       if (isAan()) toonGeluidKnop();
-      else { autoMuted = false; applyVolume(); setText("lcdTitle", isTv() ? "Druk op OK om te starten" : "Tik op ▶ om te starten"); }
+      else if (isTv() && ++autoPogingen < 5) { autoMuted = false; applyVolume(); setText("lcdTitle", "Radio start…"); try { player.playVideo(); } catch (e) {} autoStart(); }   // tv: nog een paar keer proberen
+      else { autoMuted = false; applyVolume(); document.body.classList.remove("autostart"); setText("lcdTitle", isTv() ? "Druk op OK om te starten" : "Tik op ▶ om te starten"); }
     }, 1500);
   }, 1800);
 }
@@ -2526,7 +2528,7 @@ loadZenders().then(() => {
   if (!STATIONS.length) { setText("lcdTitle", "Nog geen zenders: voeg ze toe via /beheer/"); return; }
   renderLcd(); renderList();
   setText("lcdTitle", "Radio wordt geladen…");
-  if (AUTOPLAY) { wantPlay = true; userWants = true; }
+  if (AUTOPLAY) { wantPlay = true; userWants = true; document.body.classList.add("autostart"); }
   ensureApi();
 }).catch(() => {
   setText("lcdTitle", "Zenders konden niet laden. Ververs de pagina.");
