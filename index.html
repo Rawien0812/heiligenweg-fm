@@ -649,6 +649,10 @@ body.tv .dash { display: block; padding: 0; border: 0; background: none; box-sha
 body.tv .radio { background: none; border: 0; box-shadow: none; padding: 0; display: block; }
 /* video over het hele scherm */
 body.tv .screen iframe { pointer-events: none; }   /* tv: video is alleen beeld, niet aanklikbaar */
+/* tv radio-modus: video klein en verstopt achter de foto (laagste kwaliteit, alleen geluid) */
+.tvfotolaag { display: none; }
+body.tv.tvfoto .tvfotolaag { display: block; position: fixed; inset: 0; z-index: 1; background: #000 center / cover no-repeat; }
+body.tv.tvfoto .screen iframe { width: 256px !important; height: 144px !important; transform: none !important; }
 /* tv: speler kleiner maken en weer opblazen, zodat YouTube max. ±720p kiest (lichter voor tv-sticks en wifi) */
 body.tv .screen iframe { width: calc(100% / var(--yt-schaal, 1)); height: calc(100% / var(--yt-schaal, 1)); transform: scale(var(--yt-schaal, 1)); transform-origin: 0 0; }
 body.tv .screen { position: fixed; inset: 0; z-index: 1; border: 0; border-radius: 0; box-shadow: none; aspect-ratio: auto; max-width: none; background: #000; }
@@ -882,6 +886,7 @@ body.kop-uit .strip::after, body.kop-uit .fringe, body.kop-uit .pennant, body.ko
 
 <div class="flagbar" aria-hidden="true"></div>
 <!-- Tv-modus (#tv): balk bovenaan en startknop -->
+<div class="tvfotolaag" id="tvFoto" aria-hidden="true"></div>
 <div class="tvbar" id="tvbar" aria-hidden="true">
   <span class="tvlogo" id="tvLogo">Heiligenweg FM</span>
   <span class="tvclock" id="tvClock"></span>
@@ -1374,6 +1379,8 @@ async function loadZenders() {
     bouwKwRegex();
   }
   LIVE = Object.assign({ aan: true, knop: "Live", onder: "Alles door elkaar", volgorde: "mix", bpm_van: "", bpm_tot: "" }, (data.site && data.site.live) || {});
+  TV_FOTO = !(data.site && data.site.tvbeeld === "video");
+  document.body.classList.toggle("tvfoto", TV_FOTO);
   if (data.site && data.site.overgang != null && data.site.overgang !== "") FADE = Math.max(0, Math.min(12, +data.site.overgang || 0));
   STATIONS = (data.zenders || []).filter((z) => z.nummers && z.nummers.length).map((z) => ({
     knop: z.knop, onder: z.onder, label: z.naam || z.knop, name: (z.knop || "").toUpperCase(),
@@ -1720,6 +1727,7 @@ function ensureApi() {
 }
 
 // ---------- Twee spelers: het volgende nummer vloeit in de laatste seconden in ---------
+let TV_FOTO = true;                   // tv: foto van het nummer i.p.v. de video (radio-modus)
 let FADE = 5;                         // seconden overlap (instelbaar in /beheer/)
 const IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 // Geen overlap op iPhone/iPad en op de tv: een tv-stick kan geen twee video's tegelijk soepel laden
@@ -2382,6 +2390,25 @@ function vfdSchaal() {
   document.documentElement.style.setProperty("--vfd-schaal", Math.max(0.5, sch).toFixed(3));
 }
 window.addEventListener("resize", vfdSchaal); vfdSchaal();
+// Tv radio-modus: scherpe foto (thumbnail) van het nummer dat nu speelt
+let tvFotoId = "";
+function tvFotoBij() {
+  if (!isTv() || !TV_FOTO) return;
+  let id = "";
+  try { const d = ready && player.getVideoData ? player.getVideoData() : null; id = (d && d.video_id) || ""; } catch (e) {}
+  if (!id) { const tr = track(); id = tr ? (tr.list ? plIds[plIndex] : tr.id) || "" : ""; }
+  if (!id || id === tvFotoId) return;
+  tvFotoId = id;
+  const laag = $("tvFoto"), groot = new Image();
+  const zet = (url) => {
+    if (tvFotoId !== id) return;                                 // intussen al een ander nummer
+    laag.style.backgroundImage = `url("${url}")`;           // foto is al geladen: direct wisselen
+  };
+  groot.onload = () => zet(groot.naturalWidth > 200 ? groot.src : `https://i.ytimg.com/vi/${id}/hqdefault.jpg`);   // geen HD-foto? dan de gewone
+  groot.onerror = () => zet(`https://i.ytimg.com/vi/${id}/hqdefault.jpg`);
+  groot.src = `https://i.ytimg.com/vi/${id}/maxresdefault.jpg`;
+}
+setInterval(tvFotoBij, 1000);
 // Tv: hoeveel keer de videospeler opgeblazen wordt om op ±720p uit te komen
 function ytSchaal() {
   const dpr = window.devicePixelRatio || 1;

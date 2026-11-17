@@ -296,6 +296,11 @@ ul.alist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
               <option value="0">Uit</option><option value="3">3 seconden</option><option value="5">5 seconden</option><option value="8">8 seconden</option><option value="10">10 seconden</option>
             </select>
           </label>
+          <label class="f" for="s-tvbeeld">Beeld op de tv (tv-modus en Fire TV-app) <span class="sub">‘Foto’ = echte radio: de video speelt onzichtbaar op lage kwaliteit alleen voor het geluid, op het scherm staat de foto van het nummer. Loopt het soepelst op tv-sticks.</span>
+            <select id="s-tvbeeld" data-site="tvbeeld">
+              <option value="foto">Foto van het nummer (radio-modus, aanbevolen)</option><option value="video">De YouTube-video</option>
+            </select>
+          </label>
         </div>
         <div class="zender" style="border-left-color: var(--gold)">
           <div class="zender-head"><span class="title">Hits van je kanalen ophalen</span></div>
@@ -632,6 +637,7 @@ $("kwClean").addEventListener("click", () => {
 function fillSite() {
   if (!data.site.tijdzone) data.site.tijdzone = "Europe/Amsterdam";
   if (data.site.overgang == null) data.site.overgang = "5";
+  if (!data.site.tvbeeld) data.site.tvbeeld = "foto";
   data.site.live = Object.assign({ aan: true, knop: "Live", onder: "Alles door elkaar", volgorde: "mix", bpm_van: "", bpm_tot: "" }, data.site.live || {});
   document.querySelectorAll("[data-site]").forEach((inp) => { inp.value = data.site[inp.dataset.site] ?? ""; });
   document.querySelectorAll("[data-live]").forEach((inp) => { inp.value = String(data.site.live[inp.dataset.live] ?? ""); });
