@@ -296,11 +296,6 @@ ul.alist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
               <option value="0">Uit</option><option value="3">3 seconden</option><option value="5">5 seconden</option><option value="8">8 seconden</option><option value="10">10 seconden</option>
             </select>
           </label>
-          <label class="f" for="s-tvbeeld">Beeld op de tv (tv-modus en Fire TV-app) <span class="sub">‘Foto’ = echte radio: de video speelt onzichtbaar op lage kwaliteit alleen voor het geluid, op het scherm staat de foto van het nummer. Loopt het soepelst op tv-sticks.</span>
-            <select id="s-tvbeeld" data-site="tvbeeld">
-              <option value="foto">Foto van het nummer (radio-modus, aanbevolen)</option><option value="video">De YouTube-video</option>
-            </select>
-          </label>
         </div>
         <div class="zender" style="border-left-color: var(--gold)">
           <div class="zender-head"><span class="title">Hits van je kanalen ophalen</span></div>
@@ -313,6 +308,33 @@ ul.alist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
         </div>
         </div>
       </section>
+      <section class="panel fold" data-key="p-tv">
+        <h2 class="panel-head"><button type="button" class="icon fold" aria-expanded="false" aria-controls="p-tv-body" aria-label="Uitklappen">▾</button><span class="ptitle">TV<small>Fire TV-app en tv-modus: beeld, dimmen</small></span></h2>
+        <div class="panel-body" id="p-tv-body" hidden>
+          <p class="hint" style="margin-top:0">Geldt alleen voor de <b>tv-modus</b> (…/tv) en de <b>Fire TV-app</b>. Na <b>Opslaan</b> zie je het op de tv binnen ±10 minuten, of direct na <i>Cache wissen</i> van de app.</p>
+          <label class="f" for="s-tvbeeld">Beeld op de tv (tv-modus en Fire TV-app) <span class="sub">‘Foto’ = echte radio: de video speelt onzichtbaar op lage kwaliteit alleen voor het geluid, op het scherm staat de foto van het nummer. Loopt het soepelst op tv-sticks.</span>
+            <select id="s-tvbeeld" data-site="tvbeeld">
+              <option value="foto">Foto van het nummer (radio-modus, aanbevolen)</option><option value="video">De YouTube-video</option>
+            </select>
+          </label>
+          <label class="f" for="s-tvdim">Achtergrond dimmen <span class="sub">hoeveel donkerder de foto of video achter de player is</span>
+            <select id="s-tvdim" data-site="tvdim">
+              <option value="0">Niet dimmen</option><option value="20">20%</option><option value="30">30%</option><option value="40">40%</option><option value="50">50%</option><option value="60">60%</option><option value="70">70%</option>
+            </select>
+          </label>
+          <label class="f" for="s-tvplayerdim">Player dimmen als niemand de afstandsbediening gebruikt <span class="sub">komt weer helder bij een druk op een knop</span>
+            <select id="s-tvplayerdim" data-site="tvplayerdim">
+              <option value="0">Niet dimmen</option><option value="10">10%</option><option value="25">25%</option><option value="50">50%</option><option value="75">75%</option>
+            </select>
+          </label>
+          <label class="f" for="s-tvwacht">Player dimmen na <span class="sub">seconden zonder knopdruk</span>
+            <select id="s-tvwacht" data-site="tvwacht">
+              <option value="5">5 seconden</option><option value="8">8 seconden</option><option value="15">15 seconden</option><option value="30">30 seconden</option><option value="60">1 minuut</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
       <section class="panel fold" data-key="p-ytkey">
         <h2 class="panel-head"><button type="button" class="icon fold" aria-expanded="false" aria-controls="p-ytkey-body" aria-label="Uitklappen">▾</button><span class="ptitle">YouTube API-sleutel<small>Nodig om artiesten op te zoeken</small></span></h2>
         <div class="panel-body" id="p-ytkey-body" hidden>
@@ -638,6 +660,9 @@ function fillSite() {
   if (!data.site.tijdzone) data.site.tijdzone = "Europe/Amsterdam";
   if (data.site.overgang == null) data.site.overgang = "5";
   if (!data.site.tvbeeld) data.site.tvbeeld = "foto";
+  if (data.site.tvdim == null || data.site.tvdim === "") data.site.tvdim = "40";
+  if (data.site.tvplayerdim == null || data.site.tvplayerdim === "") data.site.tvplayerdim = "25";
+  if (data.site.tvwacht == null || data.site.tvwacht === "") data.site.tvwacht = "8";
   data.site.live = Object.assign({ aan: true, knop: "Live", onder: "Alles door elkaar", volgorde: "mix", bpm_van: "", bpm_tot: "" }, data.site.live || {});
   document.querySelectorAll("[data-site]").forEach((inp) => { inp.value = data.site[inp.dataset.site] ?? ""; });
   document.querySelectorAll("[data-live]").forEach((inp) => { inp.value = String(data.site.live[inp.dataset.live] ?? ""); });

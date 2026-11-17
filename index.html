@@ -653,7 +653,7 @@ body.tv .screen iframe { pointer-events: none; }   /* tv: video is alleen beeld,
 .tvfotolaag { display: none; }
 body.tv.tvfoto .tvfotolaag { display: block; position: fixed; inset: 0; z-index: 1; background: #000 center / cover no-repeat; }
 /* tv: achtergrond (foto of video) 40% gedimd */
-body.tv.tvfoto .tvfotolaag::after, body.tv .screen::after { content: ""; position: absolute; inset: 0; background: rgba(0,0,0,.4); pointer-events: none; z-index: 1; }
+body.tv.tvfoto .tvfotolaag::after, body.tv .screen::after { content: ""; position: absolute; inset: 0; background: rgba(0,0,0,var(--tv-dim, .4)); pointer-events: none; z-index: 1; }
 body.tv.tvfoto .screen iframe { width: 256px !important; height: 144px !important; transform: none !important; }
 /* tv: speler kleiner maken en weer opblazen, zodat YouTube max. ±720p kiest (lichter voor tv-sticks en wifi) */
 body.tv .screen iframe { width: calc(100% / var(--yt-schaal, 1)); height: calc(100% / var(--yt-schaal, 1)); transform: scale(var(--yt-schaal, 1)); transform-origin: 0 0; }
@@ -685,7 +685,7 @@ body.tv .top5 { position: fixed; z-index: 3; right: 3vw; bottom: 5vh; width: 27v
   background: rgba(10,10,10,.78); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border-radius: 1.2vw; padding: 1.2vw; gap: .7vw; }
 body.tv .top5 { transition: opacity .7s ease, transform .7s ease; }
 body.tv .vfd { transition: opacity .7s ease; }
-body.tv.t5weg .vfd { opacity: .75; }   /* menu rechts weg: hifi-display 25% gedimd */
+body.tv.t5weg .vfd { opacity: var(--tv-playerdim, .75); }   /* menu rechts weg: hifi-display 25% gedimd */
 body.tv.t5weg .top5 { opacity: 0; transform: translateX(115%); pointer-events: none; }   /* top 5 schuift weg; komt terug via afstandsbediening of LIVE */
 body.tv .tvlive { cursor: pointer; }
 body.tv .top5 h3 { font-size: 1.45vw; }
@@ -1382,6 +1382,13 @@ async function loadZenders() {
   }
   LIVE = Object.assign({ aan: true, knop: "Live", onder: "Alles door elkaar", volgorde: "mix", bpm_van: "", bpm_tot: "" }, (data.site && data.site.live) || {});
   TV_FOTO = !(data.site && data.site.tvbeeld === "video");
+  // beheer → TV: dimmen
+  const pct = (v, std) => { const n = parseFloat(v); return isFinite(n) ? Math.max(0, Math.min(90, n)) / 100 : std; };
+  const si = data.site || {};
+  document.documentElement.style.setProperty("--tv-dim", pct(si.tvdim, 0.4));
+  document.documentElement.style.setProperty("--tv-playerdim", 1 - pct(si.tvplayerdim, 0.25));
+  if (+si.tvwacht > 0) TOP5_TONEN = Math.min(300, +si.tvwacht) * 1000;
+  if (typeof tvTop5Toon === "function" && location.hash === "#tv") tvTop5Toon();   // timer opnieuw met de nieuwe tijd
   document.body.classList.toggle("tvfoto", TV_FOTO);
   if (data.site && data.site.overgang != null && data.site.overgang !== "") FADE = Math.max(0, Math.min(12, +data.site.overgang || 0));
   STATIONS = (data.zenders || []).filter((z) => z.nummers && z.nummers.length).map((z) => ({
@@ -2030,7 +2037,7 @@ document.addEventListener("keydown", (e) => {
 // ---------- Tv-modus: …/#tv ----------
 const isTv = () => document.body.classList.contains("tv");
 // Top 5 in tv-modus: na een paar seconden weg, terug zodra je de afstandsbediening gebruikt of naar LIVE gaat.
-const TOP5_TONEN = 8000;
+let TOP5_TONEN = 8000;   // na hoeveel ms de player dimt (instelbaar in beheer → TV)
 let top5Timer = null;
 function tvTop5Toon() {
   if (!isTv()) return;
