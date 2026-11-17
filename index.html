@@ -1390,7 +1390,9 @@ async function loadZenders() {
   if (+si.tvwacht > 0) TOP5_TONEN = Math.min(300, +si.tvwacht) * 1000;
   if (typeof tvTop5Toon === "function" && location.hash === "#tv") tvTop5Toon();   // timer opnieuw met de nieuwe tijd
   document.body.classList.toggle("tvfoto", TV_FOTO);
-  if (data.site && data.site.overgang != null && data.site.overgang !== "") FADE = Math.max(0, Math.min(12, +data.site.overgang || 0));
+  if (data.site && data.site.overgang != null && data.site.overgang !== "") FADE_WEB = Math.max(0, Math.min(12, +data.site.overgang || 0));
+  if (data.site && data.site.tvovergang != null && data.site.tvovergang !== "") FADE_TV = Math.max(0, Math.min(20, +data.site.tvovergang || 0));
+  kiesFade();
   STATIONS = (data.zenders || []).filter((z) => z.nummers && z.nummers.length).map((z) => ({
     knop: z.knop, onder: z.onder, label: z.naam || z.knop, name: (z.knop || "").toUpperCase(),
     wanneer: Array.isArray(z.wanneer) ? z.wanneer : [],
@@ -1737,10 +1739,12 @@ function ensureApi() {
 
 // ---------- Twee spelers: het volgende nummer vloeit in de laatste seconden in ---------
 let TV_FOTO = true;                   // tv: foto van het nummer i.p.v. de video (radio-modus)
+let FADE_WEB = 5, FADE_TV = 15;       // overgang website / tv (beide instelbaar in /beheer/)
+function kiesFade() { FADE = document.body.classList.contains("tv") ? FADE_TV : FADE_WEB; }
 let FADE = 5;                         // seconden overlap (instelbaar in /beheer/)
 const IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-// Geen overlap op iPhone/iPad en op de tv: een tv-stick kan geen twee video's tegelijk soepel laden
-const geenFade = () => IOS || document.body.classList.contains("tv");
+// Geen overlap op iPhone/iPad. Op de tv alleen in de radio-modus (foto): dan spelen beide video's op de laagste kwaliteit.
+const geenFade = () => IOS || (document.body.classList.contains("tv") && !TV_FOTO);
 let players = [], act = 0, readyB = false;
 let fade = null;                      // { target, stage: "prep" | "ready" | "run", timer, t0 }
 const backPlayer = () => players[1 - act];
@@ -2087,7 +2091,8 @@ function applyTvMode() {
   tvTop5Toon();
   $("tvLogo").textContent = (STATIONS.length && document.title) || "Heiligenweg FM";
   tvClock(); clearInterval(clockTimer); clockTimer = setInterval(tvClock, 10000);
-  if (typeof cancelFade === "function") cancelFade();   // tv: geen tweede video op de achtergrond
+  if (typeof cancelFade === "function") cancelFade();
+  if (typeof kiesFade === "function") kiesFade();       // tv: eigen overgangstijd
   makeQr();
   tvToast("OK = afspelen/pauze · ← → = vorige/volgende · + − = volume");
   $("vol").value = 100; prefs.muted = false; applyVolume();   // tv: radio op vol, volume via de afstandsbediening

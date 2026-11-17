@@ -554,6 +554,11 @@ body.op-overzicht .top h1 .pill { display: inline-block; }
               <option value="foto">Foto van het nummer (radio-modus, aanbevolen)</option><option value="video">De YouTube-video</option>
             </select>
           </label>
+          <label class="f" for="s-tvovergang">Overgang tussen nummers op de tv <span class="sub">seconden dat nummers in elkaar overlopen (crossfade). Werkt bij ‘Foto van het nummer’.</span>
+            <select id="s-tvovergang" data-site="tvovergang">
+              <option value="0">Uit</option><option value="5">5 seconden</option><option value="8">8 seconden</option><option value="10">10 seconden</option><option value="15">15 seconden</option><option value="20">20 seconden</option>
+            </select>
+          </label>
           <label class="f" for="s-tvdim">Achtergrond dimmen <span class="sub">hoeveel donkerder de foto of video achter de player is</span>
             <select id="s-tvdim" data-site="tvdim">
               <option value="0">Niet dimmen</option><option value="20">20%</option><option value="30">30%</option><option value="40">40%</option><option value="50">50%</option><option value="60">60%</option><option value="70">70%</option>
@@ -899,6 +904,7 @@ function fillSite() {
   if (!data.site.tijdzone) data.site.tijdzone = "Europe/Amsterdam";
   if (data.site.overgang == null) data.site.overgang = "5";
   if (!data.site.tvbeeld) data.site.tvbeeld = "foto";
+  if (data.site.tvovergang == null || data.site.tvovergang === "") data.site.tvovergang = "15";
   if (data.site.tvdim == null || data.site.tvdim === "") data.site.tvdim = "40";
   if (data.site.tvplayerdim == null || data.site.tvplayerdim === "") data.site.tvplayerdim = "25";
   if (data.site.tvwacht == null || data.site.tvwacht === "") data.site.tvwacht = "8";
