@@ -204,20 +204,230 @@ ul.alist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .savebar .state.bad { color: var(--bad); }
 .savebar .state a { color: var(--gold); }
 .savebar .actions { display: flex; gap: 8px; }
+/* ================= Dashboard, wit thema — © Rawien Paltoe ================= */
+:root {
+  --forest: #f3f5f1; --card: #ffffff; --card-2: #f8faf7; --field: #ffffff;
+  --ink: #17231a; --muted: #66736a; --line: #e2e7df; --soft: #f2f5f0;
+  --accent: #2f7a3a; --accent-d: #24622e; --accent-l: #e6f2e7; --gold-ink: #8f5f00;
+  --ok: #1f8a3b; --bad: #c2273d;
+  color-scheme: light;
+}
+body { background: var(--forest); color: var(--ink); padding: 0; }
+body > .flag { display: none; }
+.app { display: grid; grid-template-columns: 252px minmax(0, 1fr); min-height: 100vh; }
+.side { position: sticky; top: 0; height: 100vh; overflow-y: auto; background: #fff; border-right: 1px solid var(--line);
+  display: flex; flex-direction: column; gap: 14px; padding: 20px 14px; }
+.logo { display: flex; gap: 10px; align-items: center; padding: 0 6px; text-decoration: none; color: var(--ink); }
+.logo .mk { width: 38px; height: 38px; border-radius: 10px; flex: none; position: relative; overflow: hidden;
+  background: linear-gradient(to bottom, var(--sr-green) 0 20%, #fff 20% 30%, var(--sr-red) 30% 70%, #fff 70% 80%, var(--sr-green) 80%); box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
+.logo .mk::after { content: "★"; position: absolute; inset: 0; display: grid; place-items: center; color: var(--sr-yellow); font-size: 15px; text-shadow: 0 0 1px #000; }
+.logo b { display: block; font: 800 1.02rem/1.15 var(--body); }
+.logo small { display: block; font: 600 .7rem/1.2 var(--body); color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+.wsbox { display: flex; gap: 10px; align-items: center; padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--card-2); }
+.wsbox .av { width: 32px; height: 32px; border-radius: 8px; background: var(--accent); color: #fff; display: grid; place-items: center; font: 800 .8rem/1 var(--body); flex: none; }
+.wsbox b { display: block; font-size: .86rem; line-height: 1.2; }
+.wsbox span { display: block; font-size: .74rem; color: var(--muted); }
+.nav { display: grid; gap: 2px; }
+.nav .grp { font: 700 .68rem/1 var(--body); letter-spacing: .09em; text-transform: uppercase; color: var(--muted); margin: 12px 10px 6px; }
+.nav button { display: flex; gap: 10px; align-items: center; width: 100%; padding: 9px 10px; border-radius: 10px; background: transparent; color: #3c4a40;
+  font-weight: 600; font-size: .9rem; text-align: left; }
+.nav button svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; opacity: .85; }
+.nav button:hover:not(:disabled) { background: var(--soft); color: var(--ink); }
+.nav button[aria-current="page"] { background: var(--accent); color: #fff; box-shadow: 0 2px 8px rgba(47,122,58,.25); }
+.nav button[aria-current="page"] svg { opacity: 1; }
+.nav button:disabled { opacity: .45; cursor: default; }
+.nav button .cnt { margin-left: auto; font-size: .72rem; font-weight: 700; color: var(--muted); }
+.nav button[aria-current="page"] .cnt { color: #d9f0dc; }
+.side-foot { margin-top: auto; display: grid; gap: 10px; }
+.syncbox { font-size: .78rem; color: var(--muted); padding: 10px; border-radius: 12px; background: var(--card-2); border: 1px solid var(--line); }
+.syncbox b { display: flex; gap: 6px; align-items: center; color: var(--ink); font-size: .82rem; }
+.syncbox b::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+.syncbox.dirty b::before { background: #e3a008; }
+.side-links { display: grid; gap: 2px; }
+.side-links a { display: flex; gap: 8px; align-items: center; padding: 7px 10px; border-radius: 8px; color: #3c4a40; text-decoration: none; font-size: .86rem; font-weight: 600; }
+.side-links a:hover { background: var(--soft); }
+
+.mainwrap { min-width: 0; display: flex; flex-direction: column; }
+.top { display: flex; gap: 16px; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; padding: 22px 32px 8px; }
+.crumb { font-size: .8rem; color: var(--muted); margin-bottom: 6px; }
+.crumb b { color: var(--ink); font-weight: 600; }
+.top h1 { color: var(--ink); font: 800 clamp(1.5rem, 2.6vw, 2rem)/1.15 var(--body); display: flex; gap: 10px; align-items: center; }
+.top h1 .pill { font: 800 .68rem/1 var(--body); letter-spacing: .08em; color: var(--accent); background: var(--accent-l); border: 1px solid #bfe0c3; border-radius: 999px; padding: 5px 9px; }
+.top p { margin: 4px 0 0; color: var(--muted); font-size: .92rem; }
+.top-acties { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.top-acties a.btn { text-decoration: none; }
+main.wrap { max-width: 1200px; margin: 0; width: 100%; padding: 12px 32px 130px; gap: 18px; }
+
+section.panel { background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 1px 2px rgba(16,24,18,.04); }
+section.panel.fold { padding: 0; }
+.panel-head { cursor: default; padding: 16px 20px; }
+.panel-head .icon.fold { display: none; }
+section.panel.fold:has(.panel-body:not([hidden])) .panel-head { border-bottom: 1px solid var(--line); margin-bottom: 16px; }
+.panel-body { padding: 0 20px 20px; }
+h2, .panel-head .ptitle { color: var(--ink); }
+.panel-head .ptitle { font: 800 1.08rem/1.2 var(--body); }
+.toolbar { display: none !important; }
+.hint { color: var(--muted); }
+details.help { background: var(--card-2); border: 1px solid var(--line); }
+details.help a, .hint a, .savebar .state a { color: var(--accent); }
+code { background: var(--soft); color: #7a4d00; }
+
+input[type=text], input[type=password], input[type=url], input[type=search], select, input[type=time], textarea {
+  background: #fff !important; color: var(--ink) !important; border: 1px solid #d5dcd2 !important; border-radius: 10px !important; }
+#fbRules { background: var(--card-2) !important; }
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid rgba(47,122,58,.35); outline-offset: 1px; }
+.btn { background: #fff; color: var(--ink); border: 1px solid #d5dcd2; font-weight: 700; border-radius: 10px; }
+.btn.gold { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 0 2px 6px rgba(47,122,58,.25); }
+.btn.gold:hover { background: var(--accent-d); }
+.btn.ghost { background: #fff; color: var(--ink); border: 1px solid #d5dcd2; }
+.btn.ghost:hover { background: var(--soft); }
+.btn.red { background: var(--sr-red); color: #fff; border-color: var(--sr-red); }
+.icon { background: #fff; color: var(--ink); border: 1px solid #d5dcd2; border-radius: 8px; }
+.icon.del { color: var(--bad); }
+
+.zender { background: var(--card-2); border: 1px solid var(--line); border-left: 5px solid var(--sr-red); }
+.track, .arow, .nwrow, .block, .yts-kaart { background: #fff; border: 1px solid var(--line); }
+.artists, .sched, .yts-body { background: var(--soft); border: 1px solid var(--line); }
+.artists-head b, .sched-head b { color: var(--gold-ink); }
+.songs li:nth-child(odd) { background: var(--card-2); }
+.songs .hot { color: var(--gold-ink); }
+.days button { background: #fff; color: var(--muted); border: 1px solid #d5dcd2; }
+.days button[aria-pressed="true"] { background: var(--sr-red); color: #fff; border-color: var(--sr-red); }
+.quick button { background: #fff; color: var(--ink); border: 1px solid #d5dcd2; }
+.quick button[aria-pressed="true"] { background: var(--accent); color: #fff; border-color: var(--accent); }
+.msg.ok { color: var(--ok); } .msg.bad { color: var(--bad); }
+.arow details summary { color: var(--accent); }
+
+.savebar { left: 252px; background: rgba(255,255,255,.96); border-top: 1px solid var(--line); box-shadow: 0 -6px 20px rgba(16,24,18,.06); backdrop-filter: blur(6px); }
+.savebar .wrap { max-width: none; padding: 12px 32px; }
+.savebar .state { color: var(--muted); }
+.savebar .state.dirty { color: var(--gold-ink); }
+
+/* kop van het onderdeel staat al bovenaan de pagina */
+section.panel.fold > .panel-head { display: none; }
+section.panel.fold > .panel-body { padding-top: 20px; }
+main.wrap > *, #editor, #editor > div, section.panel, .panel-body, .zender, .card-body { min-width: 0; }
+.zender-head .title { flex: 1 1 0; }
+.zender, .panel-body, .card-body, #editor > div { grid-template-columns: minmax(0, 1fr); }
+.zender > *, .card-body > *, .panel-body > * { min-width: 0; }
+code { overflow-wrap: anywhere; }
+.top h1 .pill { display: none; }
+body.op-overzicht .top h1 .pill { display: inline-block; }
+/* ---------- Overzicht ---------- */
+#overzicht { background: none; border: 0; box-shadow: none; padding: 0; display: grid; gap: 18px; }
+.tabs { display: flex; gap: 18px; border-bottom: 1px solid var(--line); }
+.tabs span { padding: 0 2px 10px; font-size: .88rem; font-weight: 600; color: var(--muted); }
+.tabs span.on { color: var(--ink); box-shadow: inset 0 -2px 0 var(--accent); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
+.stat { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; display: grid; gap: 6px; text-align: left; color: var(--ink); cursor: pointer; transition: box-shadow .15s, transform .15s; }
+.stat:hover { box-shadow: 0 6px 18px rgba(16,24,18,.08); transform: translateY(-1px); }
+.stat .lbl { display: flex; justify-content: space-between; align-items: center; font-size: .82rem; color: var(--muted); font-weight: 600; }
+.stat .lbl svg { width: 18px; height: 18px; fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.stat .val { font: 800 2rem/1.1 var(--body); letter-spacing: -.02em; }
+.stat .sub { font-size: .8rem; color: var(--muted); }
+.stat .sub b { color: var(--ok); }
+.ov-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 18px; }
+@media (max-width: 1100px) { .ov-grid { grid-template-columns: minmax(0, 1fr); } }
+.kaart { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+.kaart-kop { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.kaart-kop h3 { margin: 0; font: 800 1rem/1.2 var(--body); }
+.kaart-kop small { color: var(--muted); font-size: .8rem; }
+.kaart-kop button { background: none; color: var(--accent); font-weight: 700; font-size: .82rem; padding: 0; }
+.prog { display: grid; gap: 10px; }
+.prog-rij { display: grid; grid-template-columns: 110px minmax(0, 1fr) 96px; gap: 12px; align-items: center; font-size: .88rem; }
+.prog-rij b { font-weight: 700; display: flex; gap: 6px; align-items: center; }
+.prog-rij .nu { font: 800 .62rem/1 var(--body); letter-spacing: .06em; color: #fff; background: var(--sr-red); border-radius: 999px; padding: 3px 6px; }
+.prog-rij .tijd { color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; font-size: .82rem; white-space: nowrap; }
+.balk24 { position: relative; height: 10px; border-radius: 999px; background: var(--soft); overflow: hidden; }
+.balk24 i { position: absolute; top: 0; bottom: 0; border-radius: 999px; background: #b9d9be; }
+.prog-rij.aan .balk24 i { background: var(--accent); }
+.balk24 .nuLijn { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--sr-red); }
+.prog-as { display: grid; grid-template-columns: 110px minmax(0, 1fr) 96px; gap: 12px; font-size: .72rem; color: var(--muted); }
+.prog-as span { display: flex; justify-content: space-between; }
+.lijstje { list-style: none; margin: 0; padding: 0; display: grid; }
+.lijstje li { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 9px 0; border-top: 1px solid var(--line); font-size: .86rem; }
+.lijstje li:first-child { border-top: 0; }
+.lijstje img { width: 64px; height: 36px; object-fit: cover; border-radius: 6px; background: var(--soft); display: block; }
+.lijstje .tt { min-width: 0; }
+.lijstje .tt strong { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lijstje .tt span { display: block; color: var(--muted); font-size: .78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chip { font-size: .72rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: var(--soft); color: #3c4a40; white-space: nowrap; }
+.chip.groen { background: var(--accent-l); color: var(--accent); }
+.leeg { color: var(--muted); font-size: .88rem; }
+.tipkaart { background: #fff4c9; border: 1px solid #f1dc8a; border-radius: 16px; padding: 16px 20px; display: grid; gap: 6px; }
+.tipkaart b { font: 800 .98rem/1.2 var(--body); }
+.tipkaart p { margin: 0; font-size: .9rem; color: #4a3d10; }
+.tipkaart button { justify-self: start; background: none; padding: 0; color: #6a4f00; font-weight: 800; font-size: .85rem; }
+.verdeling { display: grid; gap: 10px; }
+.verdeling .r { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; font-size: .84rem; }
+.verdeling .r span { color: var(--muted); }
+.verdeling .r .bar { grid-column: 1 / -1; height: 6px; border-radius: 999px; background: var(--soft); overflow: hidden; }
+.verdeling .r .bar i { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
+
+/* Telefoon/tablet: menu bovenaan als schuifbalk */
+@media (max-width: 900px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .side { position: sticky; top: 0; z-index: 6; height: auto; flex-direction: row; align-items: center; padding: 10px 12px; gap: 10px; border-right: 0; border-bottom: 1px solid var(--line); overflow-x: auto; overflow-y: hidden; }
+  .logo small, .wsbox, .side-foot, .nav .grp { display: none; }
+  .logo b { white-space: nowrap; font-size: .9rem; }
+  .nav { display: flex; gap: 4px; }
+  .nav button { width: auto; white-space: nowrap; padding: 8px 10px; }
+  .top { padding: 16px 16px 6px; }
+  main.wrap { padding: 10px 16px 130px; }
+  .savebar { left: 0; }
+  .savebar .wrap { padding: 10px 16px; }
+  .prog-rij, .prog-as { grid-template-columns: 80px minmax(0, 1fr) auto; gap: 8px; }
+  .prog-rij .tijd { font-size: .72rem; }
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .stat { padding: 12px 14px; }
+  .stat .val { font-size: 1.6rem; }
+}
 </style>
 </head>
 <body>
 <div class="flag" aria-hidden="true"></div>
-<header>
-  <div class="wrap">
-    <h1>Heiligenweg FM<small>Beheer van zenders en teksten</small></h1>
-    <span style="display:flex; gap:8px; flex-wrap:wrap">
-      <a class="btn ghost" href="../" target="_blank" rel="noopener" style="text-decoration:none">Bekijk de site ↗</a>
-      <a class="btn ghost" href="../tv/" target="_blank" rel="noopener" style="text-decoration:none" title="Kort adres: rawien0812.github.io/heiligenweg-fm/tv">Tv-modus ↗</a>
-    </span>
-  </div>
-</header>
-
+<div class="app">
+  <aside class="side">
+    <a class="logo" href="../" target="_blank" rel="noopener" title="Bekijk de site"><span class="mk" aria-hidden="true"></span><span><b>Heiligenweg FM</b><small>Beheer</small></span></a>
+    <div class="wsbox"><span class="av">RP</span><span><b>Rawien Paltoe</b><span>Eigenaar · radio</span></span></div>
+    <nav class="nav" aria-label="Beheer">
+      <button type="button" data-page="overzicht"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>Overzicht</button>
+      <span class="grp">Radio</span>
+      <button type="button" data-page="p-live"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M8 8a5.6 5.6 0 0 0 0 8M16 8a5.6 5.6 0 0 1 0 8M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/></svg>LIVE-instellingen</button>
+      <button type="button" data-page="p-blokken"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>Tijdblokken<span class="cnt"></span></button>
+      <button type="button" data-page="p-algemeen"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Algemene bronnen<span class="cnt"></span></button>
+      <button type="button" data-page="p-nieuw"><svg viewBox="0 0 24 24"><path d="M12 4l2.3 4.7 5.2.8-3.8 3.7.9 5.2L12 16l-4.6 2.4.9-5.2-3.8-3.7 5.2-.8z"/></svg>Nieuwe nummers<span class="cnt"></span></button>
+      <button type="button" data-page="p-top5"><svg viewBox="0 0 24 24"><path d="M5 20V10M10 20V4M15 20v-7M20 20v-4"/></svg>Top 5<span class="cnt"></span></button>
+      <span class="grp">Weergave</span>
+      <button type="button" data-page="p-teksten"><svg viewBox="0 0 24 24"><path d="M5 6h14M12 6v13M9 19h6"/></svg>Teksten</button>
+      <button type="button" data-page="p-tv"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8"/></svg>TV</button>
+      <span class="grp">Instellingen</span>
+      <button type="button" data-page="p-kwaliteit"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>Kwaliteit</button>
+      <button type="button" data-page="p-teller"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M16 5.5a3 3 0 0 1 0 5.8M17.5 19a5 5 0 0 0-2.5-4.3"/></svg>Bezoekersteller</button>
+      <button type="button" data-page="p-ytkey"><svg viewBox="0 0 24 24"><circle cx="8" cy="12" r="3.5"/><path d="M11.5 12H21M17 12v3M20 12v2"/></svg>YouTube-sleutel</button>
+      <button type="button" data-page="p-zenders"><svg viewBox="0 0 24 24"><path d="M4 9h16v10H4zM8 5l4 4 4-4"/></svg>Extra zenders</button>
+      <button type="button" data-page="p-account"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Account</button>
+    </nav>
+    <div class="side-foot">
+      <div class="syncbox" id="syncBox"><b id="syncTitel">Niet ingelogd</b><span id="syncTekst">Log in om te beheren.</span></div>
+      <div class="side-links">
+        <a href="../" target="_blank" rel="noopener">↗ Bekijk de site</a>
+        <a href="../tv/" target="_blank" rel="noopener" title="Kort adres: rawien0812.github.io/heiligenweg-fm/tv">↗ Tv-modus</a>
+      </div>
+    </div>
+  </aside>
+  <div class="mainwrap">
+    <header class="top">
+      <div>
+        <div class="crumb">Beheer › <b id="crumbNu">Overzicht</b></div>
+        <h1 id="pageTitle">Overzicht <span class="pill">LIVE</span></h1>
+        <p id="pageSub">Alles van je radio in één oogopslag.</p>
+      </div>
+      <div class="top-acties">
+        <a class="btn ghost" href="../" target="_blank" rel="noopener">Bekijk de site ↗</a>
+        <a class="btn ghost" href="../tv/" target="_blank" rel="noopener">Tv-modus ↗</a>
+      </div>
+    </header>
 <main class="wrap">
   <!-- Inloggen -->
   <section class="panel" id="loginPanel">
@@ -249,6 +459,33 @@ ul.alist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
         <span>Klik op een kop om dat onderdeel open of dicht te klappen.</span>
         <span class="tb-btns"><button class="btn ghost" type="button" id="openAll">Alles uitklappen</button><button class="btn ghost" type="button" id="closeAll">Alles inklappen</button></span>
       </div>
+      <section class="panel" id="overzicht" data-key="overzicht">
+        <div class="tabs"><span class="on">Vandaag</span><span id="ovDatum"></span></div>
+        <div class="stats" id="ovStats"></div>
+        <div class="ov-grid">
+          <div class="kaart">
+            <div class="kaart-kop"><h3>Programma van LIVE</h3><button type="button" data-ga="p-blokken">Tijdblokken →</button></div>
+            <div class="prog" id="ovProg"></div>
+          </div>
+          <div class="kaart">
+            <div class="kaart-kop"><h3>Bronnen per blok</h3><small>kanalen + artiesten</small></div>
+            <div class="verdeling" id="ovVerdeling"></div>
+          </div>
+        </div>
+        <div class="ov-grid">
+          <div class="kaart">
+            <div class="kaart-kop"><h3>Nieuwe nummers</h3><button type="button" data-ga="p-nieuw">Beheren →</button></div>
+            <ul class="lijstje" id="ovNieuw"></ul>
+          </div>
+          <div style="display:grid; gap:18px; align-content:start">
+            <div class="kaart">
+              <div class="kaart-kop"><h3>Top 5</h3><button type="button" data-ga="p-top5">Beheren →</button></div>
+              <ul class="lijstje" id="ovTop5"></ul>
+            </div>
+            <div class="tipkaart" id="ovTip"></div>
+          </div>
+        </div>
+      </section>
       <section class="panel fold" data-key="p-teksten">
         <h2 class="panel-head"><button type="button" class="icon fold" aria-expanded="false" aria-controls="p-teksten-body" aria-label="Uitklappen">▾</button><span class="ptitle">Teksten en instellingen<small>Titel, busroute, welkomsttekst, tijdzone</small></span></h2>
         <div class="panel-body" id="p-teksten-body" hidden>
@@ -485,7 +722,7 @@ ul.alist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
         <div style="margin-top:14px"><button class="btn ghost" type="button" id="addZender">+ Zender toevoegen</button></div>
         </div>
       </section>
-      <section class="panel">
+      <section class="panel" data-key="p-account" style="padding:20px">
         <h2>Uitloggen</h2>
         <p class="hint">Gebruik je een computer die niet van jou is? Log dan uit als je klaar bent; de sleutel wordt dan uit deze browser verwijderd.</p>
         <button class="btn ghost" type="button" id="logout">Uitloggen</button>
@@ -493,6 +730,8 @@ ul.alist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
     </div>
   </div>
 </main>
+  </div>
+</div>
 
 <div class="savebar" id="savebar" hidden>
   <div class="wrap">
@@ -567,7 +806,7 @@ async function login(t) {
     data.site = data.site || {}; data.zenders = data.zenders || [];
     store.set(token);
     $("loginPanel").hidden = true; $("editor").hidden = false; $("savebar").hidden = false;
-    fillSite(); renderZenders(); setDirty(false);
+    fillSite(); renderZenders(); setDirty(false); naInloggen();
   } catch (e) {
     $("loginMsg").className = "msg bad"; $("loginMsg").textContent = explain(e);
     $("helpBox").open = true;
@@ -1193,10 +1432,7 @@ function setPanel(sec, open) {
   tg.setAttribute("aria-expanded", String(open)); tg.setAttribute("aria-label", open ? "Inklappen" : "Uitklappen");
   open ? openCards.add(key) : openCards.delete(key);
 }
-document.querySelectorAll("section.panel.fold").forEach((sec) => {
-  setPanel(sec, openCards.has(sec.dataset.key));
-  sec.querySelector(".panel-head").addEventListener("click", () => { setPanel(sec, sec.querySelector(".panel-body").hidden); saveOpen(); });
-});
+document.querySelectorAll("section.panel.fold").forEach((sec) => setPanel(sec, true));   // dashboard: elke pagina staat open
 $("openAll").addEventListener("click", () => { document.querySelectorAll("section.panel.fold").forEach((x) => setPanel(x, true)); saveOpen(); });
 $("closeAll").addEventListener("click", () => {
   document.querySelectorAll("section.panel.fold").forEach((x) => setPanel(x, false));
@@ -1453,6 +1689,12 @@ function setDirty(v, text, cls) {
   s.className = "state " + (cls || (v ? "dirty" : ""));
   if (text) s.innerHTML = text;
   else s.textContent = v ? "Je hebt wijzigingen die nog niet zijn opgeslagen." : "Alles is opgeslagen.";
+  if ($("syncBox")) {
+    $("syncBox").className = "syncbox" + (v ? " dirty" : "");
+    $("syncTitel").textContent = v ? "Niet opgeslagen" : "Alles is opgeslagen";
+    $("syncTekst").textContent = v ? "Klik onderaan op Opslaan en publiceren." : "Je site is bijgewerkt (binnen 1 à 2 minuten online).";
+  }
+  if (typeof renderOverzicht === "function" && huidigePagina === "overzicht") renderOverzicht(true);
 }
 function problems() {
   const out = [];
@@ -1490,10 +1732,136 @@ $("reload").addEventListener("click", () => {
 });
 $("logout").addEventListener("click", () => {
   store.clear(); token = ""; data = null; sha = null;
-  $("editor").hidden = true; $("savebar").hidden = true; $("loginPanel").hidden = false;
+  $("editor").hidden = true; $("savebar").hidden = true; $("loginPanel").hidden = false; navAan(false);
+  $("syncBox").className = "syncbox"; $("syncTitel").textContent = "Niet ingelogd"; $("syncTekst").textContent = "Log in om te beheren.";
   $("token").value = ""; $("loginMsg").className = "msg ok"; $("loginMsg").textContent = "Je bent uitgelogd.";
 });
 window.addEventListener("beforeunload", (e) => { if (dirty) { e.preventDefault(); e.returnValue = ""; } });
+
+// ================= Dashboard: zijmenu, pagina's en overzicht — © Rawien Paltoe =================
+const PAGINAS = {
+  overzicht:   ["Overzicht", "Alles van je radio in één oogopslag."],
+  "p-live":    ["LIVE-instellingen", "Aan/uit, volgorde, BPM, overgangen en hits ophalen."],
+  "p-blokken": ["Tijdblokken", "Soul, Bhajan, Bollywood, Lokaal… met bronnen en artiesten."],
+  "p-algemeen":["Algemene bronnen", "Kanalen die buiten de blokken en in lege blokken draaien."],
+  "p-nieuw":   ["Nieuwe nummers", "Een nieuw nummer een tijdje extra vaak op LIVE."],
+  "p-top5":    ["Top 5", "De aanvraaglijst onder de radio."],
+  "p-teksten": ["Teksten", "Titel, busroute, welkomsttekst en tijdzone."],
+  "p-tv":      ["TV", "Fire TV-app en tv-modus: beeld en dimmen."],
+  "p-kwaliteit":["Kwaliteit", "Live-opnames, vlogs en reels weren; alleen HD."],
+  "p-teller":  ["Bezoekersteller", "Hoeveel mensen er nu luisteren en hoe vaak de site is bezocht."],
+  "p-ytkey":   ["YouTube-sleutel", "Nodig om artiesten en hits op te zoeken."],
+  "p-zenders": ["Extra zenders", "Zenders naast LIVE (optioneel)."],
+  "p-account": ["Account", "Uitloggen op deze computer."],
+};
+const PAGINA_OPSLAG = "hfm-beheer-pagina";
+let huidigePagina = "overzicht";
+function toonPagina(k, scroll = true) {
+  if (!PAGINAS[k]) k = "overzicht";
+  huidigePagina = k;
+  document.body.classList.toggle("op-overzicht", k === "overzicht");
+  document.querySelectorAll("#editor section.panel[data-key]").forEach((s) => { s.hidden = s.dataset.key !== k; });
+  document.querySelectorAll(".nav button[data-page]").forEach((b) => { if (b.dataset.page === k) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
+  $("pageTitle").firstChild.textContent = PAGINAS[k][0] + " ";
+  $("pageSub").textContent = PAGINAS[k][1];
+  $("crumbNu").textContent = PAGINAS[k][0];
+  try { localStorage.setItem(PAGINA_OPSLAG, k); } catch (e) {}
+  if (k === "overzicht") renderOverzicht();
+  if (scroll) window.scrollTo({ top: 0 });
+  const knop = document.querySelector(`.nav button[data-page="${k}"]`);
+  if (knop && window.innerWidth <= 900) knop.scrollIntoView({ inline: "center", block: "nearest" });
+}
+document.querySelectorAll(".nav button[data-page]").forEach((b) => b.addEventListener("click", () => toonPagina(b.dataset.page)));
+document.addEventListener("click", (e) => { const g = e.target.closest("[data-ga]"); if (g) toonPagina(g.dataset.ga); });
+function navAan(aan) {
+  document.querySelectorAll(".nav button[data-page]").forEach((b) => { b.disabled = !aan; });
+  if (!aan) {
+    document.querySelectorAll(".nav button[data-page]").forEach((b) => b.removeAttribute("aria-current"));
+    $("pageTitle").firstChild.textContent = "Inloggen "; $("pageSub").textContent = "Log in met je GitHub-sleutel om je radio te beheren."; $("crumbNu").textContent = "Inloggen";
+  }
+}
+function naInloggen() {
+  navAan(true);
+  let k = "overzicht";
+  try { k = (location.hash || "").slice(1) || localStorage.getItem(PAGINA_OPSLAG) || "overzicht"; } catch (e) {}
+  if (k && !k.startsWith("p-") && k !== "overzicht") k = "p-" + k;
+  toonPagina(k, false);
+}
+navAan(false);
+
+// ---------- Overzicht ----------
+const esc = (t) => String(t ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const nlGetal = (n) => Number(n || 0).toLocaleString("nl-NL");
+const minVan = (t) => { const [h, m] = String(t || "00:00").split(":").map(Number); return (h || 0) * 60 + (m || 0); };
+let tellerCache = null, tellerBezig = false;
+async function haalTeller() {
+  const fb = data && data.site && data.site.teller && data.site.teller.firebase;
+  if (!fb || !fb.databaseURL || tellerBezig) return;
+  tellerBezig = true;
+  try {
+    const url = fb.databaseURL.replace(/\/$/, "");
+    const [b, o] = await Promise.all([
+      fetch(`${url}/stats/bezoeken.json`).then((r) => r.ok ? r.json() : null),
+      fetch(`${url}/online.json?shallow=true`).then((r) => r.ok ? r.json() : null),
+    ]);
+    tellerCache = { bezoeken: b || 0, online: o ? Object.keys(o).length : 0 };
+  } catch (e) { tellerCache = { fout: true }; }
+  tellerBezig = false;
+  if (huidigePagina === "overzicht") renderOverzicht(true);
+}
+function renderOverzicht(zonderTeller) {
+  if (!data || !data.site) return;
+  const s = data.site, live = s.live || {};
+  const blokken = (live.blokken || []).filter((b) => b && b.naam);
+  const alleBronnen = [].concat(live.bronnen || [], ...blokken.map((b) => b.bronnen || []));
+  const metHits = alleBronnen.filter((n) => Array.isArray(n.populair) && n.populair.length);
+  const aantalHits = metHits.reduce((t, n) => t + n.populair.length, 0);
+  const uit = (s.uitgelicht && s.uitgelicht.nummers) || [];
+  const top5 = s.top5 || [];
+  const nu = new Date(), nuMin = nu.getHours() * 60 + nu.getMinutes();
+  const inBlok = (b) => { const v = minVan(b.van), t = b.tot && b.tot !== "00:00" ? minVan(b.tot) : 1440; return v <= t ? nuMin >= v && nuMin < t : nuMin >= v || nuMin < t; };
+  const actief = blokken.find(inBlok);
+  // cijfers
+  const tel = tellerCache;
+  $("ovStats").innerHTML = `
+    <button type="button" class="stat" data-ga="p-algemeen"><span class="lbl">LIVE-bronnen <svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 16 0M7.5 12a4.5 4.5 0 0 1 9 0"/><circle cx="12" cy="12" r="1.5"/></svg></span>
+      <span class="val">${alleBronnen.length}</span><span class="sub"><b>${nlGetal(aantalHits)}</b> hits uit ${metHits.length} kanalen</span></button>
+    <button type="button" class="stat" data-ga="p-blokken"><span class="lbl">Tijdblokken <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></span>
+      <span class="val">${blokken.length}</span><span class="sub">${actief ? `Nu: <b>${esc(actief.naam)}</b>` : "Geen blok actief"}</span></button>
+    <button type="button" class="stat" data-ga="p-nieuw"><span class="lbl">Nieuwe nummers <svg viewBox="0 0 24 24"><path d="M12 4l2.3 4.7 5.2.8-3.8 3.7.9 5.2L12 16l-4.6 2.4.9-5.2-3.8-3.7 5.2-.8z"/></svg></span>
+      <span class="val">${uit.length}</span><span class="sub">extra vaak, elke <b>${esc((s.uitgelicht && s.uitgelicht.elke) || 8)}</b> nummers</span></button>
+    <button type="button" class="stat" data-ga="p-teller"><span class="lbl">Bezoekers <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M16 5.5a3 3 0 0 1 0 5.8M17.5 19a5 5 0 0 0-2.5-4.3"/></svg></span>
+      <span class="val">${tel && !tel.fout ? nlGetal(tel.bezoeken) : "–"}</span><span class="sub">${tel && !tel.fout ? `<b>${tel.online}</b> luisteren nu` : tel && tel.fout ? "Teller niet bereikbaar" : (s.teller && s.teller.firebase ? "Laden…" : "Teller staat uit")}</span></button>`;
+  // programma (24 uur)
+  const rijen = blokken.slice().sort((a, b) => minVan(a.van) - minVan(b.van)).map((b) => {
+    const v = minVan(b.van), t = b.tot && b.tot !== "00:00" ? minVan(b.tot) : 1440;
+    const delen = v <= t ? [[v, t]] : [[v, 1440], [0, t]];
+    const balk = delen.map(([a, z]) => `<i style="left:${(a / 14.4).toFixed(2)}%;width:${((z - a) / 14.4).toFixed(2)}%"></i>`).join("");
+    const nuL = `<span class="nuLijn" style="left:${(nuMin / 14.4).toFixed(2)}%"></span>`;
+    return `<div class="prog-rij${b === actief ? " aan" : ""}"><b>${esc(b.naam)}${b === actief ? ' <span class="nu">NU</span>' : ""}</b><div class="balk24">${balk}${nuL}</div><span class="tijd">${esc(b.van || "00:00")} – ${esc(b.tot && b.tot !== "00:00" ? b.tot : "24:00")}</span></div>`;
+  }).join("");
+  $("ovProg").innerHTML = rijen ? rijen + `<div class="prog-as"><span></span><span><i>00</i><i>06</i><i>12</i><i>18</i><i>24</i></span><span></span></div>` : '<p class="leeg">Nog geen tijdblokken.</p>';
+  // bronnen per blok
+  const per = blokken.map((b) => ({ naam: b.naam, n: (b.bronnen || []).length + (b.artiesten || []).length }));
+  const max = Math.max(1, ...per.map((p) => p.n));
+  $("ovVerdeling").innerHTML = per.length ? per.map((p) => `<div class="r"><b>${esc(p.naam)}</b><span>${p.n} ${p.n === 1 ? "bron" : "bronnen"}</span><div class="bar"><i style="width:${(p.n / max * 100).toFixed(0)}%"></i></div></div>`).join("")
+    + `<div class="r"><b>Algemeen</b><span>${(live.bronnen || []).length} bronnen</span><div class="bar"><i style="width:${Math.min(100, (live.bronnen || []).length / Math.max(max, (live.bronnen || []).length) * 100).toFixed(0)}%"></i></div></div>` : '<p class="leeg">Nog geen blokken.</p>';
+  // lijstjes
+  const rij = (n, chip) => `<li><img alt="" loading="lazy" src="https://i.ytimg.com/vi/${esc(n.video)}/mqdefault.jpg"><span class="tt"><strong>${esc(n.titel || "Nummer")}</strong><span>${esc(n.artiest || "")}</span></span>${chip}</li>`;
+  $("ovNieuw").innerHTML = uit.length ? uit.slice(0, 5).map((n) => rij(n, `<span class="chip groen">${esc((n.blokken && n.blokken.length) ? n.blokken.join(", ") : "Alle blokken")}</span>`)).join("") : '<li class="leeg">Nog geen nieuwe nummers.</li>';
+  $("ovTop5").innerHTML = top5.length ? top5.slice(0, 5).map((n, i) => rij(n, `<span class="chip">#${i + 1}</span>`)).join("") : '<li class="leeg">De Top 5 is leeg.</li>';
+  // tip
+  const tip = !localStorage.getItem("hfm-ytkey") ? ["Zet je YouTube-sleutel erin", "Daarmee kun je artiesten opzoeken, hits ophalen en zoeken in YouTube vanuit je beheer.", "p-ytkey", "Naar YouTube-sleutel"]
+    : metHits.length < alleBronnen.length ? ["Haal de hits van je kanalen op", `${alleBronnen.length - metHits.length} van je ${alleBronnen.length} bronnen hebben nog geen hits. Met hits draait LIVE de populairste nummers vaker.`, "p-live", "Naar LIVE-instellingen"]
+    : !uit.length ? ["Zet een nieuw nummer in de schijnwerpers", "Nieuwe nummers komen een tijdje extra vaak voorbij op LIVE.", "p-nieuw", "Nieuw nummer toevoegen"]
+    : ["Alles staat er netjes bij", "Je radio draait met hits, tijdblokken en nieuwe nummers. Haal af en toe opnieuw hits op voor de nieuwste nummers.", "p-live", "Naar LIVE-instellingen"];
+  $("ovTip").innerHTML = `<b>${esc(tip[0])}</b><p>${esc(tip[1])}</p><button type="button" data-ga="${tip[2]}">${esc(tip[3])} →</button>`;
+  $("ovDatum").textContent = nu.toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long" });
+  // tellers in het menu
+  const c = (k, v) => { const el = document.querySelector(`.nav button[data-page="${k}"] .cnt`); if (el) el.textContent = v || ""; };
+  c("p-blokken", blokken.length); c("p-nieuw", uit.length); c("p-top5", top5.length); c("p-algemeen", (live.bronnen || []).length);
+  if (!zonderTeller) haalTeller();
+}
 
 $("loginForm").addEventListener("submit", (e) => { e.preventDefault(); login($("token").value); });
 const saved = store.get();
