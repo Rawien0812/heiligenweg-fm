@@ -687,7 +687,14 @@ body.tv .t5 img { width: 5.6vw; height: 3.15vw; border-radius: .35vw; }
 body.tv .t5 .tt strong { font-size: 1.05vw; }
 body.tv .t5 .tt span { font-size: .85vw; }
 body.tv .t5 .ask { display: none; }
-body.tv .tvqr { display: none !important; }   /* geen QR-code op de tv */
+body.tv .tvqr { display: none !important; }
+/* Licht voor tv-sticks (Fire TV): geen wazige achtergronden en geen bewegende gloed bovenop de video */
+body.tv .lcd, body.tv .top5 { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+body.tv .top5 { background: rgba(10,10,10,.9); }
+body.tv .tvlive, body.tv .tvlive .dot, body.tv .tvteller .dot, body.tv .vfd .time.live, body.tv .vfd .time.live .dot { animation: none !important; }
+body.tv .tvlive { box-shadow: 0 0 10px rgba(255,45,85,.5); }
+body.tv .v-seg svg, body.tv .v-knop svg { filter: none !important; }
+body.tv .vfd::after { display: none; }   /* geen QR-code op de tv */
 .qrbox { background: #fff; padding: .5vw; border-radius: .4vw; line-height: 0; flex: none; }
 .qrbox svg, .qrbox img { width: 7vw; height: 7vw; display: block; }
 /* start-knop en hulpregel */
@@ -1557,6 +1564,7 @@ function renderLiveList() {
 
 let lijstUitgesteld = null;
 function renderList() {
+  if (document.body.classList.contains("tv")) { lijstTv = true; return; }   // tv: lijst staat verborgen, niet opbouwen
   if (typeof vScrollt === "function" && vScrollt()) {    // tijdens scrollen: na het scrollen pas opnieuw opbouwen
     clearTimeout(lijstUitgesteld); lijstUitgesteld = setTimeout(renderList, 260); return;
   }
@@ -2065,6 +2073,7 @@ function applyTvMode() {
 }
 $("tvStart").addEventListener("click", tvStartOrToggle);
 window.addEventListener("hashchange", applyTvMode);
+window.addEventListener("hashchange", () => { if (!isTv() && lijstTv) { lijstTv = false; renderList(); } });
 document.addEventListener("visibilitychange", () => { if (isTv() && document.visibilityState === "visible" && playing) keepAwake(); });
 document.addEventListener("mousemove", () => {
   if (!isTv()) return;
@@ -2274,7 +2283,7 @@ function vSprite(soort, wpx, hpx, dpr) {          // één keer tekenen, daarna 
 }
 function vTeken(ctx, sp, x, y, dpr) { ctx.drawImage(sp.c, Math.round((x - sp.pad) * dpr), Math.round((y - sp.pad) * dpr)); }
 function vfdMaatCanvas() {
-  const c = vfd.canvas, dpr = Math.min(2, window.devicePixelRatio || 1);
+  const c = vfd.canvas, dpr = isTv() ? 1 : Math.min(2, window.devicePixelRatio || 1);
   const w = Math.max(50, c.clientWidth), h = c.clientHeight || 44;
   if (c.width !== Math.round(w * dpr) || c.height !== Math.round(h * dpr)) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); }
   return { w, h, dpr };
@@ -2362,9 +2371,13 @@ function vfdFrame(ts) {                      // animatie: spectrum + schuivende 
   if (document.hidden || !vZichtbaar) { vLoopt = false; return; }   // lus stopt helemaal; start weer als het display in beeld komt
   requestAnimationFrame(vfdFrame);
   if (vScrollt()) return;                     // tijdens scrollen even niets tekenen
-  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const tv = isTv();
+  const dt = vfd.vorige == null ? 66 : Math.min(250, ts - vfd.vorige);
+  if (tv && dt < 66) return;                  // tv-stick: ±15 beelden per seconde is genoeg
+  vfd.vorige = ts;
+  const dpr = tv ? 1 : Math.min(2, window.devicePixelRatio || 1);
   // ---- spectrum (±15× per seconde)
-  if (ts - vfd.lastSpec > 66) {
+  if (ts - vfd.lastSpec > (tv ? 120 : 66)) {
     vfd.lastSpec = ts;
     const cv = vfd.specCanvas, ctx = vfd.specCtx;
     const W = Math.max(40, cv.clientWidth), H = Math.max(30, cv.clientHeight);
@@ -2388,7 +2401,7 @@ function vfdFrame(ts) {                      // animatie: spectrum + schuivende 
     }
   }
   // ---- stippentitel: alleen opnieuw tekenen als hij een stapje verschuift
-  if (vfd.cols.length) vfd.shift = (vfd.shift + 0.12) % vfd.cols.length;
+  if (vfd.cols.length) vfd.shift = (vfd.shift + 0.12 * (tv ? dt / 16.7 : 1)) % vfd.cols.length;
   const { w, h } = vfdMaatCanvas(), cx = vfd.ctx;
   const ROWS = 7, DOT = Math.max(3.6, Math.min(6.4, h / ROWS)), OY = (h - ROWS * DOT) / 2;
   const VIS = Math.floor(w / DOT), cols = vfd.cols;
@@ -2411,6 +2424,7 @@ vStart();
 // en zet de eerste tik, klik of toets ergens op de pagina het geluid aan.
 const AUTOPLAY = true;
 let autoMuted = false, slikKlik = false;
+var lijstTv = false;
 function isAan() { try { const s2 = player.getPlayerState(); return s2 === YT.PlayerState.PLAYING || s2 === YT.PlayerState.BUFFERING; } catch (e) { return false; } }
 function autoStart() {
   setTimeout(() => {
