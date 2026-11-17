@@ -5371,7 +5371,8 @@
     "tvbeeld": "foto",
     "tvdim": "40",
     "tvplayerdim": "25",
-    "tvwacht": "8"
+    "tvwacht": "8",
+    "tvovergang": "15"
   },
   "zenders": []
 }
