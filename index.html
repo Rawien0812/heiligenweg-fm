@@ -1720,6 +1720,8 @@ function ensureApi() {
 // ---------- Twee spelers: het volgende nummer vloeit in de laatste seconden in ---------
 let FADE = 5;                         // seconden overlap (instelbaar in /beheer/)
 const IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+// Geen overlap op iPhone/iPad en op de tv: een tv-stick kan geen twee video's tegelijk soepel laden
+const geenFade = () => IOS || document.body.classList.contains("tv");
 let players = [], act = 0, readyB = false;
 let fade = null;                      // { target, stage: "prep" | "ready" | "run", timer, t0 }
 const backPlayer = () => players[1 - act];
@@ -1815,7 +1817,7 @@ function finishFade() {
   renderLcd(); renderList();
 }
 setInterval(() => {
-  if (!ready || !readyB || FADE <= 0 || IOS || !playing || !userWants) return;
+  if (!ready || !readyB || FADE <= 0 || geenFade() || !playing || !userWants) return;
   let d = 0, t = 0;
   try { d = player.getDuration(); t = player.getCurrentTime(); } catch (e) { return; }
   if (!d || d < FADE * 3) return;
@@ -2066,6 +2068,7 @@ function applyTvMode() {
   tvTop5Toon();
   $("tvLogo").textContent = (STATIONS.length && document.title) || "Heiligenweg FM";
   tvClock(); clearInterval(clockTimer); clockTimer = setInterval(tvClock, 10000);
+  if (typeof cancelFade === "function") cancelFade();   // tv: geen tweede video op de achtergrond
   makeQr();
   tvToast("OK = afspelen/pauze · ← → = vorige/volgende · + − = volume");
   $("vol").value = 100; prefs.muted = false; applyVolume();   // tv: radio op vol, volume via de afstandsbediening
@@ -2305,7 +2308,7 @@ function vfdStatus() {                       // 4× per seconde: lampjes, klok, 
   if (document.hidden || !vZichtbaar) return;   // buiten beeld: niets bijwerken
   const tr = STATIONS[st] && STATIONS[st].tracks[idx];
   const live = isLive();
-  vAan("iAuto", FADE > 0 && !IOS); vAan("iHd", KW.aan); vAan("iBpm", tr && tr.bpm);
+  vAan("iAuto", FADE > 0 && !geenFade()); vAan("iHd", KW.aan); vAan("iBpm", tr && tr.bpm);
   vAan("iShuffle", prefs.shuffle && !live); vAan("iRepeat", prefs.repeat && !live); vAan("iLive", live);
   const blk = live ? activeLiveBlock() : null;
   vTxt("iBlok", live ? ((blk && blk.naam) || "").toUpperCase() : (STATIONS[st] ? STATIONS[st].name : ""));
@@ -2330,8 +2333,8 @@ function vfdStatus() {                       // 4× per seconde: lampjes, klok, 
   $("vA").classList.toggle("on", act === 0); $("vB").classList.toggle("on", act === 1);
   $("vA").classList.toggle("next", !!fade && act === 1); $("vB").classList.toggle("next", !!fade && act === 0);
   vAan("vPlay", playing); vAan("vFade", !!fade && fade.stage === "run"); vAan("vDot", live);
-  vTxt("vXf", FADE > 0 && !IOS ? `CROSSFADE ${FADE}S` : "DIRECT");
-  vAan("vXf", FADE > 0 && !IOS);
+  vTxt("vXf", FADE > 0 && !geenFade() ? `CROSSFADE ${FADE}S` : "DIRECT");
+  vAan("vXf", FADE > 0 && !geenFade());
   // tekst: titel + artiest; credits
   const titel = [lcdRaw.lcdTitle, lcdRaw.lcdArtist].filter(Boolean).join("  -  ");
   if (titel !== vfd.txt) { vfd.txt = titel; vfd.cols = vKolommen(titel + "        "); vfd.shift = 0; vTxt("vfdSr", titel); }
