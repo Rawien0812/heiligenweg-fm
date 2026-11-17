@@ -687,6 +687,8 @@ body.tv .t5 img { width: 5.6vw; height: 3.15vw; border-radius: .35vw; }
 body.tv .t5 .tt strong { font-size: 1.05vw; }
 body.tv .t5 .tt span { font-size: .85vw; }
 body.tv .t5 .ask { display: none; }
+body.tv .t5 button.kies { background: #2b3b1f; box-shadow: inset 0 0 0 .2vw var(--gold), 0 0 1vw rgba(246,198,74,.45); }
+body.tv .t5 button.kies .rank { color: #fff; }
 body.tv .tvqr { display: none !important; }
 /* Licht voor tv-sticks (Fire TV): geen wazige achtergronden en geen bewegende gloed bovenop de video */
 body.tv .lcd, body.tv .top5 { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
@@ -886,7 +888,7 @@ body.kop-uit .strip::after, body.kop-uit .fringe, body.kop-uit .pennant, body.ko
 </div>
 <button class="unmute" id="unmuteBtn" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4zM15.5 9a4.5 4.5 0 0 1 0 6M18.5 6a9 9 0 0 1 0 12"/></svg><span id="unmuteTxt">Tik voor geluid</span></button>
 <button class="tvstart" id="tvStart" type="button">▶&nbsp; Druk op OK om te starten</button>
-<div class="tvhint" id="tvHint" aria-hidden="true">OK = afspelen/pauze · ← → = vorige/volgende · ↑ ↓ = volume</div>
+<div class="tvhint" id="tvHint" aria-hidden="true">OK = afspelen/pauze · ← → = vorige/volgende · ↑ ↓ = kies uit Top 5, OK = aanvragen</div>
 
 <footer class="wrap">
   <p class="sig"><span class="star" aria-hidden="true"></span><span id="siteOnderaan">Gemaakt door Rawien Paltoe.</span></p>
@@ -1508,6 +1510,7 @@ function renderTop5() {
     b.addEventListener("click", () => requestSong(n));
     li.appendChild(b); ol.appendChild(li);
   });
+  if (typeof t5Markeer === "function" && t5Keuze >= 0) t5Markeer();
 }
 function requestSong(n) {
   if (!STATIONS.length) return;
@@ -2003,19 +2006,33 @@ document.addEventListener("keydown", (e) => {
   else if (e.key === "m" || e.key === "M") $("mute").click();
   else if (e.key === "ArrowRight") $("next").click();
   else if (e.key === "ArrowLeft") $("prev").click();
+  else if (isTv() && e.key === "Enter" && t5Keuze >= 0) { e.preventDefault(); t5Aanvragen(); }
   else if (isTv() && (e.key === "Enter" || e.key === "MediaPlayPause" || e.key === "MediaPlay" || e.key === "MediaPause")) { e.preventDefault(); tvStartOrToggle(); }
   else if (isTv() && e.key === "MediaTrackNext") $("next").click();
   else if (isTv() && e.key === "MediaTrackPrevious") $("prev").click();
   else if (isTv() && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+    // Afstandsbediening: ↑ ↓ kiest een nummer uit de Top 5, OK vraagt het aan (volume gaat met + − op de afstandsbediening)
     e.preventDefault();
-    const v = Math.max(0, Math.min(100, +$("vol").value + (e.key === "ArrowUp" ? 10 : -10)));
-    $("vol").value = v; if (v > 0) prefs.muted = false; applyVolume(); savePrefs();
-    tvToast(`Volume ${v}%`);
+    const n = $("top5List").children.length;
+    if (!n || $("top5").hidden) return;
+    const stap = e.key === "ArrowDown" ? 1 : -1;
+    t5Keuze = t5Keuze < 0 ? (stap > 0 ? 0 : n - 1) : (t5Keuze + stap + n) % n;
+    t5Markeer();
   }
 });
 
 // ---------- Tv-modus: …/#tv ----------
 const isTv = () => document.body.classList.contains("tv");
+let t5Keuze = -1;   // gekozen Top 5-nummer met de afstandsbediening (-1 = geen)
+function t5Markeer() {
+  [...$("top5List").querySelectorAll("button")].forEach((b, i) => b.classList.toggle("kies", i === t5Keuze));
+}
+function t5Aanvragen() {
+  const b = $("top5List").querySelectorAll("button")[t5Keuze];
+  const naam = b ? (b.querySelector("strong") || {}).textContent : "";
+  t5Keuze = -1; t5Markeer();
+  if (b) { b.click(); tvToast("Aangevraagd: " + (naam || "nummer")); }
+}
 // Top 5 in tv-modus: na een paar seconden weg, terug zodra je de afstandsbediening gebruikt of naar LIVE gaat.
 const TOP5_TONEN = 8000;
 let top5Timer = null;
@@ -2023,7 +2040,7 @@ function tvTop5Toon() {
   if (!isTv()) return;
   document.body.classList.remove("t5weg");
   clearTimeout(top5Timer);
-  top5Timer = setTimeout(() => { if (isTv()) document.body.classList.add("t5weg"); }, TOP5_TONEN);
+  top5Timer = setTimeout(() => { if (isTv()) { document.body.classList.add("t5weg"); t5Keuze = -1; t5Markeer(); } }, TOP5_TONEN);
 }
 document.addEventListener("keydown", () => tvTop5Toon(), true);
 ["pointerenter", "click", "focus"].forEach(ev => document.querySelector(".tvlive").addEventListener(ev, tvTop5Toon));
@@ -2063,12 +2080,13 @@ function tvStartOrToggle() {
 function applyTvMode() {
   const on = location.hash === "#tv";
   document.body.classList.toggle("tv", on);
-  if (!on) { clearInterval(clockTimer); clearTimeout(top5Timer); document.body.classList.remove("t5weg"); return; }
+  if (!on) { $("top5Kop").textContent = "Top 5 · tik om aan te vragen"; t5Keuze = -1; clearInterval(clockTimer); clearTimeout(top5Timer); document.body.classList.remove("t5weg"); return; }
   tvTop5Toon();
   $("tvLogo").textContent = (STATIONS.length && document.title) || "Heiligenweg FM";
   tvClock(); clearInterval(clockTimer); clockTimer = setInterval(tvClock, 10000);
   makeQr();
-  tvToast("OK = afspelen/pauze · ← → = vorige/volgende · ↑ ↓ = volume");
+  tvToast("OK = afspelen/pauze · ← → = vorige/volgende · ↑ ↓ = kies uit Top 5, OK = aanvragen");
+  $("top5Kop").textContent = "Top 5 · ↑ ↓ kiezen · OK = aanvragen";
   $("tvStart").focus({ preventScroll: true });
 }
 $("tvStart").addEventListener("click", tvStartOrToggle);
