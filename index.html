@@ -1000,9 +1000,13 @@ const bronNaarTrack = (n) => n.lijst
   : { id: n.video, t: n.titel || "Nummer", a: n.artiest || "", bpm: +n.bpm || 0, views: +n.views || 0 };
 // Een kanaal/afspeellijst + de populairste nummers die in /beheer/ voor dat kanaal zijn opgehaald (met views).
 function bronNaarTracks(n) {
-  const out = [bronNaarTrack(n)];
-  if (n.lijst && Array.isArray(n.populair)) n.populair.filter((x) => x.video).forEach((x) =>
-    out.push({ id: x.video, t: x.titel || "Nummer", a: x.artiest || n.titel || "", views: +x.views || 0, bpm: +x.bpm || 0 }));
+  const bron = n.lijst || n.video;                       // van welk kanaal komt het (voor eerlijk mixen)
+  const out = [Object.assign(bronNaarTrack(n), { bron })];
+  if (n.lijst && Array.isArray(n.populair)) {
+    const hits = n.populair.filter((x) => x.video).slice().sort((x, y) => (+y.views || 0) - (+x.views || 0));
+    hits.forEach((x, k) => out.push({ id: x.video, t: x.titel || "Nummer", a: x.artiest || n.titel || "", views: +x.views || 0, bpm: +x.bpm || 0,
+                                      bron, rang: hits.length > 1 ? k / (hits.length - 1) : 0 }));   // rang 0 = grootste hit van dít kanaal
+  }
   return out;
 }
 // Nummers van een LIVE-blok: eigen kanalen/afspeellijsten + populaire nummers van de artiesten.
@@ -1057,10 +1061,15 @@ function huidig() {                                   // video-id + artiest van 
   return { vid: tr.list ? plIds[plIndex] : tr.id, artist: artKey(tr), tr };
 }
 let medViews = 1e5;                                   // midden van de views in de huidige mix
-function popGewicht(t) {                              // 4× zoveel views als het midden = 2× zo vaak/vroeg
+function popGewicht(t) {
   if (t.list) return 1;                               // kanaal = verrassingsnummer
+  if (t.rang != null) {                               // hit van een kanaal: tellen per kanaal, zodat kleine kanalen ook hun hits draaien
+    const binnen = t.rang < 0.2 ? 2.4 : t.rang < 0.5 ? 1.4 : 0.8;
+    const wereld = t.views ? Math.pow(clampN(t.views / medViews, 0.25, 4), 0.25) : 1;   // views tellen nog een beetje mee
+    return binnen * wereld;
+  }
   if (!t.views) return 0.7;
-  return clampN(Math.sqrt(t.views / medViews), 0.15, 8);
+  return clampN(Math.sqrt(t.views / medViews), 0.15, 8);   // 4× zoveel views als het midden = 2× zo vaak/vroeg
 }
 function smaakGewicht(t) {
   const sc = (profiel.v[t.id] || 0) * 0.5 + (profiel.a[artKey(t)] || 0) * 0.3;
@@ -1075,8 +1084,8 @@ function recentGewicht(t) {
   if (u < 24) return 0.25;
   if (u < 48) return 0.5;                               // gisteren
   if (u < 96) return 0.8;
-  if (u === Infinity) return 1.15;                      // nog nooit gehoord: klein zetje
-  return u > 24 * 7 ? 1.1 : 1;                          // lang niet gehoord
+  if (u === Infinity) return 1.5;                       // nog nooit gehoord: duidelijk zetje (steeds nieuwe nummers)
+  return u > 24 * 7 ? 1.3 : 1;                          // lang niet gehoord
 }
 // Dagrotatie: elke dag krijgt een andere selectie nummers een zetje (0,6–1,5), vast voor die dag.
 function dagSleutel() { try { return new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(new Date()); } catch (e) { return new Date().toISOString().slice(0, 10); } }
@@ -1134,11 +1143,29 @@ function voegNieuwToe(pool, alVerder) {
   if (!n) out.splice(Math.min(1, out.length), 0, Object.assign({}, rij[0]));
   return out;
 }
-function scheidDubbel(pool) {                         // niet hetzelfde nummer, en liefst niet dezelfde artiest, kort na elkaar
+// Kanaal-verrassingen (een willekeurig, liefst nog niet gehoord nummer uit het hele kanaal) gelijkmatig tussen de hits:
+// ongeveer 1 op de 3 nummers is nieuw, de rest zijn de bekende hits.
+function mengVerrassingen(pool) {
+  const lijsten = pool.filter((t) => t.list), hits = pool.filter((t) => !t.list);
+  if (!lijsten.length || !hits.length) return pool;
+  const out = []; let h = 0, l = 0;
+  while (h < hits.length || l < lijsten.length) {
+    for (let k = 0; k < 2 && h < hits.length; k++) out.push(hits[h++]);
+    if (l < lijsten.length) out.push(lijsten[l++]);
+  }
+  return out;
+}
+function scheidDubbel(pool) {                         // niet hetzelfde nummer, artiest of kanaal kort na elkaar
   const key = (t) => t.id || t.list;
   const art = (t) => artKey(t) || key(t);
-  const botst = (arr, n, t, ruimte) => {               // lijkt t op een van de vorige `ruimte` nummers?
-    for (let r = 1; r <= ruimte && n - r >= 0; r++) { const v = arr[n - r]; if (key(v) === key(t) || art(v) === art(t)) return true; }
+  const bronnen = new Set(pool.map((t) => t.bron).filter(Boolean)).size;
+  const bronRuimte = Math.min(5, Math.max(0, bronnen - 1));   // hetzelfde kanaal niet binnen 5 nummers (als dat kan)
+  const botst = (arr, n, t, ruimte) => {               // lijkt t op een van de vorige nummers?
+    for (let r = 1; r <= Math.max(ruimte, bronRuimte) && n - r >= 0; r++) {
+      const v = arr[n - r];
+      if (r <= ruimte && (key(v) === key(t) || art(v) === art(t))) return true;
+      if (t.bron && v.bron === t.bron && r <= Math.min(bronRuimte, ruimte + 2)) return true;
+    }
     return false;
   };
   for (const ruimte of [3, 1]) {                       // eerst 3 nummers ruimte proberen, anders minimaal 1
@@ -1190,7 +1217,7 @@ function buildLiveQueue() {
     if (inRange.length >= 2) pool = inRange;
   }
   shuffle(pool);
-  if (LIVE.volgorde === "populair") pool = rangschik(pool);
+  if (LIVE.volgorde === "populair") pool = mengVerrassingen(rangschik(pool));
   if (LIVE.volgorde === "bpm") {
     const known = pool.filter((t) => t.bpm), unknown = pool.filter((t) => !t.bpm);
     const out = [];
