@@ -652,6 +652,8 @@ body.tv .screen iframe { pointer-events: none; }   /* tv: video is alleen beeld,
 /* tv radio-modus: video klein en verstopt achter de foto (laagste kwaliteit, alleen geluid) */
 .tvfotolaag { display: none; }
 body.tv.tvfoto .tvfotolaag { display: block; position: fixed; inset: 0; z-index: 1; background: #000 center / cover no-repeat; }
+/* tv: achtergrond (foto of video) 40% gedimd */
+body.tv.tvfoto .tvfotolaag::after, body.tv .screen::after { content: ""; position: absolute; inset: 0; background: rgba(0,0,0,.4); pointer-events: none; z-index: 1; }
 body.tv.tvfoto .screen iframe { width: 256px !important; height: 144px !important; transform: none !important; }
 /* tv: speler kleiner maken en weer opblazen, zodat YouTube max. ±720p kiest (lichter voor tv-sticks en wifi) */
 body.tv .screen iframe { width: calc(100% / var(--yt-schaal, 1)); height: calc(100% / var(--yt-schaal, 1)); transform: scale(var(--yt-schaal, 1)); transform-origin: 0 0; }
