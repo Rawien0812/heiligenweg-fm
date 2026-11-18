@@ -654,7 +654,7 @@ body.tv .screen iframe { pointer-events: none; }   /* tv: video is alleen beeld,
 body.tv.tvfoto .tvfotolaag { display: block; position: fixed; inset: 0; z-index: 1; background: #000 center / cover no-repeat; }
 /* tv: achtergrond (foto of video) 40% gedimd */
 body.tv.tvfoto .tvfotolaag::after, body.tv .screen::after { content: ""; position: absolute; inset: 0; background: rgba(0,0,0,var(--tv-dim, .4)); pointer-events: none; z-index: 1; }
-body.tv.tvfoto .screen iframe { width: 256px !important; height: 144px !important; transform: none !important; }
+body.tv.tvfoto .screen iframe { width: 356px !important; height: 200px !important; transform: none !important; }   /* YouTube wil min. 200px hoog; blijft lage kwaliteit */
 /* tv: speler kleiner maken en weer opblazen, zodat YouTube max. ±720p kiest (lichter voor tv-sticks en wifi) */
 body.tv .screen iframe { width: calc(100% / var(--yt-schaal, 1)); height: calc(100% / var(--yt-schaal, 1)); transform: scale(var(--yt-schaal, 1)); transform-origin: 0 0; }
 body.tv .screen { position: fixed; inset: 0; z-index: 1; border: 0; border-radius: 0; box-shadow: none; aspect-ratio: auto; max-width: none; background: #000; }
@@ -2111,10 +2111,16 @@ function tvStartOrToggle() {
     if (document.documentElement.requestFullscreen && !document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
   } else $("play").click();
 }
+var volVoorTv = null;
 function applyTvMode() {
   const on = location.hash === "#tv";
   document.body.classList.toggle("tv", on);
-  if (!on) { clearInterval(clockTimer); clearTimeout(top5Timer); document.body.classList.remove("t5weg"); return; }
+  if (!on) {
+    clearInterval(clockTimer); clearTimeout(top5Timer); document.body.classList.remove("t5weg");
+    if (typeof kiesFade === "function") kiesFade();                       // overgang van de website terug
+    if (volVoorTv != null) { $("vol").value = volVoorTv; volVoorTv = null; applyVolume(); }   // volume van vóór de tv-modus terug
+    return;
+  }
   tvTop5Toon();
   $("tvLogo").textContent = (STATIONS.length && document.title) || "Heiligenweg FM";
   tvClock(); clearInterval(clockTimer); clockTimer = setInterval(tvClock, 10000);
@@ -2122,6 +2128,7 @@ function applyTvMode() {
   if (typeof kiesFade === "function") kiesFade();       // tv: eigen overgangstijd
   makeQr();
   tvToast("OK = afspelen/pauze · ← → = vorige/volgende · + − = volume");
+  if (volVoorTv == null) volVoorTv = +$("vol").value;
   $("vol").value = 100; prefs.muted = false; applyVolume();   // tv: radio op vol, volume via de afstandsbediening
   $("tvStart").focus({ preventScroll: true });
 }

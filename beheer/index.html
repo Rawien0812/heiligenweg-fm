@@ -1782,6 +1782,7 @@ document.addEventListener("click", (e) => { const g = e.target.closest("[data-ga
 function navAan(aan) {
   document.querySelectorAll(".nav button[data-page]").forEach((b) => { b.disabled = !aan; });
   if (!aan) {
+    document.body.classList.remove("op-overzicht");
     document.querySelectorAll(".nav button[data-page]").forEach((b) => b.removeAttribute("aria-current"));
     $("pageTitle").firstChild.textContent = "Inloggen "; $("pageSub").textContent = "Log in met je GitHub-sleutel om je radio te beheren."; $("crumbNu").textContent = "Inloggen";
   }
@@ -1857,7 +1858,8 @@ function renderOverzicht(zonderTeller) {
   $("ovNieuw").innerHTML = uit.length ? uit.slice(0, 5).map((n) => rij(n, `<span class="chip groen">${esc((n.blokken && n.blokken.length) ? n.blokken.join(", ") : "Alle blokken")}</span>`)).join("") : '<li class="leeg">Nog geen nieuwe nummers.</li>';
   $("ovTop5").innerHTML = top5.length ? top5.slice(0, 5).map((n, i) => rij(n, `<span class="chip">#${i + 1}</span>`)).join("") : '<li class="leeg">De Top 5 is leeg.</li>';
   // tip
-  const tip = !localStorage.getItem("hfm-ytkey") ? ["Zet je YouTube-sleutel erin", "Daarmee kun je artiesten opzoeken, hits ophalen en zoeken in YouTube vanuit je beheer.", "p-ytkey", "Naar YouTube-sleutel"]
+  let heeftSleutel = false; try { heeftSleutel = !!localStorage.getItem("hfm-ytkey"); } catch (e) {}
+  const tip = !heeftSleutel ? ["Zet je YouTube-sleutel erin", "Daarmee kun je artiesten opzoeken, hits ophalen en zoeken in YouTube vanuit je beheer.", "p-ytkey", "Naar YouTube-sleutel"]
     : metHits.length < alleBronnen.length ? ["Haal de hits van je kanalen op", `${alleBronnen.length - metHits.length} van je ${alleBronnen.length} bronnen hebben nog geen hits. Met hits draait LIVE de populairste nummers vaker.`, "p-live", "Naar LIVE-instellingen"]
     : !uit.length ? ["Zet een nieuw nummer in de schijnwerpers", "Nieuwe nummers komen een tijdje extra vaak voorbij op LIVE.", "p-nieuw", "Nieuw nummer toevoegen"]
     : ["Alles staat er netjes bij", "Je radio draait met hits, tijdblokken en nieuwe nummers. Haal af en toe opnieuw hits op voor de nieuwste nummers.", "p-live", "Naar LIVE-instellingen"];
