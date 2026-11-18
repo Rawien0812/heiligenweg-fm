@@ -366,6 +366,10 @@ body.op-overzicht .top h1 .pill { display: inline-block; }
 .rw-fav-kop svg { width: 17px; height: 17px; fill: none; stroke: #222; stroke-width: 2; stroke-linecap: round; }
 .rw-fav { display: flex; gap: 10px; overflow-x: auto; padding: 2px 16px 12px; scrollbar-width: none; }
 .rw-fav::-webkit-scrollbar { display: none; }
+.rw-fav { cursor: grab; user-select: none; -webkit-user-select: none; }
+.rw-fav.sleept { cursor: grabbing; }
+.rw-fav.sleept button { pointer-events: none; }
+.rw-fav button { cursor: pointer; }
 .rw-fav button { flex: 0 0 auto; min-width: 170px; display: flex; justify-content: space-between; align-items: center; gap: 14px; background: #fff; border: 1px solid #dcdcda; border-radius: 10px; padding: 12px 14px; color: #111; font-weight: 600; }
 .rw-fav button b { font: 800 1.05rem/1 var(--body); font-variant-numeric: tabular-nums; }
 .rw-fav button.aan { border-color: #111; box-shadow: 0 0 0 1px #111; }
@@ -2115,7 +2119,10 @@ function rwRender() {
   if ($("rwFav").dataset.h !== favHtml) {
     $("rwFav").dataset.h = favHtml; $("rwFav").innerHTML = favHtml;
     const k = $("rwFav").querySelector("button.aan");                        // gekozen blok in beeld schuiven
-    if (k) $("rwFav").scrollTo({ left: Math.max(0, k.offsetLeft - $("rwFav").offsetLeft - 16), behavior: "smooth" });
+    if (k) {                                                                   // alleen schuiven als het blok (deels) buiten beeld staat
+      const f = $("rwFav"), fr = f.getBoundingClientRect(), kr = k.getBoundingClientRect();
+      if (kr.left < fr.left || kr.right > fr.right) f.scrollTo({ left: Math.max(0, kr.left - fr.left + f.scrollLeft - 16), behavior: "smooth" });
+    }
   }
   const ov = +(s.overgang ?? 5) || 0;
   if (document.activeElement !== $("rwOvergang")) $("rwOvergang").value = ov;
@@ -2126,7 +2133,30 @@ function rwRender() {
   const hoek = -135 + RW.vol * 2.7, r = 26;
   $("rwKnobStip").style.transform = `translate(${(Math.sin(hoek * Math.PI / 180) * r).toFixed(1)}px, ${(-Math.cos(hoek * Math.PI / 180) * r).toFixed(1)}px)`;
 }
-$("rwFav").addEventListener("click", (e) => { const k = e.target.closest("[data-rwblok]"); if (k) rwAfstemmen(+k.dataset.rwblok, true); });
+$("rwFav").addEventListener("click", (e) => {
+  if (rwSleep.versleept) { rwSleep.versleept = false; e.preventDefault(); return; }   // na slepen geen klik
+  const k = e.target.closest("[data-rwblok]"); if (k) rwAfstemmen(+k.dataset.rwblok, true);
+});
+// Tijdblokken met de muis verschuiven: slepen, of het muiswieltje gebruiken
+const rwSleep = { aan: false, x: 0, links: 0, versleept: false };
+$("rwFav").addEventListener("pointerdown", (e) => {
+  if (e.pointerType !== "mouse" || e.button !== 0) return;               // vinger: gewoon de browser laten schuiven
+  rwSleep.aan = true; rwSleep.x = e.clientX; rwSleep.links = $("rwFav").scrollLeft; rwSleep.versleept = false;
+});
+window.addEventListener("pointermove", (e) => {
+  if (!rwSleep.aan) return;
+  const dx = e.clientX - rwSleep.x;
+  if (Math.abs(dx) > 4) { rwSleep.versleept = true; $("rwFav").classList.add("sleept"); }
+  if (rwSleep.versleept) $("rwFav").scrollLeft = rwSleep.links - dx;
+});
+window.addEventListener("pointerup", () => { if (!rwSleep.aan) return; rwSleep.aan = false; $("rwFav").classList.remove("sleept"); });
+$("rwFav").addEventListener("wheel", (e) => {
+  const f = $("rwFav"); if (f.scrollWidth <= f.clientWidth) return;
+  const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+  const kan = d < 0 ? f.scrollLeft > 0 : f.scrollLeft < f.scrollWidth - f.clientWidth - 1;
+  if (!kan) return;                                                        // aan het eind: de pagina mag weer scrollen
+  e.preventDefault(); f.scrollLeft += d;
+}, { passive: false });
 $("rwDialL").addEventListener("click", () => rwAfstemmen(RW.blok - 1, true));
 $("rwDialR").addEventListener("click", () => rwAfstemmen(RW.blok + 1, true));
 $("rwVB").addEventListener("click", () => rwAfstemmen(RW.blok - 1, true));
