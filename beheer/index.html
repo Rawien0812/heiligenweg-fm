@@ -313,6 +313,95 @@ main.wrap > *, #editor, #editor > div, section.panel, .panel-body, .zender, .car
 code { overflow-wrap: anywhere; }
 .top h1 .pill { display: none; }
 body.op-overzicht .top h1 .pill { display: inline-block; }
+/* ---------- Mini-radio (overzicht) ---------- */
+.rw { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); background: #ececeb; border: 1px solid #dcdcda; border-radius: 22px;
+  box-shadow: 0 1px 0 #fff inset, 0 10px 30px rgba(16,24,18,.08); overflow: hidden; }
+.rw button { font: inherit; }
+.rw-l { padding: 16px; display: grid; gap: 12px; border-right: 1px solid #d6d6d3; min-width: 0; }
+.rw-r { display: grid; grid-template-rows: auto auto auto 1fr; min-width: 0; }
+.rw-scherm { display: grid; grid-template-columns: 42% minmax(0, 1fr); gap: 12px; background: #1d1d1f; border-radius: 14px; padding: 8px; min-height: 140px; }
+.rw-lcd { background: linear-gradient(160deg, #b9d3ee, #9dbde0); border-radius: 9px; padding: 9px 10px; display: flex; flex-direction: column; justify-content: space-between; color: #0e1a28; box-shadow: inset 0 0 0 1px rgba(0,0,0,.15); }
+.rw-tag { display: flex; gap: 5px; align-items: center; }
+.rw-tag b { font: 800 .74rem/1 var(--body); border: 2px solid #0e1a28; border-radius: 4px; padding: 2px 5px; letter-spacing: .04em; }
+.rw-tag span { font: 800 .74rem/1 var(--body); border: 2px solid #0e1a28; border-radius: 4px; padding: 2px 5px; min-width: 20px; text-align: center; }
+.rw-tijd { display: flex; align-items: baseline; gap: 4px; }
+.rw-tijd span { font: 800 clamp(1.9rem, 3.6vw, 2.7rem)/1 var(--body); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.rw-tijd small { font: 700 .72rem/1 var(--body); }
+.rw-info { position: relative; display: flex; flex-direction: column; gap: 4px; color: #fff; padding: 6px 4px 6px 0; min-width: 0; }
+.rw-info small { font: 700 .62rem/1 var(--body); letter-spacing: .1em; color: #9a9aa0; }
+.rw-titel { overflow: hidden; white-space: nowrap; mask-image: linear-gradient(90deg, #000 85%, transparent); -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); }
+.rw-titel span { display: inline-block; font: 800 1.12rem/1.25 var(--body); padding-right: 2.5em; }
+.rw-titel.loopt span { animation: rwLoop var(--rw-duur, 12s) linear infinite; }
+@keyframes rwLoop { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.rw-sub { font-size: .95rem; color: #8e8e95; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rw-timer { position: absolute; right: 2px; bottom: 2px; display: inline-flex; gap: 6px; align-items: center; background: #2c2c2f; border: 1px solid #3a3a3e; border-radius: 9px; padding: 6px 10px; font: 600 .82rem/1 var(--body); color: #fff; }
+.rw-timer svg { width: 15px; height: 15px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; }
+.rw-dial { display: grid; grid-template-columns: 30px minmax(0, 1fr) 30px; gap: 8px; align-items: center; }
+.rw-pijl { width: 30px; height: 30px; border-radius: 8px; background: #fff; border: 1px solid #d6d6d3; color: #222; font-size: 1.2rem; line-height: 1; padding: 0; }
+.rw-schaal { position: relative; height: 54px; cursor: pointer; }
+.rw-schaal .tk { position: absolute; bottom: 20px; width: 1px; background: #8d8d8d; }
+.rw-schaal .lb { position: absolute; bottom: 0; transform: translateX(-50%); font: 600 .78rem/1 var(--body); color: #333; }
+.rw-schaal .mk { position: absolute; top: 2px; transform: translateX(-50%); width: 9px; height: 9px; background: #8d8d8d; clip-path: polygon(0 0, 100% 0, 100% 60%, 50% 100%, 0 60%); }
+.rw-schaal .mk.aan { background: var(--sr-red); }
+.rw-schaal .naald { position: absolute; top: -4px; bottom: -4px; width: 2px; background: #111; transform: translateX(-1px); transition: left .35s ease; }
+.rw-schaal .naald::after { content: ""; position: absolute; left: -3px; top: 24px; width: 8px; height: 12px; border-radius: 3px; background: #111; }
+.rw-onder { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 10px; align-items: center; }
+.rw-rond { width: 44px; height: 44px; border-radius: 50%; background: #fff; border: 1px solid #d6d6d3; color: #222; display: grid; place-items: center; font-size: 1.1rem; padding: 0; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+.rw-rond svg { width: 20px; height: 20px; fill: none; stroke: #222; stroke-width: 2; stroke-linecap: round; }
+.rw-seg { display: flex; justify-content: center; align-items: center; gap: 6px; height: 44px; border-radius: 999px; background: #dcdcda; box-shadow: inset 0 1px 3px rgba(0,0,0,.12); font: 800 1rem/1 var(--body); color: #666; }
+.rw-seg button, .rw-seg a { background: none; border: 0; color: #888; padding: 6px 8px; font: inherit; text-decoration: none; border-radius: 999px; }
+.rw-seg button[aria-pressed="true"] { color: #222; }
+.rw-seg a:hover, .rw-seg button:hover { color: #222; }
+.rw-top { display: grid; grid-template-columns: minmax(0, 1fr) 80px; gap: 10px; padding: 16px 16px 6px; }
+.rw-gebied { display: flex; align-items: center; gap: 10px; background: #f4f4f3; border: 1px solid #d6d6d3; border-radius: 12px; padding: 14px; color: #444; min-width: 0; text-align: left; }
+.rw-gebied span { font: 600 .82rem/1 var(--body); letter-spacing: .02em; color: #777; }
+.rw-gebied b { margin-left: auto; font-weight: 700; color: #222; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rw-gebied i { font-style: normal; color: #444; }
+.rw-stereo { display: grid; place-items: center; gap: 2px; background: #d6d6d4; border: 1px solid #c8c8c5; border-radius: 12px; color: #222; padding: 8px 0; box-shadow: inset 0 1px 3px rgba(0,0,0,.08); }
+.rw-stereo svg { width: 22px; height: 22px; fill: none; stroke: #222; stroke-width: 2; }
+.rw-stereo small { font: 700 .66rem/1 var(--body); letter-spacing: .06em; color: #555; }
+.rw-fav-kop { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px 6px; }
+.rw-fav-kop b { font: 800 1.08rem/1.2 var(--body); color: #111; }
+.rw-fav-kop button { display: inline-flex; gap: 6px; align-items: center; background: none; border: 0; color: #222; font-weight: 600; padding: 0; }
+.rw-fav-kop svg { width: 17px; height: 17px; fill: none; stroke: #222; stroke-width: 2; stroke-linecap: round; }
+.rw-fav { display: flex; gap: 10px; overflow-x: auto; padding: 2px 16px 12px; scrollbar-width: none; }
+.rw-fav::-webkit-scrollbar { display: none; }
+.rw-fav button { flex: 0 0 auto; min-width: 170px; display: flex; justify-content: space-between; align-items: center; gap: 14px; background: #fff; border: 1px solid #dcdcda; border-radius: 10px; padding: 12px 14px; color: #111; font-weight: 600; }
+.rw-fav button b { font: 800 1.05rem/1 var(--body); font-variant-numeric: tabular-nums; }
+.rw-fav button.aan { border-color: #111; box-shadow: 0 0 0 1px #111; }
+.rw-fav button.nu::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--sr-red); margin-right: -6px; }
+.rw-ctrl { border-top: 1px solid #d6d6d3; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto; gap: 8px 14px; padding: 12px 16px 14px; align-items: center; }
+.rw-tempo { display: grid; grid-template-columns: auto minmax(60px, 1fr) auto auto; gap: 10px; align-items: center; font-weight: 600; color: #222; }
+.rw-tempo input { accent-color: #4a90e2; width: 100%; }
+.rw-tempo output { font: 700 .8rem/1 var(--body); color: #555; min-width: 2.6em; }
+.rw-tempo button { background: none; border: 0; color: #222; font-weight: 600; padding: 0; white-space: nowrap; }
+.rw-knoppen { display: flex; justify-content: space-between; gap: 6px; }
+.rw-knoppen button { background: none; border: 0; padding: 6px; border-radius: 8px; color: #111; display: grid; place-items: center; }
+.rw-knoppen button:hover { background: #e0e0de; }
+.rw-knoppen svg { width: 22px; height: 22px; fill: #111; }
+.rw-pp .i-z, .rw.speelt .rw-pp .i-p { display: none; }
+.rw.speelt .rw-pp .i-z { display: block; }
+.rw-volume { grid-column: 2; grid-row: 1 / span 2; position: relative; width: 92px; height: 92px; }
+.rw-knob { position: absolute; inset: 12px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #3a3a3d, #111 70%); border: 0; box-shadow: 0 4px 10px rgba(0,0,0,.35), inset 0 1px 1px rgba(255,255,255,.15); display: grid; place-items: center; padding: 0; }
+.rw-knob svg { width: 26px; height: 26px; fill: #fff; stroke: #fff; stroke-width: 0; }
+.rw-knob svg .g { fill: none; stroke-width: 2; stroke-linecap: round; }
+.rw-knob.stil svg .g { opacity: .2; }
+.rw-knob i { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: #fff; left: 50%; top: 50%; margin: -2.5px; }
+.rw-volume::before { content: ""; position: absolute; inset: 0; border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0 4deg, #222 4deg 6deg, transparent 6deg 86deg, #222 86deg 88deg, transparent 88deg 176deg, #222 176deg 178deg, transparent 178deg 266deg, #222 266deg 268deg, transparent 268deg);
+  -webkit-mask: radial-gradient(circle, transparent 41px, #000 42px); mask: radial-gradient(circle, transparent 41px, #000 42px); }
+.rw-min, .rw-plus { position: absolute; background: none; border: 0; font: 700 1.2rem/1 var(--body); color: #222; padding: 2px 4px; }
+.rw-min { left: -6px; bottom: -6px; } .rw-plus { right: -6px; top: -6px; }
+.rw-speler { position: absolute; width: 200px; height: 200px; left: -9999px; top: 0; opacity: 0; pointer-events: none; }
+@media (max-width: 1100px) { .rw { grid-template-columns: minmax(0, 1fr); } .rw-l { border-right: 0; border-bottom: 1px solid #d6d6d3; } }
+@media (max-width: 520px) {
+  .rw-scherm { grid-template-columns: minmax(0, 1fr); }
+  .rw-timer { position: static; align-self: flex-start; margin-top: 4px; }
+  .rw-ctrl { grid-template-columns: minmax(0, 1fr); }
+  .rw-volume { grid-column: 1; grid-row: auto; justify-self: center; }
+  .rw-tempo { grid-template-columns: auto minmax(60px, 1fr) auto; }
+  .rw-tempo button { display: none; }
+}
 /* ---------- Overzicht ---------- */
 #overzicht { background: none; border: 0; box-shadow: none; padding: 0; display: grid; gap: 18px; }
 .tabs { display: flex; gap: 18px; border-bottom: 1px solid var(--line); }
@@ -461,6 +550,59 @@ body.op-overzicht .top h1 .pill { display: inline-block; }
       </div>
       <section class="panel" id="overzicht" data-key="overzicht">
         <div class="tabs"><span class="on">Vandaag</span><span id="ovDatum"></span></div>
+        <!-- Mini-radio: tijdblokken voorbeluisteren — © Rawien Paltoe -->
+        <div class="rw" id="radioWidget">
+          <div class="rw-l">
+            <div class="rw-scherm">
+              <div class="rw-lcd"><div class="rw-tag"><b>LIVE</b><span id="rwNr">1</span></div><div class="rw-tijd"><span id="rwTijd">--:--</span><small>UUR</small></div></div>
+              <div class="rw-info">
+                <small id="rwLabel">NU OP HET PROGRAMMA</small>
+                <div class="rw-titel"><span id="rwTitel">–</span></div>
+                <div class="rw-sub" id="rwSub"></div>
+                <span class="rw-timer"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg><span id="rwTimer">–</span></span>
+              </div>
+            </div>
+            <div class="rw-dial">
+              <button type="button" class="rw-pijl" id="rwDialL" aria-label="Vorig blok">‹</button>
+              <div class="rw-schaal" id="rwSchaal" title="Klik om af te stemmen op een tijdblok"></div>
+              <button type="button" class="rw-pijl" id="rwDialR" aria-label="Volgend blok">›</button>
+            </div>
+            <div class="rw-onder">
+              <button type="button" class="rw-rond" data-ga="p-nieuw" title="Nieuwe nummers">★</button>
+              <div class="rw-seg"><button type="button" id="rwLive" aria-pressed="true">LIVE</button><span>·</span><a href="../tv/" target="_blank" rel="noopener">TV</a></div>
+              <button type="button" class="rw-rond" data-ga="p-live" title="LIVE-instellingen"><svg viewBox="0 0 24 24"><path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4"/></svg></button>
+            </div>
+          </div>
+          <div class="rw-r">
+            <div class="rw-top">
+              <button type="button" class="rw-gebied" data-ga="p-teksten"><span>TIJDZONE</span><b id="rwZone">–</b><i>›</i></button>
+              <button type="button" class="rw-stereo" data-ga="p-tv"><svg viewBox="0 0 24 24"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/></svg><small>TV</small></button>
+            </div>
+            <div class="rw-fav-kop"><b>Tijdblokken · <span id="rwAantal">0</span></b><button type="button" data-ga="p-blokken">Bewerken <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg></button></div>
+            <div class="rw-fav" id="rwFav"></div>
+            <div class="rw-ctrl">
+              <div class="rw-tempo">
+                <label for="rwOvergang">Overgang</label>
+                <input type="range" id="rwOvergang" min="0" max="10" step="1" aria-label="Overgang tussen nummers in seconden">
+                <output id="rwOvergangW">0 s</output>
+                <button type="button" data-ga="p-live">Instellingen ›</button>
+              </div>
+              <div class="rw-knoppen">
+                <button type="button" id="rwVB" title="Vorig tijdblok"><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM19 5v14L9 12z"/></svg></button>
+                <button type="button" id="rwVN" title="Vorig nummer"><svg viewBox="0 0 24 24"><path d="M11 6v12L3 12zM20 6v12l-8-6z"/></svg></button>
+                <button type="button" id="rwPP" title="Voorbeluisteren / pauze" class="rw-pp"><svg viewBox="0 0 24 24" class="i-p"><path d="M7 5v14l11-7z"/></svg><svg viewBox="0 0 24 24" class="i-z"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg></button>
+                <button type="button" id="rwNN" title="Volgend nummer"><svg viewBox="0 0 24 24"><path d="M13 6v12l8-6zM4 6v12l8-6z"/></svg></button>
+                <button type="button" id="rwNB" title="Volgend tijdblok"><svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM5 5v14l10-7z"/></svg></button>
+              </div>
+              <div class="rw-volume">
+                <button type="button" class="rw-min" id="rwVolMin" aria-label="Zachter">−</button>
+                <button type="button" class="rw-knob" id="rwKnob" aria-label="Geluid aan/uit"><i id="rwKnobStip"></i><svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path class="g" d="M15.5 9a4.5 4.5 0 0 1 0 6M18.5 6a9 9 0 0 1 0 12"/></svg></button>
+                <button type="button" class="rw-plus" id="rwVolPlus" aria-label="Harder">+</button>
+              </div>
+            </div>
+          </div>
+          <div class="rw-speler" aria-hidden="true"><div id="rwSpeler"></div></div>
+        </div>
         <div class="stats" id="ovStats"></div>
         <div class="ov-grid">
           <div class="kaart">
@@ -1869,7 +2011,148 @@ function renderOverzicht(zonderTeller) {
   const c = (k, v) => { const el = document.querySelector(`.nav button[data-page="${k}"] .cnt`); if (el) el.textContent = v || ""; };
   c("p-blokken", blokken.length); c("p-nieuw", uit.length); c("p-top5", top5.length); c("p-algemeen", (live.bronnen || []).length);
   if (!zonderTeller) haalTeller();
+  rwRender();
 }
+
+// ---------- Mini-radio op het overzicht: tijdblokken voorbeluisteren — © Rawien Paltoe ----------
+const RW = { blok: -1, live: true, rij: [], pos: -1, speler: null, klaar: false, speelt: false, vol: 70, stil: false, wilSpelen: false };
+const rwBlokken = () => ((data && data.site && data.site.live && data.site.live.blokken) || []).filter((b) => b && b.naam)
+  .slice().sort((a, b) => minVan(a.van) - minVan(b.van));
+const rwEind = (b) => (b.tot && b.tot !== "00:00" ? minVan(b.tot) : 1440);
+const rwIn = (b, m) => { const v = minVan(b.van), t = rwEind(b); return v <= t ? m >= v && m < t : m >= v || m < t; };
+const rwNuMin = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
+const rwDuur = (min) => { min = Math.max(0, Math.round(min)); const u = Math.floor(min / 60), m = min % 60; return u ? `${u} u ${m} min` : `${m} min`; };
+function rwNummers(b) {                                   // hits van het blok; leeg blok = algemene bronnen
+  const live = data.site.live || {};
+  const uit = (bronnen) => (bronnen || []).flatMap((n) => (n.populair || []).filter((x) => x.video).map((x) => ({ id: x.video, t: x.titel, a: x.artiest || n.titel || "" })));
+  let r = uit(b && b.bronnen);
+  ((b && b.artiesten) || []).forEach((a) => (a.nummers || []).filter((x) => x.video).forEach((x) => r.push({ id: x.video, t: x.titel, a: x.artiest || a.naam })));
+  if (!r.length) r = uit(live.bronnen);
+  if (!r.length) r = [].concat((b && b.bronnen) || [], live.bronnen || []).filter((n) => n.video).map((n) => ({ id: n.video, t: n.titel, a: n.artiest || "" }));
+  for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]]; }
+  return r;
+}
+function rwAfstemmen(i, handmatig) {
+  const bl = rwBlokken(); if (!bl.length) return;
+  RW.blok = ((i % bl.length) + bl.length) % bl.length;
+  if (handmatig) RW.live = false;
+  RW.rij = rwNummers(bl[RW.blok]); RW.pos = -1;
+  if (RW.speelt || RW.wilSpelen) rwSpeel(1); else rwRender();
+}
+function rwNaarNu() { const bl = rwBlokken(), m = rwNuMin(); RW.live = true; const i = bl.findIndex((b) => rwIn(b, m)); rwAfstemmen(i >= 0 ? i : 0, false); }
+function rwLaadApi() {
+  if (window.YT && window.YT.Player) return Promise.resolve();
+  return new Promise((ok) => {
+    const vorige = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = () => { if (vorige) vorige(); ok(); };
+    if (!document.querySelector('script[src*="youtube.com/iframe_api"]')) { const s = document.createElement("script"); s.src = "https://www.youtube.com/iframe_api"; document.head.appendChild(s); }
+  });
+}
+async function rwSpeel(stap) {
+  if (!RW.rij.length) { $("rwSub").textContent = "Geen nummers met hits in dit blok. Haal eerst hits op."; return; }
+  RW.pos = ((RW.pos + stap) % RW.rij.length + RW.rij.length) % RW.rij.length;
+  const n = RW.rij[RW.pos];
+  RW.wilSpelen = true; rwRender();
+  await rwLaadApi();
+  if (!RW.speler) {
+    RW.speler = new YT.Player("rwSpeler", { width: 200, height: 200, videoId: n.id, playerVars: { autoplay: 1, playsinline: 1, controls: 0, rel: 0 },
+      events: {
+        onReady: (e) => { RW.klaar = true; e.target.setVolume(RW.vol); if (RW.stil) e.target.mute(); e.target.playVideo(); },
+        onStateChange: (e) => { RW.speelt = e.data === YT.PlayerState.PLAYING || e.data === YT.PlayerState.BUFFERING; if (e.data === YT.PlayerState.ENDED) rwSpeel(1); else rwRender(); },
+        onError: () => setTimeout(() => rwSpeel(1), 400),   // niet insluitbaar of weg: volgende
+      } });
+  } else if (RW.klaar) RW.speler.loadVideoById(n.id);
+}
+function rwPauze() { RW.wilSpelen = false; try { RW.speler.pauseVideo(); } catch (e) {} RW.speelt = false; rwRender(); }
+function rwVolume(d) {
+  RW.vol = Math.max(0, Math.min(100, RW.vol + d)); if (d > 0) RW.stil = false;
+  try { RW.speler.setVolume(RW.vol); RW.stil ? RW.speler.mute() : RW.speler.unMute(); } catch (e) {}
+  rwRender();
+}
+function rwRender() {
+  if (!$("radioWidget") || !data || !data.site) return;
+  const bl = rwBlokken(), m = rwNuMin(), s = data.site;
+  if (RW.blok < 0 || RW.blok >= bl.length || (RW.live && bl[RW.blok] && !rwIn(bl[RW.blok], m))) {
+    const i = bl.findIndex((b) => rwIn(b, m)); RW.blok = i >= 0 ? i : 0; if (!RW.rij.length && bl.length) RW.rij = rwNummers(bl[RW.blok]);
+  }
+  const b = bl[RW.blok];
+  const nu = new Date();
+  $("rwNr").textContent = b ? RW.blok + 1 : "–";
+  $("rwTijd").textContent = RW.live || !b ? nu.toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" }) : (b.van || "00:00");
+  const n = RW.pos >= 0 && (RW.speelt || RW.wilSpelen) ? RW.rij[RW.pos] : null;
+  $("rwLabel").textContent = n ? (RW.speelt ? "NU AAN HET VOORBELUISTEREN" : "LADEN…") : RW.live ? "NU OP HET PROGRAMMA" : "AFGESTEMD OP";
+  const titel = n ? (n.t || "Nummer") : b ? b.naam : "Nog geen tijdblokken";
+  const span = $("rwTitel"), tEl = span.parentElement;
+  if (span.dataset.t !== titel) {
+    span.dataset.t = titel; span.textContent = titel;
+    tEl.classList.remove("loopt");
+    requestAnimationFrame(() => { if (span.scrollWidth > tEl.clientWidth + 4) { span.textContent = titel + "  " + titel; tEl.style.setProperty("--rw-duur", Math.max(8, titel.length * 0.35) + "s"); tEl.classList.add("loopt"); } });
+  }
+  $("rwSub").textContent = n ? [b && b.naam, n.a].filter(Boolean).join(" · ") : b ? (b.omschrijving || `${(b.bronnen || []).length} bronnen · ${(b.artiesten || []).length} artiesten`) : "Maak ze aan onder Tijdblokken";
+  if (b) {
+    const aan = rwIn(b, m), v = minVan(b.van), e = rwEind(b);
+    $("rwTimer").textContent = aan ? `nog ${rwDuur((e - m + 1440) % 1440 || 1440)}` : `over ${rwDuur((v - m + 1440) % 1440)}`;
+  } else $("rwTimer").textContent = "–";
+  // schaal: 24 uur
+  const sc = $("rwSchaal");
+  if (!sc.dataset.klaar) {
+    let h = "";
+    for (let u = 0; u <= 24; u++) {
+      const x = (u / 24 * 100).toFixed(3);
+      h += `<span class="tk" style="left:${x}%;height:${u % 3 === 0 ? 14 : 7}px"></span>`;
+      if (u % 3 === 0) h += `<span class="lb" style="left:${x}%">${String(u).padStart(2, "0")}</span>`;
+      if (u < 24) for (let q = 1; q < 4; q++) h += `<span class="tk" style="left:${((u + q / 4) / 24 * 100).toFixed(3)}%;height:4px"></span>`;
+    }
+    sc.innerHTML = h + '<span class="naald" id="rwNaald"></span><span id="rwMarks"></span>'; sc.dataset.klaar = "1";
+  }
+  $("rwMarks").innerHTML = bl.map((x, i) => `<span class="mk${i === RW.blok ? " aan" : ""}" style="left:${(minVan(x.van) / 14.4).toFixed(2)}%" title="${esc(x.naam)} ${esc(x.van || "00:00")}"></span>`).join("");
+  const naaldMin = RW.live || !b ? m : (() => { const v = minVan(b.van), e = rwEind(b); return v <= e ? (v + e) / 2 : ((v + e + 1440) / 2) % 1440; })();
+  $("rwNaald").style.left = (naaldMin / 14.4).toFixed(2) + "%";
+  // rechts
+  $("rwZone").textContent = s.tijdzone === "luisteraar" ? "Eigen tijd luisteraar" : s.tijdzone === "America/Paramaribo" ? "Suriname" : s.tijdzone ? "Nederland" : "Nederland";
+  $("rwAantal").textContent = bl.length;
+  const favHtml = bl.map((x, i) => `<button type="button" data-rwblok="${i}" class="${i === RW.blok ? "aan" : ""}${rwIn(x, m) ? " nu" : ""}">${esc(x.naam)}<b>${esc(x.van || "00:00")}</b></button>`).join("");
+  if ($("rwFav").dataset.h !== favHtml) {
+    $("rwFav").dataset.h = favHtml; $("rwFav").innerHTML = favHtml;
+    const k = $("rwFav").querySelector("button.aan");                        // gekozen blok in beeld schuiven
+    if (k) $("rwFav").scrollTo({ left: Math.max(0, k.offsetLeft - $("rwFav").offsetLeft - 16), behavior: "smooth" });
+  }
+  const ov = +(s.overgang ?? 5) || 0;
+  if (document.activeElement !== $("rwOvergang")) $("rwOvergang").value = ov;
+  $("rwOvergangW").textContent = ov ? ov + " s" : "uit";
+  $("rwLive").setAttribute("aria-pressed", String(RW.live));
+  $("radioWidget").classList.toggle("speelt", RW.speelt || RW.wilSpelen);
+  $("rwKnob").classList.toggle("stil", RW.stil || RW.vol === 0);
+  const hoek = -135 + RW.vol * 2.7, r = 26;
+  $("rwKnobStip").style.transform = `translate(${(Math.sin(hoek * Math.PI / 180) * r).toFixed(1)}px, ${(-Math.cos(hoek * Math.PI / 180) * r).toFixed(1)}px)`;
+}
+$("rwFav").addEventListener("click", (e) => { const k = e.target.closest("[data-rwblok]"); if (k) rwAfstemmen(+k.dataset.rwblok, true); });
+$("rwDialL").addEventListener("click", () => rwAfstemmen(RW.blok - 1, true));
+$("rwDialR").addEventListener("click", () => rwAfstemmen(RW.blok + 1, true));
+$("rwVB").addEventListener("click", () => rwAfstemmen(RW.blok - 1, true));
+$("rwNB").addEventListener("click", () => rwAfstemmen(RW.blok + 1, true));
+$("rwVN").addEventListener("click", () => rwSpeel(-1));
+$("rwNN").addEventListener("click", () => rwSpeel(1));
+$("rwPP").addEventListener("click", () => { if (RW.speelt || RW.wilSpelen) rwPauze(); else if (RW.speler && RW.klaar && RW.pos >= 0) { RW.wilSpelen = true; RW.speler.playVideo(); rwRender(); } else rwSpeel(1); });
+$("rwLive").addEventListener("click", rwNaarNu);
+$("rwSchaal").addEventListener("click", (e) => {
+  const r = $("rwSchaal").getBoundingClientRect(), min = Math.max(0, Math.min(1439, (e.clientX - r.left) / r.width * 1440));
+  const i = rwBlokken().findIndex((b) => rwIn(b, min)); if (i >= 0) rwAfstemmen(i, true);
+});
+$("rwVolMin").addEventListener("click", () => rwVolume(-10));
+$("rwVolPlus").addEventListener("click", () => rwVolume(10));
+$("rwKnob").addEventListener("click", () => { RW.stil = !RW.stil; rwVolume(0); });
+$("rwKnob").closest(".rw-volume").addEventListener("wheel", (e) => { e.preventDefault(); rwVolume(e.deltaY < 0 ? 5 : -5); }, { passive: false });
+$("rwOvergang").addEventListener("input", () => {
+  const keuzes = [0, 3, 5, 8, 10], v = +$("rwOvergang").value;            // zelfde keuzes als bij LIVE-instellingen
+  const best = keuzes.reduce((x, y) => (Math.abs(y - v) < Math.abs(x - v) ? y : x));
+  $("rwOvergang").value = best;
+  if (String(data.site.overgang) === String(best)) return;
+  data.site.overgang = String(best);
+  if ($("s-overgang")) $("s-overgang").value = String(best);
+  setDirty(true);
+});
+setInterval(() => { if (huidigePagina === "overzicht" && !document.hidden) rwRender(); }, 15000);
 
 $("loginForm").addEventListener("submit", (e) => { e.preventDefault(); login($("token").value); });
 const saved = store.get();
