@@ -651,6 +651,10 @@ body.tv .radio { background: none; border: 0; box-shadow: none; padding: 0; disp
 body.tv .screen iframe { pointer-events: none; }   /* tv: video is alleen beeld, niet aanklikbaar */
 /* tv radio-modus: video klein en verstopt achter de foto (laagste kwaliteit, alleen geluid) */
 .tvfotolaag { display: none; }
+/* tv: startbeeld (vervangbaar via beheer → TV) tot de muziek speelt */
+.tvintro { display: none; }
+body.tv .tvintro:not([hidden]) { display: block; position: fixed; inset: 0; z-index: 20; background: #000 center / cover no-repeat; transition: opacity .9s ease; }
+body.tv .tvintro.weg { opacity: 0; }
 body.tv.tvfoto .tvfotolaag { display: block; position: fixed; inset: 0; z-index: 1; background: #000 center / cover no-repeat; }
 /* tv: achtergrond (foto of video) 40% gedimd */
 body.tv.tvfoto .tvfotolaag::after, body.tv .screen::after { content: ""; position: absolute; inset: 0; background: rgba(0,0,0,var(--tv-dim, .4)); pointer-events: none; z-index: 1; }
@@ -889,6 +893,7 @@ body.kop-uit .strip::after, body.kop-uit .fringe, body.kop-uit .pennant, body.ko
 <div class="flagbar" aria-hidden="true"></div>
 <!-- Tv-modus (#tv): balk bovenaan en startknop -->
 <div class="tvfotolaag" id="tvFoto" aria-hidden="true"></div>
+<div class="tvintro" id="tvIntro" aria-hidden="true" hidden></div>
 <div class="tvbar" id="tvbar" aria-hidden="true">
   <span class="tvlogo" id="tvLogo">Heiligenweg FM</span>
   <span class="tvclock" id="tvClock"></span>
@@ -1409,6 +1414,7 @@ async function loadZenders() {
   }
   LIVE = Object.assign({ aan: true, knop: "Live", onder: "Alles door elkaar", volgorde: "mix", bpm_van: "", bpm_tot: "" }, (data.site && data.site.live) || {});
   TV_FOTO = !(data.site && data.site.tvbeeld === "video");
+  if (typeof tvIntroVersie === "function") tvIntroVersie(data.site && data.site.tvstart_v);
   // beheer → TV: dimmen
   const pct = (v, std) => { const n = parseFloat(v); return isFinite(n) ? Math.max(0, Math.min(90, n)) / 100 : std; };
   const si = data.site || {};
@@ -2112,6 +2118,26 @@ function tvStartOrToggle() {
   } else $("play").click();
 }
 var volVoorTv = null;
+// Tv-startbeeld: images/tv-start.jpg (vervangen via beheer → TV). Versie in zenders.json, zodat de tv het nieuwe beeld meteen ophaalt.
+let introKlaar = false;
+function tvIntroUrl(v) { return `images/tv-start.jpg${v ? "?v=" + encodeURIComponent(v) : ""}`; }
+function tvIntroStart() {
+  if (introKlaar) return; introKlaar = true;
+  const el = $("tvIntro"); let v = ""; try { v = localStorage.getItem("hfm-tvstart-v") || ""; } catch (e) {}
+  el.style.backgroundImage = `url("${tvIntroUrl(v)}")`; el.hidden = false;
+  const t0 = Date.now();
+  const tik = setInterval(() => {
+    const lang = Date.now() - t0;
+    if ((playing && lang > 3000) || lang > 15000 || !isTv()) {        // muziek speelt (min. 3 s in beeld) of na 15 s: weg
+      clearInterval(tik); el.classList.add("weg"); setTimeout(() => { el.hidden = true; }, 950);
+    }
+  }, 250);
+}
+function tvIntroVersie(v) {                            // na het laden van zenders.json: nieuwer startbeeld? meteen tonen
+  if (!v) return;
+  let oud = ""; try { oud = localStorage.getItem("hfm-tvstart-v") || ""; localStorage.setItem("hfm-tvstart-v", String(v)); } catch (e) {}
+  if (String(v) !== oud && !$("tvIntro").hidden) $("tvIntro").style.backgroundImage = `url("${tvIntroUrl(v)}")`;
+}
 function applyTvMode() {
   const on = location.hash === "#tv";
   document.body.classList.toggle("tv", on);
@@ -2124,6 +2150,7 @@ function applyTvMode() {
   tvTop5Toon();
   $("tvLogo").textContent = (STATIONS.length && document.title) || "Heiligenweg FM";
   tvClock(); clearInterval(clockTimer); clockTimer = setInterval(tvClock, 10000);
+  tvIntroStart();
   if (typeof cancelFade === "function") cancelFade();
   if (typeof kiesFade === "function") kiesFade();       // tv: eigen overgangstijd
   makeQr();

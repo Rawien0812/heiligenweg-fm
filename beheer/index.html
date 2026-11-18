@@ -700,6 +700,13 @@ body.op-overzicht .top h1 .pill { display: inline-block; }
               <option value="foto">Foto van het nummer (radio-modus, aanbevolen)</option><option value="video">De YouTube-video</option>
             </select>
           </label>
+          <div class="zender" style="border-left-color: var(--gold)">
+            <div class="zender-head"><span class="title">Startbeeld op de tv</span></div>
+            <p class="hint" style="margin:0">Dit beeld zie je als de Fire TV-app of de tv-modus opent, tot de muziek speelt. Vervang het zo vaak je wilt: <b>geen nieuwe installatie nodig</b>. Kies een liggend beeld (16:9); het wordt automatisch op 1280×720 gezet. <i>Het icoon in de appsrij van de Fire TV zit in de app zelf en verandert alleen met een nieuwe installatie.</i></p>
+            <img id="tvStartVoorbeeld" alt="Huidig startbeeld" style="width:min(100%,480px);aspect-ratio:16/9;object-fit:cover;border-radius:10px;border:1px solid var(--line);background:#000">
+            <div class="add"><input type="file" id="tvStartBestand" accept="image/*"><button class="btn gold" type="button" id="tvStartUpload">Startbeeld uploaden</button></div>
+            <p class="msg" id="tvStartMsg"></p>
+          </div>
           <label class="f" for="s-tvovergang">Overgang tussen nummers op de tv <span class="sub">seconden dat nummers in elkaar overlopen (crossfade). Werkt bij ‘Foto van het nummer’.</span>
             <select id="s-tvovergang" data-site="tvovergang">
               <option value="0">Uit</option><option value="5">5 seconden</option><option value="8">8 seconden</option><option value="10">10 seconden</option><option value="15">15 seconden</option><option value="20">20 seconden</option>
@@ -957,7 +964,7 @@ async function login(t) {
     data.site = data.site || {}; data.zenders = data.zenders || [];
     store.set(token);
     $("loginPanel").hidden = true; $("editor").hidden = false; $("savebar").hidden = false;
-    fillSite(); renderZenders(); setDirty(false); naInloggen();
+    fillSite(); renderZenders(); setDirty(false); naInloggen(); tvStartToon();
   } catch (e) {
     $("loginMsg").className = "msg bad"; $("loginMsg").textContent = explain(e);
     $("helpBox").open = true;
@@ -2183,6 +2190,45 @@ $("rwOvergang").addEventListener("input", () => {
   setDirty(true);
 });
 setInterval(() => { if (huidigePagina === "overzicht" && !document.hidden) rwRender(); }, 15000);
+
+// ---------- Tv-startbeeld uploaden (images/tv-start.jpg) ----------
+function tvStartToon() { $("tvStartVoorbeeld").src = "../images/tv-start.jpg?v=" + encodeURIComponent((data && data.site && data.site.tvstart_v) || Date.now()); }
+async function ghPad(pad, method, body) {
+  const url = `https://api.github.com/repos/${REPO.owner}/${REPO.name}/contents/${pad}` + (method === "GET" ? `?ref=${BRANCH}&t=${Date.now()}` : "");
+  const r = await fetch(url, { method, cache: "no-store", body: body ? JSON.stringify(body) : undefined,
+    headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", ...(body ? { "Content-Type": "application/json" } : {}) } });
+  const json = await r.json().catch(() => ({}));
+  if (!r.ok) { const e = new Error(json.message || r.statusText); e.status = r.status; throw e; }
+  return json;
+}
+function naar16x9(file) {                               // bijsnijden tot 16:9 en verkleinen tot 1280×720 (jpg)
+  return new Promise((ok, fout) => {
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => {
+      const W = 1280, H = 720, c = document.createElement("canvas"); c.width = W; c.height = H;
+      const sch = Math.max(W / img.naturalWidth, H / img.naturalHeight), w = img.naturalWidth * sch, h = img.naturalHeight * sch;
+      const x = c.getContext("2d"); x.fillStyle = "#000"; x.fillRect(0, 0, W, H); x.drawImage(img, (W - w) / 2, (H - h) / 2, w, h);
+      URL.revokeObjectURL(url); ok(c.toDataURL("image/jpeg", 0.86).split(",")[1]);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); fout(new Error("Dit bestand is geen afbeelding.")); };
+    img.src = url;
+  });
+}
+$("tvStartUpload").addEventListener("click", async () => {
+  const f = $("tvStartBestand").files[0], msg = $("tvStartMsg");
+  if (!f) { msg.className = "msg bad"; msg.textContent = "Kies eerst een afbeelding."; return; }
+  $("tvStartUpload").disabled = true; msg.className = "msg"; msg.textContent = "Bezig met uploaden…";
+  try {
+    const inhoud = await naar16x9(f);
+    let sha; try { sha = (await ghPad("images/tv-start.jpg", "GET")).sha; } catch (e) { if (e.status !== 404) throw e; }
+    await ghPad("images/tv-start.jpg", "PUT", { message: "Nieuw tv-startbeeld via beheer", content: inhoud, branch: BRANCH, ...(sha ? { sha } : {}) });
+    data.site.tvstart_v = String(Date.now());
+    $("tvStartVoorbeeld").src = "data:image/jpeg;base64," + inhoud;
+    msg.className = "msg ok"; msg.textContent = "Startbeeld geüpload. Klik nu onderaan op ‘Opslaan en publiceren’, dan haalt de tv het nieuwe beeld op.";
+    setDirty(true);
+  } catch (e) { msg.className = "msg bad"; msg.textContent = e.status ? explain(e) : e.message; }
+  finally { $("tvStartUpload").disabled = false; }
+});
 
 $("loginForm").addEventListener("submit", (e) => { e.preventDefault(); login($("token").value); });
 const saved = store.get();
