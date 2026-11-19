@@ -5495,8 +5495,8 @@
       "lijst": []
     },
     "mededeling": {
-      "aan": false,
-      "tekst": "",
+      "aan": true,
+      "tekst": "Test test ",
       "tot": ""
     }
   },
