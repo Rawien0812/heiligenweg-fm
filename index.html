@@ -650,6 +650,14 @@ body.tv .radio { background: none; border: 0; box-shadow: none; padding: 0; disp
 /* video over het hele scherm */
 body.tv .screen iframe { pointer-events: none; }   /* tv: video is alleen beeld, niet aanklikbaar */
 /* tv radio-modus: video klein en verstopt achter de foto (laagste kwaliteit, alleen geluid) */
+/* Mededeling: lopende tekst (site en tv) */
+.meded { display: flex; align-items: center; gap: 10px; max-width: 1100px; width: calc(100% - 24px); margin: 10px auto 0; padding: 8px 14px; border-radius: 999px;
+  background: linear-gradient(180deg, #ffe36a, var(--sr-yellow)); color: #2a1a00; font: 700 .95rem/1.2 var(--body, system-ui); box-shadow: 0 4px 14px rgba(0,0,0,.25); overflow: hidden; }
+.meded[hidden] { display: none !important; }
+.meded-ic { flex: none; }
+.meded-loop { overflow: hidden; white-space: nowrap; flex: 1; mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent); }
+.meded-loop span { display: inline-block; animation: marquee var(--dur, 20s) linear infinite; }
+body.tv .meded { position: fixed; z-index: 4; top: 11vh; left: 50%; transform: translateX(-50%); width: 62vw; max-width: none; margin: 0; font-size: 1.5vw; padding: .7vw 1.4vw; }
 .tvfotolaag { display: none; }
 /* tv: startbeeld (vervangbaar via beheer → TV) tot de muziek speelt */
 .tvintro { display: none; }
@@ -757,6 +765,7 @@ body.kop-uit .strip::after, body.kop-uit .fringe, body.kop-uit .pennant, body.ko
   </div>
 </header>
 <div class="fringe" aria-hidden="true"></div>
+<div class="meded" id="meded" role="status" hidden><span class="meded-ic" aria-hidden="true">📢</span><div class="meded-loop"><span id="mededTxt"></span></div></div>
 
 <main class="wrap">
   <div class="windshield" aria-hidden="true">
@@ -1414,6 +1423,8 @@ async function loadZenders() {
   }
   LIVE = Object.assign({ aan: true, knop: "Live", onder: "Alles door elkaar", volgorde: "mix", bpm_van: "", bpm_tot: "" }, (data.site && data.site.live) || {});
   TV_FOTO = !(data.site && data.site.tvbeeld === "video");
+  if (data.site && data.site.jingles) JINGLES = { aan: !!data.site.jingles.aan, elke: Math.max(2, +data.site.jingles.elke || 5), lijst: Array.isArray(data.site.jingles.lijst) ? data.site.jingles.lijst.filter((j) => j && j.pad) : [] };
+  toonMededeling(data.site && data.site.mededeling);
   if (typeof tvIntroVersie === "function") tvIntroVersie(data.site && data.site.tvstart_v);
   // beheer → TV: dimmen
   const pct = (v, std) => { const n = parseFloat(v); return isFinite(n) ? Math.max(0, Math.min(90, n)) / 100 : std; };
@@ -1869,6 +1880,7 @@ function finishFade() {
   if (f.target.idx !== idx) { idx = f.target.idx; tracksOpen = true; }
   plIds = []; plIndex = -1;
   if (f.target.list) { const l = player.getPlaylist(); if (l && l.length) { plIds = l; plIndex = player.getPlaylistIndex(); plCache[f.target.list] = l; } }
+  setTimeout(nummerGestart, 300);
   playing = true; fails = 0;
   renderLcd(); renderList();
 }
@@ -1920,6 +1932,7 @@ window.onYouTubeIframeAPIReady = function () {
         if (e.data === YT.PlayerState.PLAYING) {
           playing = true; fails = 0;
           onthoud(huidig().vid);
+          nummerGestart();
           if (randomizeOnPlay && pl) {                          // LIVE: willekeurig nummer uit de afspeellijst
             randomizeOnPlay = false;
             const l = player.getPlaylist();
@@ -1946,7 +1959,7 @@ window.onYouTubeIframeAPIReady = function () {
             if (d > 90) player.seekTo(d * (0.15 + Math.random() * 0.4), true);
           }
         }
-        else if (e.data === YT.PlayerState.PAUSED) playing = false;
+        else if (e.data === YT.PlayerState.PAUSED) { playing = false; meldNu(); }
         else if (e.data === YT.PlayerState.ENDED) {
           const list = player.getPlaylist && player.getPlaylist();
           // In een afspeellijst gaat YouTube zelf door; pas na het laatste nummer naar de volgende halte.
@@ -2238,6 +2251,53 @@ let tellerGestart = false;
 function laadScript(src) {
   return new Promise((ok, fout) => { const sc = document.createElement("script"); sc.src = src; sc.onload = ok; sc.onerror = fout; document.head.appendChild(sc); });
 }
+// ---------- ON AIR: wat speelt er bij deze luisteraar (voor het studio-paneel in /beheer/) ----------
+let meRef = null, laatsteNu = "", nrTeller = 0;
+function meldNu(forceer) {
+  if (!meRef) return;
+  try {
+    const h = huidig(); if (!h.vid) return;
+    const vd = player && player.getVideoData ? player.getVideoData() : {};
+    const t = player && player.getCurrentTime ? player.getCurrentTime() || 0 : 0, d = player && player.getDuration ? player.getDuration() || 0 : 0;
+    const blk = isLive() ? activeLiveBlock() : null;
+    meRef.update({ v: h.vid, n: String((vd && vd.title) || (titles[h.vid] && titles[h.vid].t) || (h.tr && h.tr.t) || "").slice(0, 140),
+                   a: String((h.tr && (h.tr.a || h.tr.from)) || "").slice(0, 80), b: blk && blk.naam ? String(blk.naam).slice(0, 40) : "",
+                   s: Date.now() - Math.round(t * 1000), d: Math.round(d), p: !playing, pt: Math.round(t) }).catch(() => {});
+  } catch (e) {}
+}
+function nummerGestart() {                            // een nieuw nummer is echt begonnen
+  const vid = huidig().vid || "";
+  if (!vid || vid === laatsteNu) { meldNu(); return; }
+  const eerste = !laatsteNu; laatsteNu = vid;
+  meldNu(true);
+  if (!eerste) speelJingle();
+}
+// ---------- Jingles: kort geluidsfragment over het begin van een nummer (muziek even zachter) ----------
+let JINGLES = { aan: false, elke: 5, lijst: [] };
+function speelJingle() {
+  if (!JINGLES.aan || !JINGLES.lijst.length || autoMuted || prefs.muted) return;
+  nrTeller++;
+  if (nrTeller % Math.max(2, JINGLES.elke) !== 0) return;
+  const j = JINGLES.lijst[Math.floor(Math.random() * JINGLES.lijst.length)];
+  const V = +$("vol").value, a = new Audio(j.pad + (j.v ? "?v=" + encodeURIComponent(j.v) : ""));
+  a.volume = Math.max(0, Math.min(1, V / 100));
+  let zacht = false;
+  const terug = () => { if (!zacht) return; zacht = false; try { if (!fade) player.setVolume(V); } catch (e) {} };
+  a.addEventListener("playing", () => { try { if (!fade) { player.setVolume(Math.round(V * 0.25)); zacht = true; } } catch (e) {} });
+  a.addEventListener("ended", terug); a.addEventListener("error", terug); setTimeout(terug, 20000);
+  a.play().catch(terug);
+}
+// ---------- Mededeling: lopende tekst op de site en de tv (instelbaar in /beheer/) ----------
+function toonMededeling(m) {
+  const el = $("meded"); if (!el) return;
+  const vandaag = new Date().toISOString().slice(0, 10);
+  const aan = m && m.aan && String(m.tekst || "").trim() && (!m.tot || vandaag <= m.tot);
+  el.hidden = !aan;
+  if (!aan) return;
+  const t = String(m.tekst).trim();
+  $("mededTxt").textContent = t + "\u2003\u2003★\u2003\u2003" + t + "\u2003\u2003★\u2003\u2003";
+  $("mededTxt").style.setProperty("--dur", Math.max(14, t.length * 0.28) + "s");
+}
 async function startTeller(cfg) {
   const fb = cfg && cfg.firebase;
   if (tellerGestart || !fb || !fb.databaseURL || !fb.apiKey) return;
@@ -2252,9 +2312,10 @@ async function startTeller(cfg) {
     const fmt = (n) => Number(n || 0).toLocaleString("nl-NL");
     // Aanwezig zijn: één regel per open pagina, verdwijnt vanzelf bij sluiten.
     const me = db.ref("online").push();
+    meRef = me;
     db.ref(".info/connected").on("value", (snap) => {
       if (snap.val() !== true) return;
-      me.onDisconnect().remove().then(() => me.set({ t: firebase.database.ServerValue.TIMESTAMP, tv: location.hash === "#tv" }));
+      me.onDisconnect().remove().then(() => me.set({ t: firebase.database.ServerValue.TIMESTAMP, tv: location.hash === "#tv" })).then(() => meldNu(true));
     });
     db.ref("online").on("value", (snap) => {
       const n = snap.numChildren();

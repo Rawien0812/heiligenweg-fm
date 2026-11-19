@@ -313,99 +313,133 @@ main.wrap > *, #editor, #editor > div, section.panel, .panel-body, .zender, .car
 code { overflow-wrap: anywhere; }
 .top h1 .pill { display: none; }
 body.op-overzicht .top h1 .pill { display: inline-block; }
-/* ---------- Mini-radio (overzicht) ---------- */
-.rw { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); background: #ececeb; border: 1px solid #dcdcda; border-radius: 22px;
+/* ---------- Studio-paneel (overzicht) ---------- */
+.rw { --gk: #2f9a4a; position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); background: #ececeb; border: 1px solid #dcdcda; border-radius: 22px;
   box-shadow: 0 1px 0 #fff inset, 0 10px 30px rgba(16,24,18,.08); overflow: hidden; }
 .rw button { font: inherit; }
-.rw-l { padding: 16px; display: grid; gap: 12px; border-right: 1px solid #d6d6d3; min-width: 0; }
-.rw-r { display: grid; grid-template-rows: auto auto auto 1fr; min-width: 0; }
-.rw-scherm { display: grid; grid-template-columns: 42% minmax(0, 1fr); gap: 12px; background: #1d1d1f; border-radius: 14px; padding: 8px; min-height: 140px; }
-.rw-lcd { background: linear-gradient(160deg, #b9d3ee, #9dbde0); border-radius: 9px; padding: 9px 10px; display: flex; flex-direction: column; justify-content: space-between; color: #0e1a28; box-shadow: inset 0 0 0 1px rgba(0,0,0,.15); }
+.rw-l { padding: 16px; display: grid; gap: 12px; border-right: 1px solid #d6d6d3; min-width: 0; align-content: start; }
+.rw-r { display: grid; grid-template-rows: auto auto auto auto auto 1fr; min-width: 0; }
+.rw-scherm { display: grid; grid-template-columns: 31% minmax(0, 1fr); gap: 12px; background: #1d1d1f; border-radius: 14px; padding: 8px; min-height: 178px; }
+.rw-lcd { background: linear-gradient(160deg, #b9d3ee, #9dbde0); border-radius: 9px; padding: 10px; display: flex; flex-direction: column; justify-content: space-between; color: #0e1a28; box-shadow: inset 0 0 0 1px rgba(0,0,0,.15); min-width: 0; }
 .rw-tag { display: flex; gap: 5px; align-items: center; }
-.rw-tag b { font: 800 .74rem/1 var(--body); border: 2px solid #0e1a28; border-radius: 4px; padding: 2px 5px; letter-spacing: .04em; }
-.rw-tag span { font: 800 .74rem/1 var(--body); border: 2px solid #0e1a28; border-radius: 4px; padding: 2px 5px; min-width: 20px; text-align: center; }
+.rw-tag b, .rw-tag span { font: 800 .72rem/1 var(--body); border: 2px solid #0e1a28; border-radius: 4px; padding: 2px 5px; letter-spacing: .04em; }
+.rw-tag span { min-width: 20px; text-align: center; }
+.rw-tag .rw-air { margin-left: auto; background: #c8102e; color: #fff; border-color: #c8102e; white-space: nowrap; }
 .rw-tijd { display: flex; align-items: baseline; gap: 4px; }
-.rw-tijd span { font: 800 clamp(1.9rem, 3.6vw, 2.7rem)/1 var(--body); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.rw-tijd span { font: 800 clamp(1.9rem, 3.2vw, 2.6rem)/1 var(--body); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
 .rw-tijd small { font: 700 .72rem/1 var(--body); }
-.rw-info { position: relative; display: flex; flex-direction: column; gap: 4px; color: #fff; padding: 6px 4px 6px 0; min-width: 0; }
-.rw-info small { font: 700 .62rem/1 var(--body); letter-spacing: .1em; color: #9a9aa0; }
+.rw-lcdinfo { display: flex; flex-wrap: wrap; gap: 4px 10px; font: 700 .74rem/1.1 var(--body); white-space: nowrap; overflow: hidden; }
+.rw-lcdinfo i { font-style: normal; opacity: .7; }
+.rw-info { display: grid; grid-template-columns: 92px minmax(0, 1fr) 26px; gap: 12px; align-items: center; color: #fff; min-width: 0; padding-right: 4px; }
+.rw-cover { width: 92px; height: 92px; border-radius: 10px; background: var(--gk) center / cover no-repeat; box-shadow: 0 6px 16px rgba(0,0,0,.5); display: grid; place-items: center; font: 800 2.2rem/1 var(--body); color: rgba(255,255,255,.9); }
+.rw-txt { display: grid; gap: 4px; min-width: 0; }
+.rw-txt small { font: 700 .6rem/1 var(--body); letter-spacing: .07em; color: #9a9aa0; display: flex; gap: 6px; align-items: center; white-space: nowrap; overflow: hidden; }
+.rw.onair .rw-txt small { color: #ff5a6e; }
+.rw.onair .rw-txt small::before { content: ""; flex: none; width: 7px; height: 7px; border-radius: 50%; background: #ff3b52; box-shadow: 0 0 8px #ff3b52; }
 .rw-titel { overflow: hidden; white-space: nowrap; mask-image: linear-gradient(90deg, #000 85%, transparent); -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); }
-.rw-titel span { display: inline-block; font: 800 1.12rem/1.25 var(--body); padding-right: 2.5em; }
+.rw-titel span { display: inline-block; font: 800 1.15rem/1.25 var(--body); padding-right: 2.5em; }
 .rw-titel.loopt span { animation: rwLoop var(--rw-duur, 12s) linear infinite; }
 @keyframes rwLoop { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-.rw-sub { font-size: .95rem; color: #8e8e95; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rw-timer { position: absolute; right: 2px; bottom: 2px; display: inline-flex; gap: 6px; align-items: center; background: #2c2c2f; border: 1px solid #3a3a3e; border-radius: 9px; padding: 6px 10px; font: 600 .82rem/1 var(--body); color: #fff; }
-.rw-timer svg { width: 15px; height: 15px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; }
+.rw-sub { font-size: .9rem; color: #8e8e95; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rw-prog { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: center; font: 600 .72rem/1 var(--body); color: #bbb; font-variant-numeric: tabular-nums; margin-top: 2px; }
+.rw-bar { position: relative; height: 4px; border-radius: 9px; background: #3a3a3e; cursor: pointer; }
+.rw-bar i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: #fff; border-radius: 9px; }
+.rw-bar i::after { content: ""; position: absolute; right: -5px; top: -4px; width: 12px; height: 12px; border-radius: 50%; background: #fff; }
+.rw-timer { justify-self: start; display: inline-flex; gap: 6px; align-items: center; background: #2c2c2f; border: 1px solid #3a3a3e; border-radius: 9px; padding: 5px 9px; font: 600 .78rem/1 var(--body); color: #fff; margin-top: 4px; white-space: nowrap; }
+.rw-timer svg { width: 14px; height: 14px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; }
+.rw-spec { display: flex; gap: 2px; align-items: flex-end; height: 92px; }
+.rw-spec i { flex: 1; height: 12%; border-radius: 2px; background: linear-gradient(color-mix(in srgb, var(--gk) 55%, #fff), var(--gk)); opacity: .5; transition: height .2s; }
+.rw.speelt .rw-spec i { opacity: .95; animation: rwSpec .9s ease-in-out infinite alternate; }
+.rw.speelt .rw-spec i:nth-child(2) { animation-duration: .7s; } .rw.speelt .rw-spec i:nth-child(3) { animation-duration: 1.1s; }
+.rw.speelt .rw-spec i:nth-child(4) { animation-duration: .6s; } .rw.speelt .rw-spec i:nth-child(5) { animation-duration: .95s; } .rw.speelt .rw-spec i:nth-child(6) { animation-duration: .75s; }
+@keyframes rwSpec { from { height: 15%; } to { height: 95%; } }
 .rw-dial { display: grid; grid-template-columns: 30px minmax(0, 1fr) 30px; gap: 8px; align-items: center; }
 .rw-pijl { width: 30px; height: 30px; border-radius: 8px; background: #fff; border: 1px solid #d6d6d3; color: #222; font-size: 1.2rem; line-height: 1; padding: 0; }
-.rw-schaal { position: relative; height: 54px; cursor: pointer; }
+.rw-schaal { position: relative; height: 62px; cursor: pointer; }
+.rw-schaal .band { position: absolute; top: 14px; height: 6px; border-radius: 3px; opacity: .85; }
 .rw-schaal .tk { position: absolute; bottom: 20px; width: 1px; background: #8d8d8d; }
 .rw-schaal .lb { position: absolute; bottom: 0; transform: translateX(-50%); font: 600 .78rem/1 var(--body); color: #333; }
 .rw-schaal .mk { position: absolute; top: 2px; transform: translateX(-50%); width: 9px; height: 9px; background: #8d8d8d; clip-path: polygon(0 0, 100% 0, 100% 60%, 50% 100%, 0 60%); }
-.rw-schaal .mk.aan { background: var(--sr-red); }
-.rw-schaal .naald { position: absolute; top: -4px; bottom: -4px; width: 2px; background: #111; transform: translateX(-1px); transition: left .35s ease; }
-.rw-schaal .naald::after { content: ""; position: absolute; left: -3px; top: 24px; width: 8px; height: 12px; border-radius: 3px; background: #111; }
+.rw-schaal .mk.aan { background: #111; }
+.rw-schaal .naald { position: absolute; top: -2px; bottom: -4px; width: 2px; background: #111; transform: translateX(-1px); transition: left .35s ease; }
+.rw-schaal .naald::after { content: ""; position: absolute; left: -3px; top: 26px; width: 8px; height: 12px; border-radius: 3px; background: #111; }
 .rw-onder { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 10px; align-items: center; }
 .rw-rond { width: 44px; height: 44px; border-radius: 50%; background: #fff; border: 1px solid #d6d6d3; color: #222; display: grid; place-items: center; font-size: 1.1rem; padding: 0; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
 .rw-rond svg { width: 20px; height: 20px; fill: none; stroke: #222; stroke-width: 2; stroke-linecap: round; }
-.rw-seg { display: flex; justify-content: center; align-items: center; gap: 6px; height: 44px; border-radius: 999px; background: #dcdcda; box-shadow: inset 0 1px 3px rgba(0,0,0,.12); font: 800 1rem/1 var(--body); color: #666; }
-.rw-seg button, .rw-seg a { background: none; border: 0; color: #888; padding: 6px 8px; font: inherit; text-decoration: none; border-radius: 999px; }
-.rw-seg button[aria-pressed="true"] { color: #222; }
+.rw-seg { display: flex; align-items: center; gap: 4px; height: 44px; border-radius: 999px; background: #dcdcda; box-shadow: inset 0 1px 3px rgba(0,0,0,.12); padding: 4px; font: 800 .86rem/1 var(--body); }
+.rw-seg button, .rw-seg a { flex: 1; text-align: center; background: none; border: 0; color: #888; padding: 10px 6px; font: inherit; text-decoration: none; border-radius: 999px; white-space: nowrap; }
+.rw-seg button[aria-pressed="true"] { background: #fff; color: #222; box-shadow: 0 1px 3px rgba(0,0,0,.15); }
+.rw-seg #rwModusAir[aria-pressed="true"] { color: #c8102e; }
+.rw-seg a { flex: .55; }
 .rw-seg a:hover, .rw-seg button:hover { color: #222; }
-.rw-top { display: grid; grid-template-columns: minmax(0, 1fr) 80px; gap: 10px; padding: 16px 16px 6px; }
+.rw-top { display: grid; grid-template-columns: minmax(0, 1fr) 76px 76px; gap: 10px; padding: 16px 16px 6px; }
 .rw-gebied { display: flex; align-items: center; gap: 10px; background: #f4f4f3; border: 1px solid #d6d6d3; border-radius: 12px; padding: 14px; color: #444; min-width: 0; text-align: left; }
-.rw-gebied span { font: 600 .82rem/1 var(--body); letter-spacing: .02em; color: #777; }
+.rw-gebied span { font: 600 .8rem/1 var(--body); color: #777; }
 .rw-gebied b { margin-left: auto; font-weight: 700; color: #222; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rw-gebied i { font-style: normal; color: #444; }
-.rw-stereo { display: grid; place-items: center; gap: 2px; background: #d6d6d4; border: 1px solid #c8c8c5; border-radius: 12px; color: #222; padding: 8px 0; box-shadow: inset 0 1px 3px rgba(0,0,0,.08); }
-.rw-stereo svg { width: 22px; height: 22px; fill: none; stroke: #222; stroke-width: 2; }
-.rw-stereo small { font: 700 .66rem/1 var(--body); letter-spacing: .06em; color: #555; }
+.rw-tile { display: grid; place-items: center; gap: 3px; background: #d6d6d4; border: 1px solid #c8c8c5; border-radius: 12px; color: #222; padding: 8px 0; box-shadow: inset 0 1px 3px rgba(0,0,0,.08); }
+.rw-tile b { font-size: 1.2rem; line-height: 1; }
+.rw-tile svg { width: 22px; height: 22px; fill: none; stroke: #222; stroke-width: 2; }
+.rw-tile small { font: 700 .64rem/1 var(--body); letter-spacing: .06em; color: #555; }
+.rw-tile.aan { background: #1d1d1f; border-color: #1d1d1f; } .rw-tile.aan b { color: #fff; } .rw-tile.aan small { color: #ffcf5a; }
 .rw-fav-kop { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px 6px; }
 .rw-fav-kop b { font: 800 1.08rem/1.2 var(--body); color: #111; }
 .rw-fav-kop button { display: inline-flex; gap: 6px; align-items: center; background: none; border: 0; color: #222; font-weight: 600; padding: 0; }
 .rw-fav-kop svg { width: 17px; height: 17px; fill: none; stroke: #222; stroke-width: 2; stroke-linecap: round; }
-.rw-fav { display: flex; gap: 10px; overflow-x: auto; padding: 2px 16px 12px; scrollbar-width: none; }
+.rw-fav { display: flex; gap: 10px; overflow-x: auto; padding: 2px 16px 8px; scrollbar-width: none; cursor: grab; user-select: none; -webkit-user-select: none; }
 .rw-fav::-webkit-scrollbar { display: none; }
-.rw-fav { cursor: grab; user-select: none; -webkit-user-select: none; }
-.rw-fav.sleept { cursor: grabbing; }
-.rw-fav.sleept button { pointer-events: none; }
-.rw-fav button { cursor: pointer; }
-.rw-fav button { flex: 0 0 auto; min-width: 170px; display: flex; justify-content: space-between; align-items: center; gap: 14px; background: #fff; border: 1px solid #dcdcda; border-radius: 10px; padding: 12px 14px; color: #111; font-weight: 600; }
-.rw-fav button b { font: 800 1.05rem/1 var(--body); font-variant-numeric: tabular-nums; }
+.rw-fav.sleept { cursor: grabbing; } .rw-fav.sleept button { pointer-events: none; }
+.rw-fav button { flex: 0 0 auto; min-width: 180px; display: grid; gap: 8px; background: #fff; border: 1px solid #dcdcda; border-radius: 10px; padding: 11px 14px 9px; color: #111; font-weight: 600; cursor: pointer; text-align: left; }
+.rw-fav .rij { display: flex; justify-content: space-between; align-items: center; gap: 14px; }
+.rw-fav .rij span { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+.rw-fav .rij span::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--k); }
+.rw-fav .rij b { font: 800 1.02rem/1 var(--body); font-variant-numeric: tabular-nums; }
+.rw-fav .p { height: 4px; border-radius: 9px; background: #eee; overflow: hidden; } .rw-fav .p i { display: block; height: 100%; background: var(--k); border-radius: 9px; }
 .rw-fav button.aan { border-color: #111; box-shadow: 0 0 0 1px #111; }
-.rw-fav button.nu::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--sr-red); margin-right: -6px; }
-.rw-ctrl { border-top: 1px solid #d6d6d3; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto; gap: 8px 14px; padding: 12px 16px 14px; align-items: center; }
-.rw-tempo { display: grid; grid-template-columns: auto minmax(60px, 1fr) auto auto; gap: 10px; align-items: center; font-weight: 600; color: #222; }
+.rw-straks { padding: 0 16px 10px; font-size: .86rem; color: #555; } .rw-straks b { color: #111; }
+.rw-med { margin: 0 16px 12px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 8px; align-items: center; background: #fff8dc; border: 1px solid #f1dc8a; border-radius: 12px; padding: 8px 10px; }
+.rw-med b { font-size: .74rem; letter-spacing: .05em; color: #8f5f00; white-space: nowrap; }
+.rw-med input[type=text], .rw-med input[type=date] { background: transparent !important; border: 0 !important; padding: 6px 4px !important; font-size: .9rem; min-width: 0; color: #333 !important; }
+.rw-med input[type=date] { width: 132px; color: #8f5f00 !important; font-weight: 700; }
+.rw-sw { position: relative; width: 40px; height: 24px; flex: none; cursor: pointer; }
+.rw-sw input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.rw-sw span { position: absolute; inset: 0; border-radius: 999px; background: #c9c9c6; transition: background .2s; pointer-events: none; }
+.rw-sw span::after { content: ""; position: absolute; left: 3px; top: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: left .2s; box-shadow: 0 1px 2px rgba(0,0,0,.2); }
+.rw-sw input:checked + span { background: #2f7a3a; } .rw-sw input:checked + span::after { left: 19px; }
+.rw-sw input:focus-visible + span { outline: 3px solid rgba(47,122,58,.35); outline-offset: 2px; }
+.rw-ctrl { border-top: 1px solid #d6d6d3; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 14px; padding: 12px 16px 14px; align-items: center; }
+.rw-tempo { display: grid; grid-template-columns: 92px minmax(60px, 1fr) 48px; gap: 10px; align-items: center; font-weight: 600; color: #222; }
 .rw-tempo input { accent-color: #4a90e2; width: 100%; }
-.rw-tempo output { font: 700 .8rem/1 var(--body); color: #555; min-width: 2.6em; }
-.rw-tempo button { background: none; border: 0; color: #222; font-weight: 600; padding: 0; white-space: nowrap; }
+.rw-tempo output { font: 700 .8rem/1 var(--body); color: #555; }
 .rw-knoppen { display: flex; justify-content: space-between; gap: 6px; }
 .rw-knoppen button { background: none; border: 0; padding: 6px; border-radius: 8px; color: #111; display: grid; place-items: center; }
 .rw-knoppen button:hover { background: #e0e0de; }
 .rw-knoppen svg { width: 22px; height: 22px; fill: #111; }
-.rw-pp .i-z, .rw.speelt .rw-pp .i-p { display: none; }
-.rw.speelt .rw-pp .i-z { display: block; }
-.rw-volume { grid-column: 2; grid-row: 1 / span 2; position: relative; width: 92px; height: 92px; }
+.rw-pp .i-z, .rw.speelt-pre .rw-pp .i-p { display: none; }
+.rw.speelt-pre .rw-pp .i-z { display: block; }
+.rw-volume { grid-column: 2; grid-row: 1 / span 3; position: relative; width: 92px; height: 92px; }
 .rw-knob { position: absolute; inset: 12px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #3a3a3d, #111 70%); border: 0; box-shadow: 0 4px 10px rgba(0,0,0,.35), inset 0 1px 1px rgba(255,255,255,.15); display: grid; place-items: center; padding: 0; }
-.rw-knob svg { width: 26px; height: 26px; fill: #fff; stroke: #fff; stroke-width: 0; }
-.rw-knob svg .g { fill: none; stroke-width: 2; stroke-linecap: round; }
+.rw-knob svg { width: 26px; height: 26px; fill: #fff; }
+.rw-knob svg .g { fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; }
 .rw-knob.stil svg .g { opacity: .2; }
 .rw-knob i { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: #fff; left: 50%; top: 50%; margin: -2.5px; }
-.rw-volume::before { content: ""; position: absolute; inset: 0; border-radius: 50%;
-  background: conic-gradient(from 0deg, transparent 0 4deg, #222 4deg 6deg, transparent 6deg 86deg, #222 86deg 88deg, transparent 88deg 176deg, #222 176deg 178deg, transparent 178deg 266deg, #222 266deg 268deg, transparent 268deg);
-  -webkit-mask: radial-gradient(circle, transparent 41px, #000 42px); mask: radial-gradient(circle, transparent 41px, #000 42px); }
+.rw-volume::before { content: ""; position: absolute; inset: 0; border-radius: 50%; border: 2px dotted #555; opacity: .45; }
 .rw-min, .rw-plus { position: absolute; background: none; border: 0; font: 700 1.2rem/1 var(--body); color: #222; padding: 2px 4px; }
 .rw-min { left: -6px; bottom: -6px; } .rw-plus { right: -6px; top: -6px; }
 .rw-speler { position: absolute; width: 200px; height: 200px; left: -9999px; top: 0; opacity: 0; pointer-events: none; }
 @media (max-width: 1100px) { .rw { grid-template-columns: minmax(0, 1fr); } .rw-l { border-right: 0; border-bottom: 1px solid #d6d6d3; } }
-@media (max-width: 520px) {
+@media (max-width: 560px) {
   .rw-scherm { grid-template-columns: minmax(0, 1fr); }
-  .rw-timer { position: static; align-self: flex-start; margin-top: 4px; }
-  .rw-ctrl { grid-template-columns: minmax(0, 1fr); }
-  .rw-volume { grid-column: 1; grid-row: auto; justify-self: center; }
-  .rw-tempo { grid-template-columns: auto minmax(60px, 1fr) auto; }
-  .rw-tempo button { display: none; }
+  .rw-info { grid-template-columns: 72px minmax(0, 1fr); padding: 4px; } .rw-cover { width: 72px; height: 72px; } .rw-spec { display: none; }
+  .rw-onder { grid-template-columns: minmax(0, 1fr); } .rw-onder .rw-rond { display: none; }
+  .rw-seg { font-size: .74rem; } .rw-top { grid-template-columns: minmax(0, 1fr) 64px 64px; }
+  .rw-med { grid-template-columns: minmax(0, 1fr) auto; } .rw-med b, .rw-med input[type=text] { grid-column: 1 / -1; } .rw-med input[type=date] { width: auto; }
+  .rw-ctrl { grid-template-columns: minmax(0, 1fr); } .rw-volume { grid-column: 1; grid-row: auto; justify-self: center; }
 }
+/* ---------- Jingles (LIVE-instellingen) ---------- */
+.jlijst { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.jlijst li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+.jlijst li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
 /* ---------- Overzicht ---------- */
 #overzicht { background: none; border: 0; box-shadow: none; padding: 0; display: grid; gap: 18px; }
 .tabs { display: flex; gap: 18px; border-bottom: 1px solid var(--line); }
@@ -554,16 +588,25 @@ body.op-overzicht .top h1 .pill { display: inline-block; }
       </div>
       <section class="panel" id="overzicht" data-key="overzicht">
         <div class="tabs"><span class="on">Vandaag</span><span id="ovDatum"></span></div>
-        <!-- Mini-radio: tijdblokken voorbeluisteren — © Rawien Paltoe -->
+        <!-- Studio-paneel: ON AIR, voorbeluisteren, jingles en mededelingen — © Rawien Paltoe -->
         <div class="rw" id="radioWidget">
           <div class="rw-l">
             <div class="rw-scherm">
-              <div class="rw-lcd"><div class="rw-tag"><b>LIVE</b><span id="rwNr">1</span></div><div class="rw-tijd"><span id="rwTijd">--:--</span><small>UUR</small></div></div>
+              <div class="rw-lcd">
+                <div class="rw-tag"><b>LIVE</b><span id="rwNr">1</span><b class="rw-air" id="rwAir" hidden>● ON AIR</b></div>
+                <div class="rw-tijd"><span id="rwTijd">--:--</span><small>UUR</small></div>
+                <div class="rw-lcdinfo"><span>👥 <b id="rwNu">–</b> <i>nu</i></span><span>▲ <b id="rwBez">–</b> <i>bezoeken</i></span></div>
+              </div>
               <div class="rw-info">
-                <small id="rwLabel">NU OP HET PROGRAMMA</small>
-                <div class="rw-titel"><span id="rwTitel">–</span></div>
-                <div class="rw-sub" id="rwSub"></div>
-                <span class="rw-timer"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg><span id="rwTimer">–</span></span>
+                <div class="rw-cover" id="rwCover"></div>
+                <div class="rw-txt">
+                  <small id="rwLabel">NU OP HET PROGRAMMA</small>
+                  <div class="rw-titel"><span id="rwTitel">–</span></div>
+                  <div class="rw-sub" id="rwSub"></div>
+                  <div class="rw-prog" id="rwProg" hidden><span id="rwT1">0:00</span><div class="rw-bar" id="rwBar"><i id="rwBarI"></i></div><span id="rwT2">0:00</span></div>
+                  <span class="rw-timer"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg><span id="rwTimer">–</span></span>
+                </div>
+                <div class="rw-spec" id="rwSpec" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
               </div>
             </div>
             <div class="rw-dial">
@@ -573,23 +616,35 @@ body.op-overzicht .top h1 .pill { display: inline-block; }
             </div>
             <div class="rw-onder">
               <button type="button" class="rw-rond" data-ga="p-nieuw" title="Nieuwe nummers">★</button>
-              <div class="rw-seg"><button type="button" id="rwLive" aria-pressed="true">LIVE</button><span>·</span><a href="../tv/" target="_blank" rel="noopener">TV</a></div>
+              <div class="rw-seg"><button type="button" id="rwModusAir" aria-pressed="true">● ON AIR</button><button type="button" id="rwModusPre" aria-pressed="false">VOORBELUISTEREN</button><a href="../tv/" target="_blank" rel="noopener">TV</a></div>
               <button type="button" class="rw-rond" data-ga="p-live" title="LIVE-instellingen"><svg viewBox="0 0 24 24"><path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4"/></svg></button>
             </div>
           </div>
           <div class="rw-r">
             <div class="rw-top">
               <button type="button" class="rw-gebied" data-ga="p-teksten"><span>TIJDZONE</span><b id="rwZone">–</b><i>›</i></button>
-              <button type="button" class="rw-stereo" data-ga="p-tv"><svg viewBox="0 0 24 24"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/></svg><small>TV</small></button>
+              <button type="button" class="rw-tile" id="rwJingleTegel" title="Jingles aan/uit"><b>♪</b><small>JINGLE</small></button>
+              <button type="button" class="rw-tile" data-ga="p-tv" title="TV-instellingen"><svg viewBox="0 0 24 24"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/></svg><small>TV</small></button>
             </div>
             <div class="rw-fav-kop"><b>Tijdblokken · <span id="rwAantal">0</span></b><button type="button" data-ga="p-blokken">Bewerken <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg></button></div>
             <div class="rw-fav" id="rwFav"></div>
+            <div class="rw-straks" id="rwStraks"></div>
+            <div class="rw-med">
+              <b>📢 MEDEDELING</b>
+              <input type="text" id="rwMedTekst" maxlength="160" placeholder="Bijv. Zaterdag live bij Cafe de Kroon, Den Haag!" aria-label="Tekst van de mededeling">
+              <input type="date" id="rwMedTot" aria-label="Tonen tot en met" title="Tonen tot en met (leeg = altijd)">
+              <label class="rw-sw" title="Mededeling aan/uit"><input type="checkbox" id="rwMedAan"><span></span></label>
+            </div>
             <div class="rw-ctrl">
               <div class="rw-tempo">
                 <label for="rwOvergang">Overgang</label>
                 <input type="range" id="rwOvergang" min="0" max="10" step="1" aria-label="Overgang tussen nummers in seconden">
                 <output id="rwOvergangW">0 s</output>
-                <button type="button" data-ga="p-live">Instellingen ›</button>
+              </div>
+              <div class="rw-tempo">
+                <label for="rwJingle">Jingle elke</label>
+                <input type="range" id="rwJingle" min="2" max="10" step="1" aria-label="Elke hoeveel nummers een jingle">
+                <output id="rwJingleW">5 nrs</output>
               </div>
               <div class="rw-knoppen">
                 <button type="button" id="rwVB" title="Vorig tijdblok"><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM19 5v14L9 12z"/></svg></button>
@@ -688,6 +743,17 @@ body.op-overzicht .top h1 .pill { display: inline-block; }
             <button class="btn gold" type="button" id="hitsGo">Hits van alle kanalen ophalen</button>
           </div>
           <p class="msg" id="hitsMsg"></p>
+        </div>
+        <div class="zender" id="jingleKaart" style="border-left-color: var(--gold)">
+          <div class="zender-head"><span class="title">Jingles</span></div>
+          <p class="hint" style="margin:0">Korte geluidsfragmenten (bijv. <i>“Je luistert naar …”</i>) die over het begin van een nummer klinken; de muziek gaat dan even zachter. Werkt op de site én de tv. Upload mp3’s van 3 tot 10 seconden (max. 2 MB).</p>
+          <label class="livebox"><input type="checkbox" id="jingleAan"> Jingles aan</label>
+          <label class="f" for="jingleElke">Elke hoeveel nummers een jingle
+            <select id="jingleElke"><option value="2">elke 2 nummers</option><option value="3">elke 3 nummers</option><option value="4">elke 4 nummers</option><option value="5">elke 5 nummers</option><option value="6">elke 6 nummers</option><option value="8">elke 8 nummers</option><option value="10">elke 10 nummers</option></select>
+          </label>
+          <ul class="jlijst" id="jingleLijst"></ul>
+          <div class="add"><input type="file" id="jingleBestand" accept="audio/mpeg,audio/mp3,audio/*"><button class="btn gold" type="button" id="jingleUpload">Jingle uploaden</button></div>
+          <p class="msg" id="jingleMsg"></p>
         </div>
         </div>
       </section>
@@ -964,7 +1030,7 @@ async function login(t) {
     data.site = data.site || {}; data.zenders = data.zenders || [];
     store.set(token);
     $("loginPanel").hidden = true; $("editor").hidden = false; $("savebar").hidden = false;
-    fillSite(); renderZenders(); setDirty(false); naInloggen(); tvStartToon();
+    fillSite(); renderZenders(); setDirty(false); naInloggen(); tvStartToon(); renderJingles();
   } catch (e) {
     $("loginMsg").className = "msg bad"; $("loginMsg").textContent = explain(e);
     $("helpBox").open = true;
@@ -1962,9 +2028,16 @@ async function haalTeller() {
     const url = fb.databaseURL.replace(/\/$/, "");
     const [b, o] = await Promise.all([
       fetch(`${url}/stats/bezoeken.json`).then((r) => r.ok ? r.json() : null),
-      fetch(`${url}/online.json?shallow=true`).then((r) => r.ok ? r.json() : null),
+      fetch(`${url}/online.json`).then((r) => r.ok ? r.json() : null),
     ]);
-    tellerCache = { bezoeken: b || 0, online: o ? Object.keys(o).length : 0 };
+    // ON AIR: het nummer dat de meeste luisteraars nu horen
+    const lijst = Object.values(o || {}).filter((x) => x && x.v);
+    const tel = {}; lijst.forEach((x) => { tel[x.v] = (tel[x.v] || 0) + 1; });
+    const top = Object.keys(tel).sort((a, c) => tel[c] - tel[a])[0];
+    let air = null;
+    if (top) { const x = lijst.filter((y) => y.v === top).sort((a, c) => (a.p ? 1 : 0) - (c.p ? 1 : 0))[0];
+      air = { v: x.v, n: x.n || "", a: x.a || "", b: x.b || "", s: +x.s || Date.now(), d: +x.d || 0, p: !!x.p, pt: +x.pt || 0, aantal: tel[top] }; }
+    tellerCache = { bezoeken: b || 0, online: o ? Object.keys(o).length : 0, air };
   } catch (e) { tellerCache = { fout: true }; }
   tellerBezig = false;
   if (huidigePagina === "overzicht") renderOverzicht(true);
@@ -2025,14 +2098,20 @@ function renderOverzicht(zonderTeller) {
   rwRender();
 }
 
-// ---------- Mini-radio op het overzicht: tijdblokken voorbeluisteren — © Rawien Paltoe ----------
-const RW = { blok: -1, live: true, rij: [], pos: -1, speler: null, klaar: false, speelt: false, vol: 70, stil: false, wilSpelen: false };
+// ---------- Studio-paneel op het overzicht — © Rawien Paltoe ----------
+// Modus ON AIR: wat je luisteraars nu horen (via de bezoekersteller in Firebase). Modus VOORBELUISTEREN: zelf een tijdblok afspelen.
+const RW = { blok: -1, modus: "air", rij: [], pos: -1, speler: null, klaar: false, speelt: false, vol: 70, stil: false, wilSpelen: false };
+const GENRE = ["#7b5cd6", "#f08c1a", "#e0457b", "#2f9a4a", "#2b7de9", "#c9a227", "#16a3a3", "#8a5a2b"];
 const rwBlokken = () => ((data && data.site && data.site.live && data.site.live.blokken) || []).filter((b) => b && b.naam)
   .slice().sort((a, b) => minVan(a.van) - minVan(b.van));
+const rwKleur = (i) => GENRE[((i % GENRE.length) + GENRE.length) % GENRE.length];
 const rwEind = (b) => (b.tot && b.tot !== "00:00" ? minVan(b.tot) : 1440);
 const rwIn = (b, m) => { const v = minVan(b.van), t = rwEind(b); return v <= t ? m >= v && m < t : m >= v || m < t; };
-const rwNuMin = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
+const rwLengte = (b) => { const v = minVan(b.van), t = rwEind(b); return v <= t ? t - v : 1440 - v + t; };
+const rwNuMin = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes() + d.getSeconds() / 60; };
 const rwDuur = (min) => { min = Math.max(0, Math.round(min)); const u = Math.floor(min / 60), m = min % 60; return u ? `${u} u ${m} min` : `${m} min`; };
+const rwTijd = (s) => { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+const rwBlokNu = () => { const bl = rwBlokken(), m = rwNuMin(); const i = bl.findIndex((b) => rwIn(b, m)); return i; };
 function rwNummers(b) {                                   // hits van het blok; leeg blok = algemene bronnen
   const live = data.site.live || {};
   const uit = (bronnen) => (bronnen || []).flatMap((n) => (n.populair || []).filter((x) => x.video).map((x) => ({ id: x.video, t: x.titel, a: x.artiest || n.titel || "" })));
@@ -2043,14 +2122,18 @@ function rwNummers(b) {                                   // hits van het blok; 
   for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]]; }
   return r;
 }
-function rwAfstemmen(i, handmatig) {
+function rwModus(m) {
+  RW.modus = m;
+  if (m === "air") { rwPauze(); const i = rwBlokNu(); RW.blok = i >= 0 ? i : 0; haalTeller(); }
+  rwRender();
+}
+function rwAfstemmen(i) {
   const bl = rwBlokken(); if (!bl.length) return;
   RW.blok = ((i % bl.length) + bl.length) % bl.length;
-  if (handmatig) RW.live = false;
+  RW.modus = "pre";
   RW.rij = rwNummers(bl[RW.blok]); RW.pos = -1;
   if (RW.speelt || RW.wilSpelen) rwSpeel(1); else rwRender();
 }
-function rwNaarNu() { const bl = rwBlokken(), m = rwNuMin(); RW.live = true; const i = bl.findIndex((b) => rwIn(b, m)); rwAfstemmen(i >= 0 ? i : 0, false); }
 function rwLaadApi() {
   if (window.YT && window.YT.Player) return Promise.resolve();
   return new Promise((ok) => {
@@ -2060,6 +2143,8 @@ function rwLaadApi() {
   });
 }
 async function rwSpeel(stap) {
+  RW.modus = "pre";
+  if (!RW.rij.length) { const bl = rwBlokken(); if (RW.blok < 0) RW.blok = Math.max(0, rwBlokNu()); RW.rij = rwNummers(bl[RW.blok]); }
   if (!RW.rij.length) { $("rwSub").textContent = "Geen nummers met hits in dit blok. Haal eerst hits op."; return; }
   RW.pos = ((RW.pos + stap) % RW.rij.length + RW.rij.length) % RW.rij.length;
   const n = RW.rij[RW.pos];
@@ -2074,40 +2159,71 @@ async function rwSpeel(stap) {
       } });
   } else if (RW.klaar) RW.speler.loadVideoById(n.id);
 }
-function rwPauze() { RW.wilSpelen = false; try { RW.speler.pauseVideo(); } catch (e) {} RW.speelt = false; rwRender(); }
+function rwPauze() { RW.wilSpelen = false; try { RW.speler.pauseVideo(); } catch (e) {} RW.speelt = false; }
 function rwVolume(d) {
   RW.vol = Math.max(0, Math.min(100, RW.vol + d)); if (d > 0) RW.stil = false;
   try { RW.speler.setVolume(RW.vol); RW.stil ? RW.speler.mute() : RW.speler.unMute(); } catch (e) {}
   rwRender();
 }
+function rwZetTitel(titel) {
+  const span = $("rwTitel"), tEl = span.parentElement;
+  if (span.dataset.t === titel) return;
+  span.dataset.t = titel; span.textContent = titel; tEl.classList.remove("loopt");
+  requestAnimationFrame(() => { if (span.scrollWidth > tEl.clientWidth + 4) { span.textContent = titel + "  " + titel; tEl.style.setProperty("--rw-duur", Math.max(8, titel.length * 0.35) + "s"); tEl.classList.add("loopt"); } });
+}
+function rwCover(vid, letter) {
+  const c = $("rwCover"), url = vid ? `url("https://i.ytimg.com/vi/${encodeURIComponent(vid)}/mqdefault.jpg")` : "none";
+  if (c.dataset.u !== url) { c.dataset.u = url; c.style.backgroundImage = url; }
+  c.textContent = vid ? "" : (letter || "");
+}
 function rwRender() {
   if (!$("radioWidget") || !data || !data.site) return;
-  const bl = rwBlokken(), m = rwNuMin(), s = data.site;
-  if (RW.blok < 0 || RW.blok >= bl.length || (RW.live && bl[RW.blok] && !rwIn(bl[RW.blok], m))) {
-    const i = bl.findIndex((b) => rwIn(b, m)); RW.blok = i >= 0 ? i : 0; if (!RW.rij.length && bl.length) RW.rij = rwNummers(bl[RW.blok]);
-  }
-  const b = bl[RW.blok];
-  const nu = new Date();
+  const bl = rwBlokken(), m = rwNuMin(), s = data.site, nuI = rwBlokNu();
+  if (RW.modus === "air" || RW.blok < 0 || RW.blok >= bl.length) RW.blok = nuI >= 0 ? nuI : 0;
+  const b = bl[RW.blok], kleur = rwKleur(RW.blok);
+  $("radioWidget").style.setProperty("--gk", kleur);
+  const tel = tellerCache && !tellerCache.fout ? tellerCache : null;
+  const air = RW.modus === "air" && tel && tel.air ? tel.air : null;
+  // blauw scherm
   $("rwNr").textContent = b ? RW.blok + 1 : "–";
-  $("rwTijd").textContent = RW.live || !b ? nu.toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" }) : (b.van || "00:00");
-  const n = RW.pos >= 0 && (RW.speelt || RW.wilSpelen) ? RW.rij[RW.pos] : null;
-  $("rwLabel").textContent = n ? (RW.speelt ? "NU AAN HET VOORBELUISTEREN" : "LADEN…") : RW.live ? "NU OP HET PROGRAMMA" : "AFGESTEMD OP";
-  const titel = n ? (n.t || "Nummer") : b ? b.naam : "Nog geen tijdblokken";
-  const span = $("rwTitel"), tEl = span.parentElement;
-  if (span.dataset.t !== titel) {
-    span.dataset.t = titel; span.textContent = titel;
-    tEl.classList.remove("loopt");
-    requestAnimationFrame(() => { if (span.scrollWidth > tEl.clientWidth + 4) { span.textContent = titel + "  " + titel; tEl.style.setProperty("--rw-duur", Math.max(8, titel.length * 0.35) + "s"); tEl.classList.add("loopt"); } });
+  $("rwTijd").textContent = RW.modus === "air" || !b ? new Date().toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" }) : (b.van || "00:00");
+  $("rwAir").hidden = !air;
+  $("rwNu").textContent = tel ? nlGetal(tel.online) : "–";
+  $("rwBez").textContent = tel ? nlGetal(tel.bezoeken) : "–";
+  // zwart scherm
+  let label, titel, sub, vid = "", t = 0, d = 0, toonBalk = false;
+  if (RW.modus === "pre") {
+    const n = RW.pos >= 0 && (RW.speelt || RW.wilSpelen) ? RW.rij[RW.pos] : null;
+    label = n ? (RW.speelt ? "NU AAN HET VOORBELUISTEREN" : "LADEN…") : "AFGESTEMD OP";
+    titel = n ? (n.t || "Nummer") : b ? b.naam : "Nog geen tijdblokken";
+    sub = n ? [b && b.naam, n.a].filter(Boolean).join(" · ") : b ? (b.omschrijving || `${(b.bronnen || []).length} bronnen · ${(b.artiesten || []).length} artiesten`) : "Maak ze aan onder Tijdblokken";
+    if (n) { vid = n.id; try { t = RW.speler.getCurrentTime() || 0; d = RW.speler.getDuration() || 0; } catch (e) {} toonBalk = d > 0; }
+  } else if (air) {
+    label = `ON AIR BIJ ${air.aantal} ${air.aantal === 1 ? "LUISTERAAR" : "LUISTERAARS"}`;
+    titel = air.n || "Nummer"; sub = [air.a, air.b].filter(Boolean).join(" · "); vid = air.v;
+    d = air.d || 0; t = air.p ? air.pt : (Date.now() - air.s) / 1000; t = Math.min(t, d || t); toonBalk = d > 0;
+  } else {
+    label = tel ? "NIEMAND LUISTERT OP DIT MOMENT" : "NU OP HET PROGRAMMA";
+    titel = b ? b.naam : "Nog geen tijdblokken"; sub = b ? (b.omschrijving || "") : "";
   }
-  $("rwSub").textContent = n ? [b && b.naam, n.a].filter(Boolean).join(" · ") : b ? (b.omschrijving || `${(b.bronnen || []).length} bronnen · ${(b.artiesten || []).length} artiesten`) : "Maak ze aan onder Tijdblokken";
+  $("radioWidget").classList.toggle("onair", !!air);
+  $("rwLabel").textContent = label; rwZetTitel(titel); $("rwSub").textContent = sub;
+  rwCover(vid, b ? b.naam.charAt(0).toUpperCase() : "");
+  $("rwProg").hidden = !toonBalk;
+  if (toonBalk) { $("rwT1").textContent = rwTijd(t); $("rwT2").textContent = rwTijd(d); $("rwBarI").style.width = Math.min(100, t / d * 100).toFixed(1) + "%"; }
   if (b) {
     const aan = rwIn(b, m), v = minVan(b.van), e = rwEind(b);
-    $("rwTimer").textContent = aan ? `nog ${rwDuur((e - m + 1440) % 1440 || 1440)}` : `over ${rwDuur((v - m + 1440) % 1440)}`;
+    $("rwTimer").textContent = aan ? `blok nog ${rwDuur((e - m + 1440) % 1440 || 1440)}` : `blok over ${rwDuur((v - m + 1440) % 1440)}`;
   } else $("rwTimer").textContent = "–";
-  // schaal: 24 uur
+  const speeltIets = (RW.modus === "pre" && RW.speelt) || (air && !air.p);
+  $("radioWidget").classList.toggle("speelt", !!speeltIets);
+  $("radioWidget").classList.toggle("speelt-pre", RW.modus === "pre" && (RW.speelt || RW.wilSpelen));
+  $("rwModusAir").setAttribute("aria-pressed", String(RW.modus === "air"));
+  $("rwModusPre").setAttribute("aria-pressed", String(RW.modus === "pre"));
+  // schaal (24 uur) met genre-kleuren
   const sc = $("rwSchaal");
   if (!sc.dataset.klaar) {
-    let h = "";
+    let h = '<span id="rwBanden"></span>';
     for (let u = 0; u <= 24; u++) {
       const x = (u / 24 * 100).toFixed(3);
       h += `<span class="tk" style="left:${x}%;height:${u % 3 === 0 ? 14 : 7}px"></span>`;
@@ -2116,38 +2232,56 @@ function rwRender() {
     }
     sc.innerHTML = h + '<span class="naald" id="rwNaald"></span><span id="rwMarks"></span>'; sc.dataset.klaar = "1";
   }
+  const banden = bl.map((x, i) => { const v = minVan(x.van), e = rwEind(x); const d2 = v <= e ? [[v, e]] : [[v, 1440], [0, e]];
+    return d2.map(([a, z]) => `<span class="band" style="left:${(a / 14.4).toFixed(2)}%;width:${((z - a) / 14.4).toFixed(2)}%;background:${rwKleur(i)}"></span>`).join(""); }).join("");
+  if ($("rwBanden").dataset.h !== banden) { $("rwBanden").dataset.h = banden; $("rwBanden").innerHTML = banden; }
   $("rwMarks").innerHTML = bl.map((x, i) => `<span class="mk${i === RW.blok ? " aan" : ""}" style="left:${(minVan(x.van) / 14.4).toFixed(2)}%" title="${esc(x.naam)} ${esc(x.van || "00:00")}"></span>`).join("");
-  const naaldMin = RW.live || !b ? m : (() => { const v = minVan(b.van), e = rwEind(b); return v <= e ? (v + e) / 2 : ((v + e + 1440) / 2) % 1440; })();
+  const naaldMin = RW.modus === "air" || !b ? m : (() => { const v = minVan(b.van), e = rwEind(b); return v <= e ? (v + e) / 2 : ((v + e + 1440) / 2) % 1440; })();
   $("rwNaald").style.left = (naaldMin / 14.4).toFixed(2) + "%";
   // rechts
-  $("rwZone").textContent = s.tijdzone === "luisteraar" ? "Eigen tijd luisteraar" : s.tijdzone === "America/Paramaribo" ? "Suriname" : s.tijdzone ? "Nederland" : "Nederland";
+  $("rwZone").textContent = s.tijdzone === "luisteraar" ? "Eigen tijd luisteraar" : s.tijdzone === "America/Paramaribo" ? "Suriname" : "Nederland";
   $("rwAantal").textContent = bl.length;
-  const favHtml = bl.map((x, i) => `<button type="button" data-rwblok="${i}" class="${i === RW.blok ? "aan" : ""}${rwIn(x, m) ? " nu" : ""}">${esc(x.naam)}<b>${esc(x.van || "00:00")}</b></button>`).join("");
+  const favHtml = bl.map((x, i) => {
+    const pct = rwIn(x, m) ? Math.min(100, ((m - minVan(x.van) + 1440) % 1440) / rwLengte(x) * 100) : 0;
+    return `<button type="button" data-rwblok="${i}" class="${i === RW.blok ? "aan" : ""}" style="--k:${rwKleur(i)}"><span class="rij"><span>${esc(x.naam)}</span><b>${esc(x.van || "00:00")}</b></span><span class="p"><i style="width:${pct.toFixed(0)}%"></i></span></button>`;
+  }).join("");
   if ($("rwFav").dataset.h !== favHtml) {
-    $("rwFav").dataset.h = favHtml; $("rwFav").innerHTML = favHtml;
-    const k = $("rwFav").querySelector("button.aan");                        // gekozen blok in beeld schuiven
-    if (k) {                                                                   // alleen schuiven als het blok (deels) buiten beeld staat
-      const f = $("rwFav"), fr = f.getBoundingClientRect(), kr = k.getBoundingClientRect();
-      if (kr.left < fr.left || kr.right > fr.right) f.scrollTo({ left: Math.max(0, kr.left - fr.left + f.scrollLeft - 16), behavior: "smooth" });
-    }
+    const nieuwBlok = $("rwFav").dataset.blok !== String(RW.blok);
+    $("rwFav").dataset.h = favHtml; $("rwFav").dataset.blok = String(RW.blok); $("rwFav").innerHTML = favHtml;
+    const k = $("rwFav").querySelector("button.aan");
+    if (k && nieuwBlok) { const f = $("rwFav"), fr = f.getBoundingClientRect(), kr = k.getBoundingClientRect();
+      if (kr.left < fr.left || kr.right > fr.right) f.scrollTo({ left: Math.max(0, kr.left - fr.left + f.scrollLeft - 16), behavior: "smooth" }); }
   }
+  if (bl.length > 1 && nuI >= 0) {
+    const a = bl[(nuI + 1) % bl.length], z = bl[(nuI + 2) % bl.length];
+    $("rwStraks").innerHTML = `Straks <b>${esc(a.van || "00:00")} ${esc(a.naam)}</b>` + (z !== bl[nuI] ? ` · daarna <b>${esc(z.van || "00:00")} ${esc(z.naam)}</b>` : "");
+  } else $("rwStraks").textContent = "";
+  // mededeling, overgang, jingles
+  const md = s.mededeling || {};
+  if (document.activeElement !== $("rwMedTekst")) $("rwMedTekst").value = md.tekst || "";
+  if (document.activeElement !== $("rwMedTot")) $("rwMedTot").value = md.tot || "";
+  $("rwMedAan").checked = !!md.aan;
   const ov = +(s.overgang ?? 5) || 0;
   if (document.activeElement !== $("rwOvergang")) $("rwOvergang").value = ov;
   $("rwOvergangW").textContent = ov ? ov + " s" : "uit";
-  $("rwLive").setAttribute("aria-pressed", String(RW.live));
-  $("radioWidget").classList.toggle("speelt", RW.speelt || RW.wilSpelen);
+  const jg = s.jingles || {};
+  if (document.activeElement !== $("rwJingle")) $("rwJingle").value = +jg.elke || 5;
+  $("rwJingleW").textContent = (+jg.elke || 5) + " nrs";
+  $("rwJingleTegel").classList.toggle("aan", !!jg.aan && (jg.lijst || []).length > 0);
+  $("rwJingleTegel").title = (jg.lijst || []).length ? (jg.aan ? "Jingles staan aan (klik = uit)" : "Jingles staan uit (klik = aan)") : "Nog geen jingles: upload ze bij LIVE-instellingen";
+  // volumeknop
   $("rwKnob").classList.toggle("stil", RW.stil || RW.vol === 0);
   const hoek = -135 + RW.vol * 2.7, r = 26;
   $("rwKnobStip").style.transform = `translate(${(Math.sin(hoek * Math.PI / 180) * r).toFixed(1)}px, ${(-Math.cos(hoek * Math.PI / 180) * r).toFixed(1)}px)`;
 }
+// ---- bediening
+const rwSleep = { aan: false, x: 0, links: 0, versleept: false };
 $("rwFav").addEventListener("click", (e) => {
   if (rwSleep.versleept) { rwSleep.versleept = false; e.preventDefault(); return; }   // na slepen geen klik
-  const k = e.target.closest("[data-rwblok]"); if (k) rwAfstemmen(+k.dataset.rwblok, true);
+  const k = e.target.closest("[data-rwblok]"); if (k) rwAfstemmen(+k.dataset.rwblok);
 });
-// Tijdblokken met de muis verschuiven: slepen, of het muiswieltje gebruiken
-const rwSleep = { aan: false, x: 0, links: 0, versleept: false };
 $("rwFav").addEventListener("pointerdown", (e) => {
-  if (e.pointerType !== "mouse" || e.button !== 0) return;               // vinger: gewoon de browser laten schuiven
+  if (e.pointerType !== "mouse" || e.button !== 0) return;
   rwSleep.aan = true; rwSleep.x = e.clientX; rwSleep.links = $("rwFav").scrollLeft; rwSleep.versleept = false;
 });
 window.addEventListener("pointermove", (e) => {
@@ -2161,20 +2295,29 @@ $("rwFav").addEventListener("wheel", (e) => {
   const f = $("rwFav"); if (f.scrollWidth <= f.clientWidth) return;
   const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
   const kan = d < 0 ? f.scrollLeft > 0 : f.scrollLeft < f.scrollWidth - f.clientWidth - 1;
-  if (!kan) return;                                                        // aan het eind: de pagina mag weer scrollen
+  if (!kan) return;
   e.preventDefault(); f.scrollLeft += d;
 }, { passive: false });
-$("rwDialL").addEventListener("click", () => rwAfstemmen(RW.blok - 1, true));
-$("rwDialR").addEventListener("click", () => rwAfstemmen(RW.blok + 1, true));
-$("rwVB").addEventListener("click", () => rwAfstemmen(RW.blok - 1, true));
-$("rwNB").addEventListener("click", () => rwAfstemmen(RW.blok + 1, true));
+$("rwDialL").addEventListener("click", () => rwAfstemmen(RW.blok - 1));
+$("rwDialR").addEventListener("click", () => rwAfstemmen(RW.blok + 1));
+$("rwVB").addEventListener("click", () => rwAfstemmen(RW.blok - 1));
+$("rwNB").addEventListener("click", () => rwAfstemmen(RW.blok + 1));
 $("rwVN").addEventListener("click", () => rwSpeel(-1));
 $("rwNN").addEventListener("click", () => rwSpeel(1));
-$("rwPP").addEventListener("click", () => { if (RW.speelt || RW.wilSpelen) rwPauze(); else if (RW.speler && RW.klaar && RW.pos >= 0) { RW.wilSpelen = true; RW.speler.playVideo(); rwRender(); } else rwSpeel(1); });
-$("rwLive").addEventListener("click", rwNaarNu);
+$("rwPP").addEventListener("click", () => {
+  if (RW.modus === "pre" && (RW.speelt || RW.wilSpelen)) { rwPauze(); rwRender(); }
+  else if (RW.modus === "pre" && RW.speler && RW.klaar && RW.pos >= 0) { RW.wilSpelen = true; RW.speler.playVideo(); rwRender(); }
+  else { if (RW.modus === "air") { RW.rij = []; RW.pos = -1; } rwSpeel(1); }
+});
+$("rwModusAir").addEventListener("click", () => rwModus("air"));
+$("rwModusPre").addEventListener("click", () => { if (RW.modus !== "pre") { RW.modus = "pre"; RW.rij = rwNummers(rwBlokken()[Math.max(0, RW.blok)]); RW.pos = -1; } rwRender(); });
 $("rwSchaal").addEventListener("click", (e) => {
   const r = $("rwSchaal").getBoundingClientRect(), min = Math.max(0, Math.min(1439, (e.clientX - r.left) / r.width * 1440));
-  const i = rwBlokken().findIndex((b) => rwIn(b, min)); if (i >= 0) rwAfstemmen(i, true);
+  const i = rwBlokken().findIndex((b) => rwIn(b, min)); if (i >= 0) rwAfstemmen(i);
+});
+$("rwBar").addEventListener("click", (e) => {                        // doorspoelen tijdens voorbeluisteren
+  if (RW.modus !== "pre" || !RW.speler || !RW.klaar) return;
+  const r = $("rwBar").getBoundingClientRect(); try { RW.speler.seekTo(RW.speler.getDuration() * (e.clientX - r.left) / r.width, true); } catch (er) {}
 });
 $("rwVolMin").addEventListener("click", () => rwVolume(-10));
 $("rwVolPlus").addEventListener("click", () => rwVolume(10));
@@ -2189,7 +2332,64 @@ $("rwOvergang").addEventListener("input", () => {
   if ($("s-overgang")) $("s-overgang").value = String(best);
   setDirty(true);
 });
-setInterval(() => { if (huidigePagina === "overzicht" && !document.hidden) rwRender(); }, 15000);
+// mededeling
+const rwMed = () => (data.site.mededeling = Object.assign({ aan: false, tekst: "", tot: "" }, data.site.mededeling || {}));
+$("rwMedTekst").addEventListener("input", () => { rwMed().tekst = $("rwMedTekst").value; if ($("rwMedTekst").value.trim() && !data.site.mededeling.aan) { data.site.mededeling.aan = true; $("rwMedAan").checked = true; } setDirty(true); });
+$("rwMedTot").addEventListener("change", () => { rwMed().tot = $("rwMedTot").value; setDirty(true); });
+$("rwMedAan").addEventListener("change", () => { rwMed().aan = $("rwMedAan").checked; setDirty(true); });
+// jingles
+const rwJg = () => (data.site.jingles = Object.assign({ aan: false, elke: 5, lijst: [] }, data.site.jingles || {}));
+$("rwJingle").addEventListener("input", () => { rwJg().elke = +$("rwJingle").value; $("rwJingleW").textContent = $("rwJingle").value + " nrs"; setDirty(true); });
+$("rwJingleTegel").addEventListener("click", () => {
+  const j = rwJg(); if (!j.lijst.length) { toonPagina("p-live"); setTimeout(() => $("jingleKaart") && $("jingleKaart").scrollIntoView({ behavior: "smooth", block: "center" }), 80); return; }
+  j.aan = !j.aan; setDirty(true); rwRender(); renderJingles();
+});
+setInterval(() => { if (huidigePagina === "overzicht" && !document.hidden) rwRender(); }, 1000);
+setInterval(() => { if (huidigePagina === "overzicht" && !document.hidden) haalTeller(); }, 15000);
+
+// ---------- Jingles beheren (LIVE-instellingen): mp3 uploaden naar jingles/ ----------
+function renderJingles() {
+  if (!$("jingleLijst") || !data) return;
+  const j = rwJg();
+  $("jingleAan").checked = !!j.aan; $("jingleElke").value = String(j.elke || 5);
+  $("jingleLijst").innerHTML = j.lijst.length ? "" : '<li class="empty" style="background:none;border:0">Nog geen jingles. Upload hieronder een mp3 (3 tot 10 seconden).</li>';
+  j.lijst.forEach((x, i) => {
+    const li = document.createElement("li");
+    const pl = document.createElement("button"); pl.type = "button"; pl.className = "icon"; pl.textContent = "▶"; pl.title = "Beluisteren";
+    pl.addEventListener("click", () => { try { new Audio("../" + x.pad + "?v=" + encodeURIComponent(x.v || "")).play(); } catch (e) {} });
+    const nm = document.createElement("span"); nm.textContent = x.naam || x.pad;
+    const del = document.createElement("button"); del.type = "button"; del.className = "icon del"; del.textContent = "🗑"; del.title = "Verwijderen";
+    del.addEventListener("click", async () => {
+      if (!del.dataset.zeker) { del.dataset.zeker = "1"; del.textContent = "Zeker?"; del.style.width = "auto"; setTimeout(() => { delete del.dataset.zeker; del.textContent = "🗑"; del.style.width = ""; }, 3000); return; }
+      del.disabled = true;
+      try { const f = await ghPad(x.pad, "GET"); await ghPad(x.pad, "DELETE", { message: "Jingle verwijderd via beheer", sha: f.sha, branch: BRANCH }); } catch (e) { if (e.status !== 404) { $("jingleMsg").className = "msg bad"; $("jingleMsg").textContent = explain(e); del.disabled = false; return; } }
+      j.lijst.splice(i, 1); setDirty(true); renderJingles();
+      $("jingleMsg").className = "msg ok"; $("jingleMsg").textContent = "Jingle verwijderd. Klik op Opslaan en publiceren.";
+    });
+    li.append(pl, nm, del); $("jingleLijst").appendChild(li);
+  });
+}
+function bestandNaarB64(f) { return new Promise((ok, fout) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(",")[1]); r.onerror = () => fout(new Error("Bestand kon niet gelezen worden.")); r.readAsDataURL(f); }); }
+$("jingleUpload").addEventListener("click", async () => {
+  const f = $("jingleBestand").files[0], msg = $("jingleMsg");
+  if (!f) { msg.className = "msg bad"; msg.textContent = "Kies eerst een mp3-bestand."; return; }
+  if (!/audio|mpeg|mp3/i.test(f.type + f.name)) { msg.className = "msg bad"; msg.textContent = "Dit is geen geluidsbestand (mp3)."; return; }
+  if (f.size > 2 * 1024 * 1024) { msg.className = "msg bad"; msg.textContent = "Te groot: maximaal 2 MB. Een jingle is meestal 3 tot 10 seconden."; return; }
+  $("jingleUpload").disabled = true; msg.className = "msg"; msg.textContent = "Bezig met uploaden…";
+  try {
+    const schoon = f.name.replace(/\.[^.]+$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "jingle";
+    const ext = (f.name.match(/\.(mp3|m4a|aac|ogg|wav)$/i) || [".mp3"])[0].toLowerCase();
+    const pad = `jingles/${Date.now()}-${schoon}${ext}`;
+    await ghPad(pad, "PUT", { message: "Jingle toegevoegd via beheer", content: await bestandNaarB64(f), branch: BRANCH });
+    const j = rwJg(); j.lijst.push({ pad, naam: f.name.replace(/\.[^.]+$/, ""), v: String(Date.now()) });
+    if (j.lijst.length === 1) j.aan = true;
+    setDirty(true); renderJingles(); $("jingleBestand").value = "";
+    msg.className = "msg ok"; msg.textContent = "Jingle geüpload. Klik nu onderaan op ‘Opslaan en publiceren’.";
+  } catch (e) { msg.className = "msg bad"; msg.textContent = e.status ? explain(e) : e.message; }
+  finally { $("jingleUpload").disabled = false; }
+});
+$("jingleAan").addEventListener("change", () => { rwJg().aan = $("jingleAan").checked; setDirty(true); });
+$("jingleElke").addEventListener("change", () => { rwJg().elke = +$("jingleElke").value; setDirty(true); });
 
 // ---------- Tv-startbeeld uploaden (images/tv-start.jpg) ----------
 function tvStartToon() { $("tvStartVoorbeeld").src = "../images/tv-start.jpg?v=" + encodeURIComponent((data && data.site && data.site.tvstart_v) || Date.now()); }
