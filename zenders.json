@@ -5488,7 +5488,17 @@
     "tvdim": "40",
     "tvplayerdim": "25",
     "tvwacht": "8",
-    "tvovergang": "15"
+    "tvovergang": "15",
+    "jingles": {
+      "aan": false,
+      "elke": 5,
+      "lijst": []
+    },
+    "mededeling": {
+      "aan": false,
+      "tekst": "",
+      "tot": ""
+    }
   },
   "zenders": []
 }
