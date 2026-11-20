@@ -553,6 +553,7 @@ section.programma { padding-block: 30px 0; }
 footer { padding-block: 22px 40px; color: var(--muted); font-size: .85rem; }
 footer p { margin: 0 0 6px; max-width: 70ch; }
 footer .copyright { margin-top: 10px; font-size: .78rem; opacity: .75; }
+footer .privacy { font-size: .78rem; opacity: .7; }
 footer .sig { font: 400 1.1rem/1.2 var(--display); color: var(--gold); display: flex; gap: 8px; align-items: center; }
 
 /* ---- Geluid-aan knop bij automatisch (stil) starten ---- */
@@ -916,6 +917,7 @@ body.kop-uit .strip::after, body.kop-uit .fringe, body.kop-uit .pennant, body.ko
 <footer class="wrap">
   <p class="sig"><span class="star" aria-hidden="true"></span><span id="siteOnderaan">Gemaakt door Rawien Paltoe.</span></p>
   <p id="siteRechten">Alle muziek wordt afgespeeld via YouTube. De rechten liggen bij de artiesten en uploaders.</p>
+  <p class="privacy">Deze site houdt anonieme luisterstatistieken bij (soort apparaat, tijdzone en wat er speelt). Er worden geen namen of IP-adressen opgeslagen.</p>
   <p class="copyright">© <span id="cJaar">2026</span> Rawien Paltoe · Alle rechten voorbehouden. Kopiëren of hergebruiken van deze site zonder toestemming is niet toegestaan.</p>
 </footer>
 
@@ -2018,6 +2020,8 @@ function applyVolume() {
   m.classList.add(v === 0 ? "lvl-0" : v < 50 ? "lvl-1" : "lvl-2");
   if (!ready || fade) return;
   try { if (prefs.muted || autoMuted || v === 0) player.mute(); else { player.unMute(); player.setVolume(v); } } catch (e) {}
+  const stil = !!(prefs.muted || autoMuted || v === 0);                 // geluid aan/uit melden voor "Luisteraars nu"
+  if (stil !== laatsteStil) { laatsteStil = stil; if (typeof meldNu === "function") meldNu(); }
 }
 function savePrefs() { try { localStorage.setItem("hfm-prefs", JSON.stringify(Object.assign({}, prefs, { vol: +$("vol").value }))); } catch (e) {} }
 function renderToggles() {
@@ -2252,7 +2256,32 @@ function laadScript(src) {
   return new Promise((ok, fout) => { const sc = document.createElement("script"); sc.src = src; sc.onload = ok; sc.onerror = fout; document.head.appendChild(sc); });
 }
 // ---------- ON AIR: wat speelt er bij deze luisteraar (voor het studio-paneel in /beheer/) ----------
-let meRef = null, laatsteNu = "", nrTeller = 0;
+var meRef = null, laatsteNu = "", nrTeller = 0, laatsteStil = null;   // var: applyVolume kan al vroeg meldNu aanroepen
+// Anoniem profiel van deze luisteraar: apparaatsoort, tijdzone en een willekeurig nummer (geen naam, geen IP-adres).
+function apparaatSoort() {
+  const ua = navigator.userAgent || "";
+  if (/HeiligenwegFM-TV/.test(ua)) return "Fire TV-app";
+  if (/AFT/.test(ua)) return "Fire TV";
+  if (/Tizen|SMART-TV.*Samsung|SamsungBrowser.*TV/i.test(ua)) return "Samsung-tv";
+  if (/Web0S|webOS|NetCast/i.test(ua)) return "LG-tv";
+  if (/Android TV|BRAVIA|GoogleTV|AndroidTV/i.test(ua)) return "Android TV";
+  if (/SMART-TV|SmartTV|HbbTV/i.test(ua)) return "Smart-tv";
+  if (/iPhone/.test(ua)) return "iPhone";
+  if (/iPad/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) return "iPad";
+  if (/Android/.test(ua)) return /Mobile/.test(ua) ? "Android-telefoon" : "Android-tablet";
+  if (/CrOS/.test(ua)) return "Chromebook";
+  if (/Windows/.test(ua)) return "Windows-computer";
+  if (/Macintosh|Mac OS X/.test(ua)) return "Mac";
+  if (/Linux/.test(ua)) return "Linux-computer";
+  return "Onbekend apparaat";
+}
+function anoniemProfiel() {
+  let id = "", nieuw = false;
+  try { id = localStorage.getItem("hfm-anon") || ""; if (!id) { nieuw = true; id = Math.floor(Math.random() * 0x10000).toString(16).toUpperCase().padStart(4, "0"); localStorage.setItem("hfm-anon", id); } } catch (e) { id = "----"; }
+  let tz = ""; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) {}
+  return { id, nw: nieuw, dev: apparaatSoort(), tz };
+}
+const PROFIEL_ANON = anoniemProfiel();
 function meldNu(forceer) {
   if (!meRef) return;
   try {
@@ -2262,7 +2291,8 @@ function meldNu(forceer) {
     const blk = isLive() ? activeLiveBlock() : null;
     meRef.update({ v: h.vid, n: String((vd && vd.title) || (titles[h.vid] && titles[h.vid].t) || (h.tr && h.tr.t) || "").slice(0, 140),
                    a: String((h.tr && (h.tr.a || h.tr.from)) || "").slice(0, 80), b: blk && blk.naam ? String(blk.naam).slice(0, 40) : "",
-                   s: Date.now() - Math.round(t * 1000), d: Math.round(d), p: !playing, pt: Math.round(t) }).catch(() => {});
+                   s: Date.now() - Math.round(t * 1000), d: Math.round(d), p: !playing, pt: Math.round(t),
+                   m: !!(prefs.muted || autoMuted || +$("vol").value === 0) }).catch(() => {});
   } catch (e) {}
 }
 function nummerGestart() {                            // een nieuw nummer is echt begonnen
@@ -2315,7 +2345,7 @@ async function startTeller(cfg) {
     meRef = me;
     db.ref(".info/connected").on("value", (snap) => {
       if (snap.val() !== true) return;
-      me.onDisconnect().remove().then(() => me.set({ t: firebase.database.ServerValue.TIMESTAMP, tv: location.hash === "#tv" })).then(() => meldNu(true));
+      me.onDisconnect().remove().then(() => me.set(Object.assign({ t: firebase.database.ServerValue.TIMESTAMP, tv: location.hash === "#tv" }, PROFIEL_ANON))).then(() => meldNu(true));
     });
     db.ref("online").on("value", (snap) => {
       const n = snap.numChildren();

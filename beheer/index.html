@@ -233,7 +233,7 @@ body > .flag { display: none; }
   font-weight: 600; font-size: .9rem; text-align: left; }
 .nav button svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; opacity: .85; }
 .nav button:hover:not(:disabled) { background: var(--soft); color: var(--ink); }
-.nav button[aria-current="page"] { background: var(--accent); color: #fff; box-shadow: 0 2px 8px rgba(47,122,58,.25); }
+.nav button[aria-current="page"], .nav button[aria-current="page"]:hover:not(:disabled) { background: var(--accent); color: #fff; box-shadow: 0 2px 8px rgba(47,122,58,.25); }
 .nav button[aria-current="page"] svg { opacity: 1; }
 .nav button:disabled { opacity: .45; cursor: default; }
 .nav button .cnt { margin-left: auto; font-size: .72rem; font-weight: 700; color: var(--muted); }
@@ -436,6 +436,20 @@ body.op-overzicht .top h1 .pill { display: inline-block; }
   .rw-med { grid-template-columns: minmax(0, 1fr) auto; } .rw-med b, .rw-med input[type=text] { grid-column: 1 / -1; } .rw-med input[type=date] { width: auto; }
   .rw-ctrl { grid-template-columns: minmax(0, 1fr); } .rw-volume { grid-column: 1; grid-row: auto; justify-self: center; }
 }
+/* ---------- Luisteraars nu ---------- */
+.lstabel-wrap { overflow-x: auto; padding: 8px 8px 12px; }
+.lstabel { width: 100%; border-collapse: collapse; font-size: .9rem; min-width: 720px; }
+.lstabel th { text-align: left; font: 700 .72rem/1 var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.lstabel td { padding: 11px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.lstabel tr:last-child td { border-bottom: 0; }
+.lstabel .bz { font: 800 .9rem/1 ui-monospace, monospace; }
+.lstabel .nu-sp { display: block; max-width: 280px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
+.lstabel .nu-sp + small { color: var(--muted); }
+.lstabel .st { display: inline-flex; gap: 6px; align-items: center; font-weight: 700; font-size: .82rem; padding: 4px 10px; border-radius: 999px; background: var(--soft); white-space: nowrap; }
+.lstabel .st.speelt { background: var(--accent-l); color: var(--accent); }
+.lstabel .st.pauze { background: #fff1d6; color: #8f5f00; }
+.lstabel .st.stil { background: #fde6ea; color: var(--bad); }
+.lstabel .leeg td { text-align: center; color: var(--muted); padding: 26px; }
 /* ---------- Jingles (LIVE-instellingen) ---------- */
 .jlijst { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .jlijst li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
@@ -519,6 +533,7 @@ body.op-overzicht .top h1 .pill { display: inline-block; }
     <div class="wsbox"><span class="av">RP</span><span><b>Rawien Paltoe</b><span>Eigenaar · radio</span></span></div>
     <nav class="nav" aria-label="Beheer">
       <button type="button" data-page="overzicht"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>Overzicht</button>
+      <button type="button" data-page="p-luisteraars"><svg viewBox="0 0 24 24"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="13" width="4" height="7" rx="1.5"/><rect x="17" y="13" width="4" height="7" rx="1.5"/></svg>Luisteraars nu<span class="cnt"></span></button>
       <span class="grp">Radio</span>
       <button type="button" data-page="p-live"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M8 8a5.6 5.6 0 0 0 0 8M16 8a5.6 5.6 0 0 1 0 8M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/></svg>LIVE-instellingen</button>
       <button type="button" data-page="p-blokken"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>Tijdblokken<span class="cnt"></span></button>
@@ -854,6 +869,17 @@ body.op-overzicht .top h1 .pill { display: inline-block; }
         </div>
       </section>
 
+      <section class="panel fold" data-key="p-luisteraars">
+        <h2 class="panel-head"><button type="button" class="icon fold" aria-expanded="false" aria-controls="p-luisteraars-body" aria-label="Uitklappen">▾</button><span class="ptitle">Luisteraars nu<small>Anoniem overzicht</small></span></h2>
+        <div class="panel-body" id="p-luisteraars-body" hidden>
+          <div class="stats" id="lsStats"></div>
+          <div class="kaart" style="padding:0; overflow:hidden">
+            <div class="kaart-kop" style="padding:16px 20px 0"><h3>Wie luistert er nu?</h3><small id="lsBijgewerkt">Laden…</small></div>
+            <div class="lstabel-wrap"><table class="lstabel"><thead><tr><th>Bezoeker</th><th>Apparaat</th><th>Land</th><th>Luistert al</th><th>Wat er speelt</th><th>Status</th></tr></thead><tbody id="lsRijen"></tbody></table></div>
+          </div>
+          <p class="hint" style="margin:0">Elke 15 seconden bijgewerkt. Het land komt uit de <b>tijdzone</b> van het apparaat, niet uit het IP-adres. Het bezoekersnummer is willekeurig en blijft hetzelfde op hetzelfde apparaat, zodat je ziet of iemand terugkomt. Luisteraars met een oudere versie van de site (nog niet ververst) tonen “onbekend”.</p>
+        </div>
+      </section>
       <section class="panel fold" data-key="p-teller">
         <h2 class="panel-head"><button type="button" class="icon fold" aria-expanded="false" aria-controls="p-teller-body" aria-label="Uitklappen">▾</button><span class="ptitle">Bezoekersteller<small>Hoeveel mensen nu luisteren en hoe vaak de site is bezocht</small></span></h2>
         <div class="panel-body" id="p-teller-body" hidden>
@@ -1966,6 +1992,7 @@ window.addEventListener("beforeunload", (e) => { if (dirty) { e.preventDefault()
 // ================= Dashboard: zijmenu, pagina's en overzicht — © Rawien Paltoe =================
 const PAGINAS = {
   overzicht:   ["Overzicht", "Alles van je radio in één oogopslag."],
+  "p-luisteraars": ["Luisteraars nu", "Wie er nu luistert: anoniem, zonder namen of IP-adressen."],
   "p-live":    ["LIVE-instellingen", "Aan/uit, volgorde, BPM, overgangen en hits ophalen."],
   "p-blokken": ["Tijdblokken", "Soul, Bhajan, Bollywood, Lokaal… met bronnen en artiesten."],
   "p-algemeen":["Algemene bronnen", "Kanalen die buiten de blokken en in lege blokken draaien."],
@@ -1992,6 +2019,7 @@ function toonPagina(k, scroll = true) {
   $("crumbNu").textContent = PAGINAS[k][0];
   try { localStorage.setItem(PAGINA_OPSLAG, k); } catch (e) {}
   if (k === "overzicht") renderOverzicht();
+  if (k === "p-luisteraars") { renderLuisteraars(); haalTeller(); }
   if (scroll) window.scrollTo({ top: 0 });
   const knop = document.querySelector(`.nav button[data-page="${k}"]`);
   if (knop && window.innerWidth <= 900) knop.scrollIntoView({ inline: "center", block: "nearest" });
@@ -2037,10 +2065,49 @@ async function haalTeller() {
     let air = null;
     if (top) { const x = lijst.filter((y) => y.v === top).sort((a, c) => (a.p ? 1 : 0) - (c.p ? 1 : 0))[0];
       air = { v: x.v, n: x.n || "", a: x.a || "", b: x.b || "", s: +x.s || Date.now(), d: +x.d || 0, p: !!x.p, pt: +x.pt || 0, aantal: tel[top] }; }
-    tellerCache = { bezoeken: b || 0, online: o ? Object.keys(o).length : 0, air };
+    tellerCache = { bezoeken: b || 0, online: o ? Object.keys(o).length : 0, air, lijst: Object.values(o || {}).filter((x) => x && typeof x === "object"), tijd: Date.now() };
   } catch (e) { tellerCache = { fout: true }; }
   tellerBezig = false;
   if (huidigePagina === "overzicht") renderOverzicht(true);
+  if (huidigePagina === "p-luisteraars") renderLuisteraars();
+  const c = document.querySelector('.nav button[data-page="p-luisteraars"] .cnt'); if (c && tellerCache && !tellerCache.fout) c.textContent = tellerCache.online || "";
+}
+// ---------- Luisteraars nu (anoniem) ----------
+const TZ_LAND = {
+  "Europe/Amsterdam": ["🇳🇱", "Nederland"], "America/Paramaribo": ["🇸🇷", "Suriname"], "Europe/Brussels": ["🇧🇪", "België"], "Europe/London": ["🇬🇧", "Verenigd Koninkrijk"],
+  "Europe/Paris": ["🇫🇷", "Frankrijk"], "Europe/Berlin": ["🇩🇪", "Duitsland"], "America/Curacao": ["🇨🇼", "Curaçao"], "America/Aruba": ["🇦🇼", "Aruba"],
+  "America/Kralendijk": ["🇧🇶", "Bonaire"], "America/Lower_Princes": ["🇸🇽", "Sint Maarten"], "America/Guyana": ["🇬🇾", "Guyana"], "America/Cayenne": ["🇬🇫", "Frans-Guyana"],
+  "America/Port_of_Spain": ["🇹🇹", "Trinidad en Tobago"], "Asia/Kolkata": ["🇮🇳", "India"], "Asia/Calcutta": ["🇮🇳", "India"], "Europe/Madrid": ["🇪🇸", "Spanje"],
+  "Europe/Dublin": ["🇮🇪", "Ierland"], "America/Toronto": ["🇨🇦", "Canada"], "America/New_York": ["🇺🇸", "Verenigde Staten"], "America/Chicago": ["🇺🇸", "Verenigde Staten"],
+  "America/Denver": ["🇺🇸", "Verenigde Staten"], "America/Los_Angeles": ["🇺🇸", "Verenigde Staten"], "America/Phoenix": ["🇺🇸", "Verenigde Staten"], "Europe/Zurich": ["🇨🇭", "Zwitserland"],
+};
+const APPARAAT_IC = { "Fire TV-app": "📺", "Fire TV": "📺", "Samsung-tv": "📺", "LG-tv": "📺", "Android TV": "📺", "Smart-tv": "📺", iPhone: "📱", iPad: "📱", "Android-telefoon": "📱", "Android-tablet": "📱", Chromebook: "💻", "Windows-computer": "💻", Mac: "💻", "Linux-computer": "💻" };
+const duurTekst = (ms) => { const min = Math.max(0, Math.round(ms / 60000)); const u = Math.floor(min / 60); return u ? `${u} u ${min % 60} min` : min < 1 ? "net begonnen" : `${min} min`; };
+function renderLuisteraars() {
+  if (!$("lsRijen")) return;
+  const tc = tellerCache;
+  if (!tc || tc.fout) { $("lsRijen").innerHTML = `<tr class="leeg"><td colspan="6">${tc && tc.fout ? "De teller is niet bereikbaar." : (data && data.site && data.site.teller && data.site.teller.firebase ? "Laden…" : "De bezoekersteller staat uit (zie Bezoekersteller).")}</td></tr>`; $("lsStats").innerHTML = ""; return; }
+  const nu = Date.now(), lijst = (tc.lijst || []).slice().sort((a, b) => (+a.t || nu) - (+b.t || nu));
+  const speelt = lijst.filter((x) => x.v && !x.p && !x.m).length, pauze = lijst.filter((x) => x.p).length;
+  const landen = new Set(lijst.map((x) => (TZ_LAND[x.tz] || [, x.tz || ""])[1]).filter(Boolean));
+  const tvs = lijst.filter((x) => /tv/i.test(x.dev || "") || x.tv).length;
+  $("lsStats").innerHTML = `
+    <div class="stat" style="cursor:default"><span class="lbl">Nu online</span><span class="val">${lijst.length}</span><span class="sub"><b>${speelt}</b> luisteren met geluid</span></div>
+    <div class="stat" style="cursor:default"><span class="lbl">Gepauzeerd of stil</span><span class="val">${lijst.length - speelt}</span><span class="sub">${pauze} gepauzeerd</span></div>
+    <div class="stat" style="cursor:default"><span class="lbl">Op een tv</span><span class="val">${tvs}</span><span class="sub">Fire TV-app of tv-modus</span></div>
+    <div class="stat" style="cursor:default"><span class="lbl">Landen</span><span class="val">${landen.size}</span><span class="sub">${esc([...landen].slice(0, 3).join(", ")) || "–"}</span></div>`;
+  $("lsRijen").innerHTML = lijst.length ? lijst.map((x) => {
+    const land = TZ_LAND[x.tz], dev = x.dev || "";
+    const status = !x.v ? '<span class="st">⏳ start op</span>' : x.p ? '<span class="st pauze">⏸ gepauzeerd</span>' : x.m ? '<span class="st stil">🔇 geluid uit</span>' : '<span class="st speelt">▶ speelt</span>';
+    return `<tr>
+      <td><span class="bz">#${esc(x.id || "????")}</span> ${x.id ? `<span class="chip ${x.nw ? "groen" : ""}">${x.nw ? "nieuw" : "terug"}</span>` : ""}</td>
+      <td>${dev ? `${APPARAAT_IC[dev] || "❔"} ${esc(dev)}` : "onbekend"}${x.tv && !/tv/i.test(dev) ? " · tv-modus" : ""}</td>
+      <td>${land ? `${land[0]} ${esc(land[1])}` : x.tz ? esc(x.tz.split("/").pop().replace(/_/g, " ")) : "onbekend"}${x.tz ? `<br><small style="color:var(--muted)">${esc(x.tz)}</small>` : ""}</td>
+      <td>${x.t ? duurTekst(nu - x.t) : "–"}</td>
+      <td>${x.v ? `<span class="nu-sp">${esc(x.n || "Nummer")}</span><small>${esc([x.a, x.b].filter(Boolean).join(" · "))}</small>` : "–"}</td>
+      <td>${status}</td></tr>`;
+  }).join("") : '<tr class="leeg"><td colspan="6">Er luistert op dit moment niemand.</td></tr>';
+  $("lsBijgewerkt").textContent = "Bijgewerkt om " + new Date(tc.tijd || nu).toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 }
 function renderOverzicht(zonderTeller) {
   if (!data || !data.site) return;
@@ -2345,7 +2412,7 @@ $("rwJingleTegel").addEventListener("click", () => {
   j.aan = !j.aan; setDirty(true); rwRender(); renderJingles();
 });
 setInterval(() => { if (huidigePagina === "overzicht" && !document.hidden) rwRender(); }, 1000);
-setInterval(() => { if (huidigePagina === "overzicht" && !document.hidden) haalTeller(); }, 15000);
+setInterval(() => { if ((huidigePagina === "overzicht" || huidigePagina === "p-luisteraars") && !document.hidden) haalTeller(); }, 15000);
 
 // ---------- Jingles beheren (LIVE-instellingen): mp3 uploaden naar jingles/ ----------
 function renderJingles() {
