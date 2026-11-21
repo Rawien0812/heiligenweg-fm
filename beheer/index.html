@@ -401,6 +401,7 @@ body.op-overzicht .top h1 .pill { display: inline-block; }
 .rw-med b { font-size: .74rem; letter-spacing: .05em; color: #8f5f00; white-space: nowrap; }
 .rw-med input[type=text], .rw-med input[type=date] { background: transparent !important; border: 0 !important; padding: 6px 4px !important; font-size: .9rem; min-width: 0; color: #333 !important; }
 .rw-med input[type=date] { width: 132px; color: #8f5f00 !important; font-weight: 700; }
+.rw-med input[type=date].verlopen { color: var(--bad) !important; text-decoration: line-through; }
 .rw-sw { position: relative; width: 40px; height: 24px; flex: none; cursor: pointer; }
 .rw-sw input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
 .rw-sw span { position: absolute; inset: 0; border-radius: 999px; background: #c9c9c6; transition: background .2s; pointer-events: none; }
@@ -2328,6 +2329,9 @@ function rwRender() {
   if (document.activeElement !== $("rwMedTekst")) $("rwMedTekst").value = md.tekst || "";
   if (document.activeElement !== $("rwMedTot")) $("rwMedTot").value = md.tot || "";
   $("rwMedAan").checked = !!md.aan;
+  const verlopen = !!md.tot && md.tot < new Date().toISOString().slice(0, 10);   // einddatum voorbij = niet meer zichtbaar
+  $("rwMedTot").classList.toggle("verlopen", verlopen);
+  $("rwMedTot").title = verlopen ? "Deze datum is voorbij: de mededeling is NIET meer zichtbaar. Kies een nieuwe datum of maak het veld leeg." : "Tonen tot en met (leeg = altijd)";
   const ov = +(s.overgang ?? 5) || 0;
   if (document.activeElement !== $("rwOvergang")) $("rwOvergang").value = ov;
   $("rwOvergangW").textContent = ov ? ov + " s" : "uit";
