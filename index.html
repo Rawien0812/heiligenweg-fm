@@ -937,7 +937,9 @@ function bouwKwRegex() {
 }
 bouwKwRegex();
 // Geeft de reden terug als een nummer niet door de keuring komt, anders "".
-function slechtNummer(title, dur) {
+let UIT = new Set();                                  // nummers die in /beheer/ uit een kanaal zijn verwijderd: nooit draaien
+function slechtNummer(title, dur, id) {
+  if (id && UIT.has(id)) return "verwijderd in beheer";
   if (!KW.aan) return "";
   const m = kwRegex && String(title || "").match(kwRegex);
   if (m) return `‘${m[2]}’ in de titel`;
@@ -1019,7 +1021,8 @@ function bronNaarTracks(n) {
   const bron = n.lijst || n.video;                       // van welk kanaal komt het (voor eerlijk mixen)
   const out = [Object.assign(bronNaarTrack(n), { bron })];
   if (n.lijst && Array.isArray(n.populair)) {
-    const hits = n.populair.filter((x) => x.video).slice().sort((x, y) => (+y.views || 0) - (+x.views || 0));
+    const weg = new Set(Array.isArray(n.uit) ? n.uit : []);
+    const hits = n.populair.filter((x) => x.video && !weg.has(x.video)).slice().sort((x, y) => (+y.views || 0) - (+x.views || 0));
     hits.forEach((x, k) => out.push({ id: x.video, t: x.titel || "Nummer", a: x.artiest || n.titel || "", views: +x.views || 0, bpm: +x.bpm || 0,
                                       bron, rang: hits.length > 1 ? k / (hits.length - 1) : 0 }));   // rang 0 = grootste hit van dít kanaal
   }
@@ -1200,6 +1203,7 @@ function kiesUitLijst(list) {
   let best = Math.floor(Math.random() * list.length);
   for (let n = 0; n < 8; n++) {
     const j = Math.floor(Math.random() * list.length);
+    if (UIT.has(list[j])) continue;                    // in beheer verwijderd: overslaan
     if (urenGeleden(list[j]) >= 24) return j;
     if (urenGeleden(list[j]) > urenGeleden(list[best])) best = j;
   }
@@ -1424,6 +1428,8 @@ async function loadZenders() {
     bouwKwRegex();
   }
   LIVE = Object.assign({ aan: true, knop: "Live", onder: "Alles door elkaar", volgorde: "mix", bpm_van: "", bpm_tot: "" }, (data.site && data.site.live) || {});
+  UIT = new Set([].concat(LIVE.bronnen || [], ...(LIVE.blokken || []).map((b) => b.bronnen || []), ...(data.zenders || []).map((z) => z.nummers || []))
+    .flatMap((n) => (n && Array.isArray(n.uit) ? n.uit : [])));
   TV_FOTO = !(data.site && data.site.tvbeeld === "video");
   if (data.site && data.site.jingles) JINGLES = { aan: !!data.site.jingles.aan, elke: Math.max(2, +data.site.jingles.elke || 5), lijst: Array.isArray(data.site.jingles.lijst) ? data.site.jingles.lijst.filter((j) => j && j.pad) : [] };
   toonMededeling(data.site && data.site.mededeling);
@@ -1845,7 +1851,7 @@ function onBackState(e) {
   }
   {                                                          // kwaliteitsfilter, nog onhoorbaar
     const vd = bp.getVideoData ? bp.getVideoData() : {};
-    if (!(fade.target.st === st && STATIONS[st].tracks[fade.target.idx] && STATIONS[st].tracks[fade.target.idx].feat) && slechtNummer(vd && vd.title, bp.getDuration())) {
+    if (!(fade.target.st === st && STATIONS[st].tracks[fade.target.idx] && STATIONS[st].tracks[fade.target.idx].feat) && slechtNummer(vd && vd.title, bp.getDuration(), vd && vd.video_id)) {
       fade.tries = (fade.tries || 0) + 1;
       const l = fade.target.list && bp.getPlaylist();
       if (l && l.length > 1 && fade.tries < 6) { bp.playVideoAt(kiesUitLijst(l)); return; }
@@ -1942,7 +1948,7 @@ window.onYouTubeIframeAPIReady = function () {
           }
           {                                                      // kwaliteitsfilter
             const vd = player.getVideoData ? player.getVideoData() : {};
-            const why = slechtNummer(vd && vd.title, player.getDuration());
+            const why = slechtNummer(vd && vd.title, player.getDuration(), vd && vd.video_id);
             if (why && guardSkips < 15 && !(track() && track().feat)) {
               guardSkips++;
               setNote(`Overgeslagen door het kwaliteitsfilter (${why}): “${(vd && vd.title) || "nummer"}”.`);
