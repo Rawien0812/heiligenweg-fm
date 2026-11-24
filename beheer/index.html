@@ -10,6 +10,7 @@
 <meta name="copyright" content="© 2026 Rawien Paltoe. Alle rechten voorbehouden.">
 <meta name="author" content="Rawien Paltoe">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="strict-origin-when-cross-origin"><!-- YouTube moet zien van welke site de speler komt (anders error 153) -->
 <title>Heiligenweg FM Beheer</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1667,7 +1668,7 @@ function zoekPaneel(z, key, opts, addForm, inp) {
     const src = r.video ? `https://www.youtube-nocookie.com/embed/${r.video}?autoplay=1&rel=0&playsinline=1`
                         : `https://www.youtube-nocookie.com/embed/videoseries?list=${r.lijst}&autoplay=1&rel=0&playsinline=1`;
     voorbeeld.innerHTML = "";
-    const f = document.createElement("iframe"); f.src = src; f.title = "Voorbeeld: " + r.titel;
+    const f = document.createElement("iframe"); f.referrerPolicy = "strict-origin-when-cross-origin"; f.src = src; f.title = "Voorbeeld: " + r.titel;
     f.allow = "autoplay; encrypted-media; picture-in-picture"; f.setAttribute("allowfullscreen", "");
     const dicht = document.createElement("button"); dicht.type = "button"; dicht.className = "btn ghost"; dicht.textContent = "✕ Voorbeeld sluiten";
     dicht.addEventListener("click", () => { voorbeeld.innerHTML = ""; voorbeeld.hidden = true; });
@@ -2326,7 +2327,7 @@ async function rwSpeel(stap) {
   RW.wilSpelen = true; rwRender();
   await rwLaadApi();
   if (!RW.speler) {
-    RW.speler = new YT.Player("rwSpeler", { width: 200, height: 200, videoId: n.id, playerVars: { autoplay: 1, playsinline: 1, controls: 0, rel: 0 },
+    RW.speler = new YT.Player("rwSpeler", { width: 200, height: 200, videoId: n.id, playerVars: { autoplay: 1, playsinline: 1, controls: 0, rel: 0, origin: location.origin, widget_referrer: location.origin + location.pathname },
       events: {
         onReady: (e) => { RW.klaar = true; e.target.setVolume(RW.vol); if (RW.stil) e.target.mute(); e.target.playVideo(); },
         onStateChange: (e) => { RW.speelt = e.data === YT.PlayerState.PLAYING || e.data === YT.PlayerState.BUFFERING; if (e.data === YT.PlayerState.ENDED) rwSpeel(1); else rwRender(); },
