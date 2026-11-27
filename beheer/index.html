@@ -15,7 +15,7 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Archivo:wght@400;600;800&family=VT323&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Archivo:wght@400;600;800&family=VT323&family=Big+Shoulders+Display:wght@700;800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap">
 <style>
 /* Layout: één kolom werkblad. Bovenaan inloggen, dan teksten van de site, dan per zender een kaart
    met de nummers. Onderaan een vaste balk met Opslaan. Zelfde groen/goud als de radio. */
@@ -548,6 +548,70 @@ body.op-overzicht .top h1 .pill { display: inline-block; }
   .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .stat { padding: 12px 14px; }
   .stat .val { font-size: 1.6rem; }
+}
+
+/* ================= Studiopaneel-stijl: buslijn met haltes — © Rawien Paltoe =================
+   Eén opvallend element (het menu als route met haltes), de rest rustig. Kleur heeft betekenis:
+   groen = doen/actief, rood = live/on air/verwijderen, geel = let op/niet opgeslagen. */
+:root {
+  --forest: #EEF1EC; --ink: #14201A; --muted: #5E6B62; --line: #DCE3DA; --soft: #E6ECE4;
+  --accent: #2E7D3C; --accent-d: #236430; --accent-l: #E3F1E5; --rood: #B40A2D; --geel: #F2C618;
+  --body: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --bord: "Big Shoulders Display", "Archivo", system-ui, sans-serif;
+}
+body { font-family: var(--body); }
+/* titels als een bestemmingsbord */
+.top h1 { font: 800 clamp(2.3rem, 4.2vw, 3.3rem)/.95 var(--bord); letter-spacing: .005em; }
+.top p { font-size: .98rem; }
+.logo b { font: 800 1.3rem/1 var(--bord); letter-spacing: .01em; }
+.logo small { text-transform: none; letter-spacing: 0; font: 400 .82rem/1.2 var(--body); margin-top: 3px; }
+.zender-head .title, .kaart-kop h3, section.panel > h2 { font-family: var(--bord); font-weight: 800; font-size: 1.3rem; letter-spacing: .01em; }
+/* het menu: buslijn met haltes */
+.nav { position: relative; gap: 0; }
+.nav::before { content: ""; position: absolute; left: 19px; top: 20px; bottom: 20px; width: 2px;
+  background: repeating-linear-gradient(to bottom, #BFCABD 0 6px, transparent 6px 11px); }
+.nav button[data-page] { position: relative; padding: 8px 10px 8px 38px; border-radius: 8px; font-weight: 400; color: var(--ink); }
+.nav button[data-page] svg { display: none; }
+.nav button[data-page]::before { content: ""; position: absolute; left: 13px; top: 50%; width: 10px; height: 10px; margin-top: -7px; border-radius: 50%;
+  background: #fff; border: 2px solid #9AA89E; z-index: 1; transition: transform .15s ease; }
+.nav button[data-page]:hover:not(:disabled) { background: rgba(46,125,60,.07); }
+.nav button[data-page]:hover:not(:disabled)::before { border-color: var(--accent); }
+.nav button[aria-current="page"], .nav button[aria-current="page"]:hover:not(:disabled) { background: var(--accent-l); color: var(--ink); font-weight: 700; box-shadow: none; }
+.nav button[aria-current="page"]::before { background: var(--rood); border-color: var(--rood); box-shadow: 0 0 0 4px rgba(180,10,45,.16); transform: scale(1.15); }
+.nav .grp { position: relative; z-index: 1; font: 800 1rem/1 var(--bord); letter-spacing: .02em; text-transform: none; color: var(--ink);
+  margin: 16px 0 6px 0; padding: 4px 8px 4px 30px; background: #fff; align-self: start; }
+.nav .grp::before { content: ""; position: absolute; left: 11px; top: 50%; width: 14px; height: 3px; margin-top: -1.5px; background: var(--ink); border-radius: 2px; }
+.nav button .cnt { font-weight: 700; font-size: .74rem; color: var(--muted); background: var(--soft); border-radius: 999px; padding: 2px 7px; }
+.nav button .cnt:empty { display: none; }
+.nav button[aria-current="page"] .cnt { color: var(--accent-d); background: #fff; }
+/* rustige vlakken: geen zachte schaduw onder alles, hiërarchie via rand en ruimte */
+section.panel, .kaart, .stat { box-shadow: none; }
+section.panel { border-radius: 14px; }
+.stat { border-radius: 12px; transition: border-color .15s; }
+.stat:hover { box-shadow: none; transform: none; border-color: var(--ink); }
+.stat .val { font: 800 2.4rem/1 var(--bord); letter-spacing: .01em; }
+.stat .lbl svg { stroke: var(--muted); }
+.btn { border-radius: 8px; }
+.btn.gold { box-shadow: none; }
+.wsbox { background: #fff; }
+.syncbox { background: #fff; }
+.syncbox.dirty { border-color: var(--geel); background: #FFFBEA; }
+.syncbox.dirty b::before { background: var(--geel); }
+.savebar { box-shadow: 0 -1px 0 var(--line); }
+.savebar .state.dirty { color: var(--ink); font-weight: 700; }
+.savebar .state.dirty::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--geel); margin-right: 8px; vertical-align: 0; box-shadow: 0 0 0 3px rgba(242,198,24,.3); }
+/* geen hoofdletter-labels */
+.lstabel th { text-transform: none; letter-spacing: 0; font: 700 .82rem/1 var(--body); color: var(--muted); }
+.tabs span { font-weight: 400; } .tabs span.on { font-weight: 700; }
+.chip { font-weight: 700; }
+.tipkaart { border-radius: 12px; }
+.tipkaart b { font: 800 1.15rem/1.1 var(--bord); }
+/* telefoon: route liggend, alleen de haltes */
+@media (max-width: 900px) {
+  .nav::before { left: 8px; right: 8px; top: auto; bottom: 2px; height: 2px; width: auto; background: repeating-linear-gradient(to right, #BFCABD 0 6px, transparent 6px 11px); }
+  .nav button[data-page] { padding: 8px 12px 8px 34px; }
+  .nav button[data-page]::before { left: 12px; }
+  .logo b { font-size: 1.1rem; }
 }
 </style>
 </head>
